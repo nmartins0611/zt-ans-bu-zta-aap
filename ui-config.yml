@@ -22,7 +22,7 @@ tabs:
     url: https://control-${guid}.${domain}/
   # - name: gitea
   #   url: https://gitea-${guid}.${domain}/
-  - name: VS Ccode
+  - name: VS Code
     url: https://vscode-${guid}.${domain}
     external: false
   - name: "TERMINAL"
