@@ -29,3 +29,9 @@ tabs:
     url: /wetty_vscode
   - name: Cloud (AWS)
     url: /cloud
+  - name: Vault
+    url: https://vault-${guid}.${domain}
+    external: false
+  - name: Terraform
+    url: https://terraform-${guid}.${domain}
+    external: false
