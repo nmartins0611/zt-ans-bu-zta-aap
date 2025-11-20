@@ -184,6 +184,12 @@ virtualmachines:
     networks:
       - default
     services:
+      - name: tfe-http
+        ports:
+          - port: 80
+            protocol: TCP
+            targetPort: 80
+            name: tfe-http
       - name: tfe-https
         ports:
           - port: 443
@@ -197,14 +203,20 @@ virtualmachines:
             targetPort: 9090
             name: tfe-9090
     routes:
+      - name: tfe-http
+        host: tfe-http
+        service: tfe-http
+        targetPort: 80
+        tls: false
+        path: "/.well-known/"
       - name: tfe-https
-        host: terraform
+        host: tfe-https
         service: tfe-https
         targetPort: 443
         tls: false
         #tls_termination: edge
       - name: tfe-9090
-        host: terraform-9090
+        host: tfe-9090
         service: tfe-9090
         targetPort: 9090
         tls: true
