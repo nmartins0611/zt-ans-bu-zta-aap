@@ -171,32 +171,34 @@ virtualmachines:
         - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
         - systemctl reload sshd
 
-  - name: "rheltfe"
+- name: "terraform"
     image: "tfe-rhel-image-1"
-    memory: "8G"
+    memory: "16G"
     cores: 2
     image_size: "20Gi"
-    disk_type: "scsi"
-    bootloader: "efi"
+    # disk_type: "scsi"
+    # bootloader: "efi"
     tags:
       - key: "AnsibleGroup"
         value: "isolated"
     networks:
       - default
     services:
-      - name: rheltfe-https
+      - name: tfe-https
         ports:
           - port: 443
             protocol: TCP
             targetPort: 443
-            name: vscode
+            name: tfe-https
     routes:
-      - name: rheltfe-https
-        host: rheltfe
-        service: rheltfe-https
+      - name: tfe-https
+        host: terraform
+        service: tfe-https
         targetPort: 443
         tls: true
-        tls_termination: Edge
+        tls_termination: edge
+        #tls_termination: reencrypt
+        #tls_destinationCACertificate: |
     userdata: |-
       #cloud-config
       user: rhel
@@ -206,30 +208,30 @@ virtualmachines:
         - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
         - systemctl reload sshd
 
-  - name: "rhelvault"
-    image: "rhel-9.6"
-    memory: "8G"
+  - name: "vault"
+    image: "vault-rhel-image-1"
+    memory: "16G"
     cores: 2
     image_size: "20Gi"
-    disk_type: "scsi"
-    bootloader: "efi"
+    # disk_type: "scsi"
+    # bootloader: "efi"
     tags:
       - key: "AnsibleGroup"
         value: "isolated"
     networks:
       - default
     services:
-      - name: rhelvault-https
+      - name: vault-8200
         ports:
-          - port: 443
+          - port: 8200
             protocol: TCP
-            targetPort: 443
-            name: vscode
+            targetPort: 8200
+            name: vault
     routes:
-      - name: rhelvault-https
-        host: rhelvault
-        service: rhelvault-https
-        targetPort: 443
+      - name: vault-8200
+        host: vault
+        service: vault-8200
+        targetPort: 8200
         tls: true
         tls_termination: Edge
     userdata: |-
