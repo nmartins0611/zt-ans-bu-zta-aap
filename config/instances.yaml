@@ -203,8 +203,39 @@ virtualmachines:
         targetPort: 443
         tls: true
         tls_termination: reencrypt
-        tls_destinationCACertificate:
-          TODO
+        tls_destinationCACertificate:  |
+          -----BEGIN CERTIFICATE-----
+          MIIFjTCCA3WgAwIBAgIUeExa35qysEOkLFsKO0rclw0yUYgwDQYJKoZIhvcNAQEL
+          BQAwVjELMAkGA1UEBhMCWFgxFTATBgNVBAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UE
+          CgwTRGVmYXVsdCBDb21wYW55IEx0ZDESMBAGA1UEAwwJdGVycmFmb3JtMB4XDTI1
+          MTEyNDEwMzE1NVoXDTM1MTEyMjEwMzE1NVowVjELMAkGA1UEBhMCWFgxFTATBgNV
+          BAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UECgwTRGVmYXVsdCBDb21wYW55IEx0ZDES
+          MBAGA1UEAwwJdGVycmFmb3JtMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKC
+          AgEAukg9TLvk5iiDs2xZ/Wltd0kNZRBxD/FmQePrj4iiwF1mzZIPu54Kc53Tq58X
+          VW/jQL7x5+gPfIaLlIMe55EWPqRya/1nvQW8LlVzvzy7LxSkpQKtyqxgdwAHA4NX
+          dC2xeCJOieSuBZZyGxUBYfvprkXUwYgwd1F0YbIiZGWXhhFoOgK0pEGruQjiUZGj
+          7Y2sr7QoV8XfGuqxE1axQI6UodVmmx7NsYYr7UQAN06EYSo5A/8QnBzHEdZN+fJl
+          lYDXRklZ14CRbwIXkFT43IpSEAJoMdrMLEfHkcluOgsA33kCEgaovatFIGdlc5NW
+          taRa5hFJrMCy3hGnU3UYlhWFVgJvSFGmp+tbELTWAE7R14G6zOlJf8GTZWvwzINX
+          103uME3LFu0CkMDpBC3Mc46Fn5HQMYV2OZIIuYdnL52Alq3n1BRsoJ8vOs4G6BFz
+          sZvivKbs//6mtDCBOlL/y2iGhmOvZDHhDUqGXDiNtU80+UPik9uH9uQ8RC46mMZh
+          wJ9/bhqI/ybhQFj7Pbk7Ll4j7BglnOtM9b/pEGuKGZb8gu63HxFc3rhNV1MCm8Mp
+          Gm9x2HcU813dFu6WFM/XTY8CMfcLDNaABl5qhQ8vrvD0Xudfj9BFsxDmKQdFVYG4
+          UitEpNW0vADkiE3uqdzEXSG/2EdmyCfxrolSCfaRlsHJeMsCAwEAAaNTMFEwHQYD
+          VR0OBBYEFFy36tyibXnp836ET+yCZsDUn/ijMB8GA1UdIwQYMBaAFFy36tyibXnp
+          836ET+yCZsDUn/ijMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggIB
+          AFRtMxAiQul4RNfTg9qOZPGIaofgPmJLOa49ptvj1VdzQTt2l1NpC/+UIcC171Xw
+          NeR/ZLt4nDnaUnB9GEtAGOvCPNjAhRZ+uoe/htZCFQDUNSKzPrXPluifCtH8GrAT
+          uTVmK65YYCjn2PebJA1KwBC9Ebuf/Qxxjmdo/lzvM+FWapSOnyP4l8BnoYnuge6G
+          dpfQy0iD6ZuPzBmbhsE/+mxZDNXpZ+dXbdi8MEH0Yjm7Mtqi45f3yI2Qevtaat4T
+          Du6CSrnaGeQDlJ0hRZWMvcGG8hHVqTb6vJo84qK5pNYpgK5idY72DsgG65gUdu37
+          v/rJncRfs8LV7cV0SdMkZCiWQIaioBlb+KUH16ZjbB7g4qWvarD3QUuhu3g6UZdM
+          ugd2jfU7xFR0X/9h351rgNCbWVNRYujY9p5lL/TE7VIqOzF+hAL0seBjUC8Bb6pe
+          zAVhhK6oy6Df98M0aN3oNc/Z3ID7ya4xCsBPiuBxOrrMVc9iBssv7/oqji6gN3E7
+          cVf21LuIYgC9uz9kr/EimnewVgwwWneDJHE5E2stpLR9oLji4gLbswnzY6qzSem+
+          pRw10XnOz29jX0ZfcoCStUsBo/G1sfyeOK8oDhvEMcp4lRJMYXtF2mcwj3q6PNDl
+          PsJyVroHfWRn/ZYsDDVcJnWbmV0UbAUGlqYlr28hZKdy
+          -----END CERTIFICATE-----
       - name: tfe-9090
         host: tfe-9090
         service: tfe-9090
