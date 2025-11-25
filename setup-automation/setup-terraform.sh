@@ -5,7 +5,7 @@ HOSTNAME=$(hostname -f)
 
 sed -i "/name: \"TFE_HOSTNAME\"/!b;n;s/value: \".*\"/value: \"$HOSTNAME\"/" /etc/containers/systemd/tfe.yaml
 
-CERT_DIR="/etc/ssl/private/terraform-enterprise"
+CERT_DIR="/home/ec2-user/tfeinstallfiles/certs"
 mkdir -p "$CERT_DIR"
 
 cat <<'EOF' | base64 -d > "$CERT_DIR/cert.pem"
