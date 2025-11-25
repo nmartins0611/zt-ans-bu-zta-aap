@@ -3,7 +3,7 @@ echo "change me"
 
 HOSTNAME=$(hostname -f)
 
-sed -i "/name: \"TFE_HOSTNAME\"/!b;n;s/value: \".*\"/value: \"$HOSTNAME\"/" /etc/containers/systemd/tfe.yml
+sed -i "/name: \"TFE_HOSTNAME\"/!b;n;s/value: \".*\"/value: \"$HOSTNAME\"/" /etc/containers/systemd/tfe.yaml
 
 CERT_DIR="/etc/ssl/private/terraform-enterprise"
 mkdir -p "$CERT_DIR"
@@ -26,4 +26,4 @@ chmod 600 "$CERT_DIR/key.pem"
 chmod 644 "$CERT_DIR/bundle.pem"
 
 systemctl daemon-reload
-podman restart $(sudo podman ps -q)
+podman restart $(sudo podman ps -aq)
