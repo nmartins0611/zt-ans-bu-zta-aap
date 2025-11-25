@@ -26,4 +26,4 @@ sed -i "/name: \"TFE_HOSTNAME\"/!b;n;s/value: \".*\"/value: \"$HOSTNAME\"/" /etc
 # chmod 644 "$CERT_DIR/bundle.pem"
 
 # systemctl daemon-reload
-# podman restart terraform-enterprise-terraform-enterprise
+podman restart terraform-enterprise-terraform-enterprise
