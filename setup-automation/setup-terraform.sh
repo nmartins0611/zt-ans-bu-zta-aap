@@ -5,8 +5,8 @@ HOSTNAME=tfe-https-${GUID}.apps.ocpvdev01.rhdp.net
 
 sed -i "/name: \"TFE_HOSTNAME\"/!b;n;s/value: \".*\"/value: \"$HOSTNAME\"/" /etc/containers/systemd/tfe.yaml
 
-#CERT_DIR="/home/ec2-user/tfeinstallfiles/certs/"
-CERT_DIR="/tmp/"
+CERT_DIR="/home/ec2-user/tfeinstallfiles/certs/"
+#CERT_DIR="/tmp/"
 
 
 cat <<'EOF' | base64 -d > "$CERT_DIR/cert.pem" 
