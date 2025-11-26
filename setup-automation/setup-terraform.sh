@@ -1,8 +1,4 @@
 #!/bin/bash
-echo "change me"
-
-echo ${DOMAIN}
-echo ${GUID}
 
 HOSTNAME="tfe-https-${GUID}.apps.ocpvdev01.rhdp.net"
 
@@ -28,4 +24,4 @@ chmod 644 "$CERT_DIR/bundle.pem"
 
 systemctl daemon-reload
 
-sudo systemctl restart podman-terraform-enterprise.service
+podman restart terraform-enterprise-terraform-enterprise 
