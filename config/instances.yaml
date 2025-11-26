@@ -173,7 +173,7 @@ virtualmachines:
 
   - name: "terraform"
     image: "tfe-rhel-image-1"
-    memory: "16G"
+    memory: "24G"
     cores: 2
     image_size: "120Gi"
     # disk_type: "scsi"
