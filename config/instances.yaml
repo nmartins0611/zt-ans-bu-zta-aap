@@ -186,15 +186,15 @@ virtualmachines:
     services:
       - name: tfe-https
         ports:
-          - port: 8443
+          - port: 443
             protocol: TCP
-            targetPort: 8443
+            targetPort: 443
             name: tfe-https
     routes:
       - name: tfe-https
         host: tfe-https
         service: tfe-https
-        targetPort: 8443
+        targetPort: 443
         tls: true
         tls_termination: reencrypt
         tls_destinationCACertificate:  |
