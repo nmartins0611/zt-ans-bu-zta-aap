@@ -5,7 +5,7 @@
 
   # vars_files:
   #   - ../config/secrets.yaml
-
+  
   tasks:
   - name: Add bastion host
     ansible.builtin.add_host:
@@ -41,7 +41,7 @@
     ansible.builtin.wait_for_connection:
 
   - name: Set config_host variable with ansible_host value
-    ansible.builtin.set_fact:
+    set_fact:
       config_host: "{{ ansible_host }}"
 
   - name: Create a directory if it does not exist
@@ -58,17 +58,17 @@
 
   - name: Copy script file
     when: r_script_test.stat.exists
-    ansible.builtin.copy:
+    copy:
       src: "./setup-{{ ansible_host }}.sh"
       dest: "/tmp/setup-scripts/setup-{{ ansible_host }}.sh"
     register: r_result
 
   - name: Include secrets var
-    ansible.builtin.include_vars: ../config/secrets.yaml
+    include_vars: ../config/secrets.yaml
 
   - name: Execute setup-node.sh if it exists
     when: r_script_test.stat.exists
-    ansible.builtin.shell: "sh -x /tmp/setup-scripts/setup-{{ ansible_host }}.sh > /tmp/setup-scripts/setup-{{ ansible_host }}.log 2>&1"
+    shell: "sh -x /tmp/setup-scripts/setup-{{ ansible_host }}.sh > /tmp/setup-scripts/setup-{{ ansible_host }}.log 2>&1"
     become: true
     register: r_result
     environment:
