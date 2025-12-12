@@ -1,7 +1,7 @@
 ---
 site:
-  title: Terraform & Red Hat Ansible Automation Platform (AAP 2.5)
-  url: https://redhat-scholars.github.io/course-template
+  title: Terraform Enterprise & Red Hat Ansible Automation Platform
+  url: https://rhpds.github.io/zt-ans-bu-hashi-aap/modules/index.html
   start_page: modules::index.adoc
 
 content:
