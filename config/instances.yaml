@@ -1,5 +1,4 @@
 ---
-# Containers are under development
 containers:
   - name: gitea
     image: gitea/gitea:1.16.8-rootless
@@ -21,7 +20,7 @@ containers:
       GITEA__server__SSH_DOMAIN: http://gitea
       GITEA__service__DISABLE_REGISTRATION: "true"
       GITEA__service__REQUIRE_SIGNIN_VIEW: "false"
-      GITEA__webhook__ALLOWED_HOST_LIST: '*'
+      GITEA__webhook__ALLOWED_HOST_LIST: "*"
     volumeMounts:
       - name: gitea-varlib
         mountPath: /var/lib/gitea/
@@ -36,18 +35,20 @@ containers:
         emptyDir: {}
       - name: gitea-varlib
         emptyDir: {}
-    commands: 
-        - gitea admin user create --admin --username gitea --password gitea --email dummy@dummy.com --must-change-password=false
-        - >
-          curl -X POST -H "accept: application/json" -H "Content-Type: application/json"
-          -u 'gitea:gitea' 
-          -d '{"username": "student", "full_name": "student", "description": "student"}'
-          http://localhost:3000/api/v1/orgs
-        - >
-          curl -X POST -H "accept: application/json" -H "Content-Type: application/json"
-          -u 'gitea:gitea'
-          -d '{"clone_addr": "https://github.com/ansible-tmm/terraform-aap.git", "repo_name": "terraform-aap", "owner": "student", "uid": 2, "private": false}'
-          http://localhost:3000/api/v1/repos/migrate
+    commands:
+      - gitea admin user create --admin --username gitea --password gitea
+        --email dummy@dummy.com --must-change-password=false
+      - >
+        curl -X POST -H "accept: application/json" -H "Content-Type:
+        application/json" -u 'gitea:gitea'  -d '{"username": "student",
+        "full_name": "student", "description": "student"}'
+        http://localhost:3000/api/v1/orgs
+      - >
+        curl -X POST -H "accept: application/json" -H "Content-Type:
+        application/json" -u 'gitea:gitea' -d '{"clone_addr":
+        "https://github.com/ansible-tmm/terraform-aap.git", "repo_name":
+        "terraform-aap", "owner": "student", "uid": 2, "private": false}'
+        http://localhost:3000/api/v1/repos/migrate
     memory: 2Gi
     services:
       - name: gitea
@@ -63,18 +64,15 @@ containers:
         targetPort: 3000
         tls: true
         tls_termination: Edge
-
-virtualmachines:  
-  - name: "control"
-    image: "aap-2.6-2-ceh-20251103"
-    memory: "32G"
+virtualmachines:
+  - name: control
+    image: aap-2.6-2-ceh-20251103
+    memory: 32G
     cores: 4
-    image_size: "50Gi"
-   # disk_type: "scsi"
-   # bootloader: "efi"
+    image_size: 50Gi
     tags:
-      - key: "AnsibleGroup"
-        value: "isolated"
+      - key: AnsibleGroup
+        value: isolated
     networks:
       - default
       - secondary
@@ -105,122 +103,56 @@ virtualmachines:
         tls: true
         tls_termination: reencrypt
         tls_destinationCACertificate: |
-         -----BEGIN CERTIFICATE-----
-         MIIF1jCCA76gAwIBAgIUASi34Lss1upPyAS1YsA8eZTJOFAwDQYJKoZIhvcNAQEL
-         BQAwgYIxCzAJBgNVBAYTAlVTMRcwFQYDVQQIDA5Ob3J0aCBDYXJvbGluYTEQMA4G
-         A1UEBwwHUmFsZWlnaDEQMA4GA1UECgwHUmVkIEhhdDEQMA4GA1UECwwHQW5zaWJs
-         ZTEkMCIGA1UEAwwbQW5zaWJsZSBBdXRvbWF0aW9uIFBsYXRmb3JtMB4XDTI1MTEw
-         MzE5NDkyNVoXDTM1MTEwMTE5NDkyNVowgYIxCzAJBgNVBAYTAlVTMRcwFQYDVQQI
-         DA5Ob3J0aCBDYXJvbGluYTEQMA4GA1UEBwwHUmFsZWlnaDEQMA4GA1UECgwHUmVk
-         IEhhdDEQMA4GA1UECwwHQW5zaWJsZTEkMCIGA1UEAwwbQW5zaWJsZSBBdXRvbWF0
-         aW9uIFBsYXRmb3JtMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAqNju
-         44XrKsBPTqv5J+OqRz3RsY1QIemHw3NIJF3d3UvimBHt42rHnwt4Lww3mYtYMJQ0
-         nzcRpr+EnFlC5YFl2Htrfq6NzUUqknTpaCeSKNCli4aKYe9JYSocWy/8ag+H7gMf
-         oUFJ7+PDh/S8HcP7ZA15RRXhyGdjzpUK9+ry/UcMcLE4ZOW2Z4YvFyjemh+c/yYY
-         KHsNjV56TRL5q4VqsxlKQuqNQos9lWoHjz363JxC9UrvTPqvl/UbHsQmTD8NKDnB
-         xxsaYTl41kVqscLSw5KR2c6CVVgSjIn5o0iAo01Sd4gONZ0ImhrzQ5Ea9Ya2kKG7
-         OCdg84V4hVmy/fnrcBC4k9RgNthWH9k4eMHwZf3B2P1xZds3dkV1k6yF3zSrQfJd
-         VJZ0AsaeGQGw26NQw0IG17P/jmho1jBhqSLaJyT9vVM/JMOjdojbD/dSFkccID1E
-         wUZeklYiLScD13rhckVk8MxrsFv99BO91tm07lwnj5jsyLoTvUOLuI4o7yw1AlsC
-         V/OjdpAohWbL0W6YxS/elBVgZhe7Gv2lnIF9L7TxTj/UQWaarouAIgyevqbP5dnt
-         mRccxZ38YGivRA+PgWwwSL9AQCFzIJW1Q45shUR2vkTsiWEEB+Lobkj5dcyLG0CH
-         Z7fnJnlKdNDcMbm2s6U1i+nHvv1dpfyveRvOiCsCAwEAAaNCMEAwDgYDVR0PAQH/
-         BAQDAgIEMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFHAFWQy/8in8Lg2TaG9g
-         NJyRxdMfMA0GCSqGSIb3DQEBCwUAA4ICAQBT5QI+nxhpEwPVp/BxZnxJWFBotHw3
-         rROgu1GBR3clZ+c+YFygAUs3LSpCLuDGnqJnh0822sIM+5FFP2ypqHdzeKo3TQEj
-         K4QiTBGeiSgqKqwHQdqPKywgFqAuxFC+clVrmFVR7dQJ8OiUZYNk5fwYLxnOftFQ
-         pxgpJyAX7vpZKnzujc5IGEqb3apjyxUuX3TFRq4uJp8ffWR9cgykeI8WFqAi33+K
-         RW8h9UQbS9mPjkJ3lbTtd06Jx2M0V2pwtQBMlp7aTboEqs+CB5moCIq1wTXvZBqB
-         dcqcpRGppYHL+QuUguBIlZcxn/8JpfoEsYVOJszp4YLEKzr68RoXvevObbrjJxfq
-         BnEPFKqt+pQpjEJktn8JDqp8G6gMc9n+Nkx88f3MR8yr2nhMl9YL6jSZLklH4JJV
-         2UjYg+KU/u/JttFmDydmys1xN9hiFM2wtRjp+r8gAQw95pyUhMraA01qLYWP5wAO
-         KsMpndKg6rUIycxNNr+eLGNafbUNsp9qayRSull5jKok43Goi8oF8edRlPY4qpZW
-         6WvY8+YjBLTCY1rQBb6/Rfr5PHSaRlGLi3Os6xG84gt69dLtMZBz4O232fc5sG5M
-         wMQ+MKwOpgDyuy79XKvsPanlAfP8WgJi79pJdHu3BGTLlDFil9CK8l2sncM1FdaE
-         57Ys1npOUx+oxw==
-         -----END CERTIFICATE-----
-
-  # - name: "control"
-  #   image: "base-zero-aap-2.5-container-ce" #"aap-2.6-2-ceh-20251103" 
-  #   memory: "16G"
-  #   cores: 4
-  #   image_size: "30Gi"
-  #  # disk_type: "scsi"
-  #  # bootloader: "efi"
-  #   tags:
-  #     - key: "AnsibleGroup"
-  #       value: "isolated"
-  #   networks:
-  #     - default
-  #     - secondary
-  #   userdata: |-
-  #     #cloud-config
-  #     user: rhel
-  #     password: ansible123!
-  #     chpasswd: { expire: False }
-  #     runcmd:
-  #       - sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/" /etc/ssh/sshd_config
-  #       - systemctl reload sshd
-  #   services:
-  #     - name: control-https
-  #       ports:
-  #         - port: 443
-  #           protocol: TCP
-  #           targetPort: 443
-  #           name: control-https
-  #   routes:
-  #     - name: control-https
-  #       host: control
-  #       service: control-https
-  #       targetPort: 443
-  #       tls: true
-  #       tls_termination: reencrypt
-  #       tls_destinationCACertificate: |
-  #         -----BEGIN CERTIFICATE-----
-  #         MIIF1jCCA76gAwIBAgIUBQZlbUZlOmMKhspO9U4/nTJAXAEwDQYJKoZIhvcNAQEL
-  #         BQAwgYIxCzAJBgNVBAYTAlVTMRcwFQYDVQQIDA5Ob3J0aCBDYXJvbGluYTEQMA4G
-  #         A1UEBwwHUmFsZWlnaDEQMA4GA1UECgwHUmVkIEhhdDEQMA4GA1UECwwHQW5zaWJs
-  #         ZTEkMCIGA1UEAwwbQW5zaWJsZSBBdXRvbWF0aW9uIFBsYXRmb3JtMB4XDTI1MDQy
-  #         MzA4MjEyOVoXDTM1MDQyMTA4MjEyOVowgYIxCzAJBgNVBAYTAlVTMRcwFQYDVQQI
-  #         DA5Ob3J0aCBDYXJvbGluYTEQMA4GA1UEBwwHUmFsZWlnaDEQMA4GA1UECgwHUmVk
-  #         IEhhdDEQMA4GA1UECwwHQW5zaWJsZTEkMCIGA1UEAwwbQW5zaWJsZSBBdXRvbWF0
-  #         aW9uIFBsYXRmb3JtMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA2Ytu
-  #         a9MM9qr0UBvlIJPXmeSjzQXmx+CJwQAhDoR8MgOkjvWjjEdsX4VHBfQTO58d5sPr
-  #         oNg95GRe9y9Gjt6Lh7szLk70Q766Ncq8OIBYieiVKctIV+ZZmX7+bBcyzbII/0C9
-  #         Ili3lNd+XKfl5vmCWoYyuQncC1FZgVpHqZDP/+RCCMThdKEvugbQUmXF6pmEFF7Z
-  #         8PxYpxnVDX2ipOfWcjZDm6pTBd5+dzXHQVsWe25kY6QW0zEYzPJb3q0gP7oNz1uV
-  #         rXgYBnKQ8NdoSGtS7w9bvSw28Bf1ZFTvBKeCxWNeoJbiszqdsDd6PEwb4uE1Tr6D
-  #         qsLfPgvQzngQ+a7YrZ+M6GskQkfk+ZWMK8h6066p27Tzs6/9jMiCFuKwRuKWy9Qi
-  #         DdCSnwVIw4VB40ysoAHprxBHq4y/YJ2RDiC9EehTXsQf/uAy3M7KBBjVGlMfXxUE
-  #         NfjbeMdSQip04jKQGhJf8teXTymfcjlGaoCtymB+h4s3hc1T7DjfR0Q1Gd3AIL/p
-  #         lHOgU4TMBzeghqeDRbY4YQRSI1aF/hzTvAJzMaONs161buKOQ47O5UGGJYHHlJbf
-  #         aI0s3Mhld1YvIFk78A4tFI9GIwzj4IzVmCv4MZHg2BXKAU6m3Y6bYNabqP6Ho4Fs
-  #         DZOVkMvwTGKGfRxjdp0kx6HxNmjnVDMXGM9g8cECAwEAAaNCMEAwDgYDVR0PAQH/
-  #         BAQDAgIEMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFFugxH0taHxJ0/d71phl
-  #         a1Vt78fTMA0GCSqGSIb3DQEBCwUAA4ICAQApZCo7gI0xdk2TxjOcq+BdNsOvKjWL
-  #         ADceDM78oPy0xpgKd2u9INITzIY2f4KGcepXslnlMQQvny80N1LXu9Tkn4rhoU03
-  #         DXb9bXSr44T3fIf4JFU2iv5Hb6Az/DiQ3o9fZnhpW0AmzR1LmZUuFBJZefFBMMKl
-  #         s2W9C3f3nUPzi1qrGSXszXXbIDYsRMhax/MxWR9mxITuN3T6PhW8A1LyQ8dWRCLw
-  #         jFFcNuGjlR8w16XhRCw8uA1RzVwNWoUGvMiapboR25N0DLVCG8qf/mdEI4re8MhM
-  #         EYHugB/e7vRx6iV9ov7jJSB8BrBPWy/7ncebWIf8OvjM2UcUk0hciAQGD4Udbb3s
-  #         LGcpjZRJDrnpBdp+CJMCNNjoI0wLbmRDEVPGOSkJSmnj+8VTlQ5s+Dxvj2hh/rq7
-  #         APwxbIl1YBpTx65KwhacJbXSByk8bnwEQdRo240kC5ggC6twb/vvslRortZtyfqw
-  #         E/xGAKc9LOIFiqk1f0IU2ssEBvSFvYjypXsGnFITamNN2lMS2k5XQIA4avwWsoO4
-  #         rRLV87ua9S7g31PTYCMJBGw/B3PXhXjJG/eXgLyhEoUQP/fqeGiPEBzagyo71qL5
-  #         fH5qke1XR5LFGpndX1GuSVBhdZq94x0aGXWTQCDNIPQ3QtrQ64PBF1vRFdJ6o/FI
-  #         uEOWpQhGYHMC0A==
-  #         -----END CERTIFICATE-----
-
-  - name: "vscode"
-    image: "devtools-ansible"
-    memory: "8G"
+          -----BEGIN CERTIFICATE-----
+          MIIF1jCCA76gAwIBAgIUASi34Lss1upPyAS1YsA8eZTJOFAwDQYJKoZIhvcNAQEL
+          BQAwgYIxCzAJBgNVBAYTAlVTMRcwFQYDVQQIDA5Ob3J0aCBDYXJvbGluYTEQMA4G
+          A1UEBwwHUmFsZWlnaDEQMA4GA1UECgwHUmVkIEhhdDEQMA4GA1UECwwHQW5zaWJs
+          ZTEkMCIGA1UEAwwbQW5zaWJsZSBBdXRvbWF0aW9uIFBsYXRmb3JtMB4XDTI1MTEw
+          MzE5NDkyNVoXDTM1MTEwMTE5NDkyNVowgYIxCzAJBgNVBAYTAlVTMRcwFQYDVQQI
+          DA5Ob3J0aCBDYXJvbGluYTEQMA4GA1UEBwwHUmFsZWlnaDEQMA4GA1UECgwHUmVk
+          IEhhdDEQMA4GA1UECwwHQW5zaWJsZTEkMCIGA1UEAwwbQW5zaWJsZSBBdXRvbWF0
+          aW9uIFBsYXRmb3JtMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAqNju
+          44XrKsBPTqv5J+OqRz3RsY1QIemHw3NIJF3d3UvimBHt42rHnwt4Lww3mYtYMJQ0
+          nzcRpr+EnFlC5YFl2Htrfq6NzUUqknTpaCeSKNCli4aKYe9JYSocWy/8ag+H7gMf
+          oUFJ7+PDh/S8HcP7ZA15RRXhyGdjzpUK9+ry/UcMcLE4ZOW2Z4YvFyjemh+c/yYY
+          KHsNjV56TRL5q4VqsxlKQuqNQos9lWoHjz363JxC9UrvTPqvl/UbHsQmTD8NKDnB
+          xxsaYTl41kVqscLSw5KR2c6CVVgSjIn5o0iAo01Sd4gONZ0ImhrzQ5Ea9Ya2kKG7
+          OCdg84V4hVmy/fnrcBC4k9RgNthWH9k4eMHwZf3B2P1xZds3dkV1k6yF3zSrQfJd
+          VJZ0AsaeGQGw26NQw0IG17P/jmho1jBhqSLaJyT9vVM/JMOjdojbD/dSFkccID1E
+          wUZeklYiLScD13rhckVk8MxrsFv99BO91tm07lwnj5jsyLoTvUOLuI4o7yw1AlsC
+          V/OjdpAohWbL0W6YxS/elBVgZhe7Gv2lnIF9L7TxTj/UQWaarouAIgyevqbP5dnt
+          mRccxZ38YGivRA+PgWwwSL9AQCFzIJW1Q45shUR2vkTsiWEEB+Lobkj5dcyLG0CH
+          Z7fnJnlKdNDcMbm2s6U1i+nHvv1dpfyveRvOiCsCAwEAAaNCMEAwDgYDVR0PAQH/
+          BAQDAgIEMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFHAFWQy/8in8Lg2TaG9g
+          NJyRxdMfMA0GCSqGSIb3DQEBCwUAA4ICAQBT5QI+nxhpEwPVp/BxZnxJWFBotHw3
+          rROgu1GBR3clZ+c+YFygAUs3LSpCLuDGnqJnh0822sIM+5FFP2ypqHdzeKo3TQEj
+          K4QiTBGeiSgqKqwHQdqPKywgFqAuxFC+clVrmFVR7dQJ8OiUZYNk5fwYLxnOftFQ
+          pxgpJyAX7vpZKnzujc5IGEqb3apjyxUuX3TFRq4uJp8ffWR9cgykeI8WFqAi33+K
+          RW8h9UQbS9mPjkJ3lbTtd06Jx2M0V2pwtQBMlp7aTboEqs+CB5moCIq1wTXvZBqB
+          dcqcpRGppYHL+QuUguBIlZcxn/8JpfoEsYVOJszp4YLEKzr68RoXvevObbrjJxfq
+          BnEPFKqt+pQpjEJktn8JDqp8G6gMc9n+Nkx88f3MR8yr2nhMl9YL6jSZLklH4JJV
+          2UjYg+KU/u/JttFmDydmys1xN9hiFM2wtRjp+r8gAQw95pyUhMraA01qLYWP5wAO
+          KsMpndKg6rUIycxNNr+eLGNafbUNsp9qayRSull5jKok43Goi8oF8edRlPY4qpZW
+          6WvY8+YjBLTCY1rQBb6/Rfr5PHSaRlGLi3Os6xG84gt69dLtMZBz4O232fc5sG5M
+          wMQ+MKwOpgDyuy79XKvsPanlAfP8WgJi79pJdHu3BGTLlDFil9CK8l2sncM1FdaE
+          57Ys1npOUx+oxw==
+          -----END CERTIFICATE-----
+      - name: control-report
+        host: control-report
+        service: control-report
+        targetPort: 8088
+        tls: true
+        tls_termination: Edge
+  - name: vscode
+    image: devtools-ansible
+    memory: 8G
     cores: 2
-    image_size: "20Gi"
-    disk_type: "scsi"
-    bootloader: "efi"
+    image_size: 20Gi
+    disk_type: scsi
+    bootloader: efi
     tags:
-      - key: "AnsibleGroup"
-        value: "isolated"
+      - key: AnsibleGroup
+        value: isolated
     networks:
       - default
     services:
@@ -237,25 +169,26 @@ virtualmachines:
         targetPort: 8080
         tls: true
         tls_termination: Edge
-    userdata: |-
+    userdata: >-
       #cloud-config
+
       user: rhel
+
       password: ansible123!
+
       chpasswd: { expire: False }
+
       runcmd:
         - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
         - systemctl reload sshd
-
-  - name: "terraform"
-    image: "tfe-rhel-image-1"
-    memory: "24G"
+  - name: terraform
+    image: tfe-rhel-image-1
+    memory: 24G
     cores: 2
-    image_size: "120Gi"
-    # disk_type: "scsi"
-    # bootloader: "efi"
+    image_size: 120Gi
     tags:
-      - key: "AnsibleGroup"
-        value: "isolated"
+      - key: AnsibleGroup
+        value: isolated
     networks:
       - default
     services:
@@ -272,7 +205,7 @@ virtualmachines:
         targetPort: 443
         tls: true
         tls_termination: reencrypt
-        tls_destinationCACertificate:  |
+        tls_destinationCACertificate: |
           -----BEGIN CERTIFICATE-----
           MIIFjTCCA3WgAwIBAgIUeExa35qysEOkLFsKO0rclw0yUYgwDQYJKoZIhvcNAQEL
           BQAwVjELMAkGA1UEBhMCWFgxFTATBgNVBAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UE
@@ -305,34 +238,29 @@ virtualmachines:
           pRw10XnOz29jX0ZfcoCStUsBo/G1sfyeOK8oDhvEMcp4lRJMYXtF2mcwj3q6PNDl
           PsJyVroHfWRn/ZYsDDVcJnWbmV0UbAUGlqYlr28hZKdy
           -----END CERTIFICATE-----
-    userdata: |-
+    userdata: >-
       #cloud-config
+
       user: rhel
+
       password: ansible123!
+
       chpasswd: { expire: False }
+
       runcmd:
         - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
         - systemctl reload sshd
-
-  - name: "vault"
-    image: "vault-rhel-image-1"
-    memory: "16G"
+  - name: vault
+    image: vault-rhel-image-1
+    memory: 16G
     cores: 2
-    image_size: "40Gi"
-    # disk_type: "scsi"
-    # bootloader: "efi"
+    image_size: 40Gi
     tags:
-      - key: "AnsibleGroup"
-        value: "isolated"
+      - key: AnsibleGroup
+        value: isolated
     networks:
       - default
     services:
- #     - name: vault-https
- #       ports:
- #         - port: 443
- #           protocol: TCP
- #           targetPort: 443
- #           name: vault-https
       - name: vault-8200
         ports:
           - port: 8200
@@ -340,23 +268,21 @@ virtualmachines:
             targetPort: 8200
             name: vault-8200
     routes:
-#      - name: vault-https
-#        host: vault-https
-#        service: vault-https
-#        targetPort: 443
-#        tls: true
-#        tls_termination: Edge
       - name: vault-8200
         host: vault
         service: vault-8200
         targetPort: 8200
         tls: true
         tls_termination: Edge
-    userdata: |-
+    userdata: >-
       #cloud-config
+
       user: rhel
+
       password: ansible123!
+
       chpasswd: { expire: False }
+
       runcmd:
         - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
         - systemctl reload sshd
