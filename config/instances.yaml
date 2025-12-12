@@ -65,7 +65,7 @@ containers:
         tls_termination: Edge
 
 virtualmachines:  
-  - name: "control"
+ - name: "control"
     image: "aap-2.6-2-ceh-20251103"
     memory: "32G"
     cores: 4
@@ -139,7 +139,13 @@ virtualmachines:
          wMQ+MKwOpgDyuy79XKvsPanlAfP8WgJi79pJdHu3BGTLlDFil9CK8l2sncM1FdaE
          57Ys1npOUx+oxw==
          -----END CERTIFICATE-----
-
+      - name: control-report
+        host: control-report
+        service: control-report
+        targetPort: 8088
+        tls: true
+        tls_termination: Edge
+ 
   # - name: "control"
   #   image: "base-zero-aap-2.5-container-ce" #"aap-2.6-2-ceh-20251103" 
   #   memory: "16G"
