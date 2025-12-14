@@ -23,5 +23,6 @@ image::aaptfmain.png[]
 == Lab Access
 
 Each attendee will receive access to their own instance of the lab environment.
+In this lab we will use HashiCorp Terraform Enterprise, however you can acheive the same results using HCP Terraform (formally called Terraform Cloud)
 
 Have fun!
