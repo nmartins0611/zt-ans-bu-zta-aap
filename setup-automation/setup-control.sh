@@ -250,7 +250,7 @@ tee /tmp/setup.yml << EOF
     - name: Add project
       ansible.controller.project:
         name: "Terraform Demos Project"
-        description: "This is from github.com/ansible-tmm"
+        description: "This is from the local gitea instance"
         organization: "Default"
         state: present
         scm_type: git
