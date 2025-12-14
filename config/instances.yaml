@@ -36,18 +36,18 @@ containers:
       - name: gitea-varlib
         emptyDir: {}
     commands:
-      - gitea admin user create --admin --username gitea --password gitea
-        --email dummy@dummy.com --must-change-password=false
+      - gitea admin user create --admin --username gitea --password ansible123!
+        --email gitea@giteadummy.com --must-change-password=false
       - >
         curl -X POST -H "accept: application/json" -H "Content-Type:
-        application/json" -u 'gitea:gitea'  -d '{"username": "student",
-        "full_name": "student", "description": "student"}'
+        application/json" -u 'gitea:ansible123!'  -d '{"username": "laborg",
+        "full_name": "laborg", "description": "laborg"}'
         http://localhost:3000/api/v1/orgs
       - >
         curl -X POST -H "accept: application/json" -H "Content-Type:
-        application/json" -u 'gitea:gitea' -d '{"clone_addr":
+        application/json" -u 'gitea:ansible123!' -d '{"clone_addr":
         "https://github.com/ansible-tmm/aap-hashi-lab.git", "repo_name":
-        "aap-hashi-lab", "owner": "student", "uid": 2, "private": false}'
+        "aap-hashi-lab", "owner": "laborg", "uid": 2, "private": false}'
         http://localhost:3000/api/v1/repos/migrate
     memory: 2Gi
     services:
