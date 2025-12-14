@@ -35,16 +35,14 @@ To trigger Terraform Enterprise (HCP Terraform) and HashiCorp Vault Enterprise c
 
 This is easy to do using https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/latest/html/creating_and_using_execution_environments/assembly-using-builder[ansible-builder].
 
-In this challenge you will create an execution environment containing everything you need to run Terraform from the Ansible Automation Platform.
 
 NOTE: You can perform the following steps at the TERMINAL, or in Visual Studio Code (VSCode).
-In VSCode you can open a terminal prompt.
+In VSCode you can also open a terminal prompt.
 Choose either the `TERMINAL` tab, or the `VSCODE` tab from the top of the lab screen.
-We will walk through the steps using the `TERMINAL` but please feel free to do this in the `VSCODE` tab if you are more comfortable there!
 
 '''
 
-== ☑️ Task 1 - Create the configuration files for the execution environment
+== Create the configuration files for the execution environment
 
 To create an execution environment with `ansible-builder`, we need an execution environment definition file.
 The file name will be `execution-environment.yml`
