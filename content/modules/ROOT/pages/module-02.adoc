@@ -2,34 +2,38 @@
 
 '''
 
-= Create a Terraform-enabled Execution Environment
+= Create a HashiCorp-enabled Execution Environment
 
-In this challenge you will create an Execution Environment that will enable   Terraform usage in Ansible Automation Platform.
+In this challenge you will create an Execution Environment that will enable Terraform Enterprise (HCP Terraform) and HashiCorp Vault Enterprise usage in Ansible Automation Platform.  It will include all the dependencies needed.
 
 == What is an Execution Environment?
 All automation in Red Hat Ansible Automation Platform runs on container images called automation execution environments.
 Automation execution environments create a common language for communicating automation dependencies, and offer a standard way to build and distribute the automation environment.
 
-In the previous challenge an Execution Environment called `Terraform Execution Environment` was already created for you.
+In the previous challenge an Execution Environment called `Terraform Execution Environment` was already created for you. It included the new **hashicorp.terraform**, and **hashicorp.vault** collections, the Terraform binary, other cloud collections, and other dependencies.
 
-*To use Terraform in YOUR Ansible Automation Platform environment you must create and Execution Environment* that includes the Cloud Terraform collection, the Terraform binary, other cloud collections, and other dependencies.
-*Hence, why you will learn how to create an Execution Environment.*
+*To use HashiCorp Terraform Enterprise (HCP Terraform) and HashiCorp Vault Enterprise in YOUR Ansible Automation Platform environment you must create and Execution Environment* that includes the Terraform Enterprise (HCP Terraform) and HashiCorp Vault Enterprise collections, the Terraform binary, other cloud collections, and other dependencies.
+*Hence, why you will learn how to create an Execution Environment, for this specific scenario.*
 
 The tool needed to create an `execution environment` is called `ansible-builder`
 
-👋 Challenge introduction.
+== Challenge introduction.
 
 Estimated time to complete: _30 minutes_
 
 In this challenge you will learn:
+
 * How to create the necessary configuration files needed to create an execution environment
+
 * How to create the execution environment container image using the `ansbile-builder` tool
+
 * How to add the new execution environment to Ansible Automation Platform
 
 == Execution Environments
 
-*_To run Terraform commands from within Ansible Automation Platform, you will need to create an execution environment that contains the Terraform binary and the Red Hat certified collection for Terraform.
-This is easy to do using https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/latest/html/creating_and_using_execution_environments/assembly-using-builder[ansible-builder]._*
+To trigger Terraform Enterprise (HCP Terraform) and HashiCorp Vault Enterprise commands from within Ansible Automation Platform, you will need to create an execution environment container imagethat contains the Terraform binary and the Red Hat certified collection for HashiCorp Terraform and HashiCorp Vault.
+
+This is easy to do using https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/latest/html/creating_and_using_execution_environments/assembly-using-builder[ansible-builder].
 
 In this challenge you will create an execution environment containing everything you need to run Terraform from the Ansible Automation Platform.
 
