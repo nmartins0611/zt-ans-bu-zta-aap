@@ -65,15 +65,12 @@ NOTE: The keys are encrypted so no one, not even an administrator, can see the k
 mm
 ----
 
-
-
 WARNING: *Before you click on `Create credential` to save the `Backend configuration` section, yours will look SIMILAR to the following BUT WITH YOUR SPECIFIC AWS ENVIRONMENT DETAILS.*
 
 [source,sh]
 ----
 mm
 ----
-
 
 == Terraform Inventory
 
@@ -179,7 +176,6 @@ Now click on the `Sources` menu and click on  `🚀 Launch Inventory Update` ico
 
 Return to the `Hosts` menu, and notice that you have an EC2 instance that was create by Terraform now part of your inventory.
 
-
 [NOTE]
 ====
 **The inventory updates can occur automatically,** but here we didn't because we wanted you to see the before and after results in the `Host` tab of the `Terraform Inventory`.
@@ -222,8 +218,6 @@ resource "aws_instance" "tf-demo-aws-ec2-instance-1" {
 }
 ----
 
-'''
-
 == Create a Workflow Template to kick off a Terraform project (Terraform provider for AWS & Terraform Provider for ANSIBLE Automation Platform (AAP))
 
 In this Task we will create an Ansible Job Template that will kick off a Terrafrom project.  **The Terraform project is a simple project that will create some AWS resources.  It will leverage the ANSIBLE Automation Platform provider to then push the Terraform inventory (ec2 host(s)) created into the Ansible Automation Platform inventory.**
@@ -238,7 +232,6 @@ Click on the `Ansible Automation Platform` tab at the top of lab. (if not alread
 Expand the `Automation Execution` menu on the left.
 `Automation Execution` -> `Templates`.
 Now click on `+ Create Template` then scroll down and click  `Create job template`
-
 
 Fill out the following fields:
 
@@ -263,7 +256,6 @@ Fill out the following fields:
 | Credentials
 | "AWS_Credential"  *AND*  "Terraform Backend Credential"
 |===
-
 
 Scroll to the bottom Click the blue `Create Job Template` button to **save** the job template.
 

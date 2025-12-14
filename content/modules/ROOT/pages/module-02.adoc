@@ -158,7 +158,7 @@ podman push quay.io/[username]/hashicorp-ee
 
 '''
 
-== ☑️ Task 3 - Add the Terraform Execution Environment to Ansible Automation Platform
+== Add the Terraform Execution Environment to Ansible Automation Platform
 
 Now you will add an execution environment to Ansible Automation Platform.
 
@@ -180,7 +180,7 @@ Click on `+ Create execution environment` and enter the following information.
 | Field | Value
 
 | Name
-| myTerraform EE
+| myHashiCorp EE
 
 | Image
 | quay.io/acme_corp/terraform_ee
@@ -197,6 +197,6 @@ NOTE: *Since this image on Quay.io is public you don't need to create a Registry
 Click on `Create execution environment` to save this new Execution Environmnet.
 Yes, Yes, we're using the same image we already have, but remember, this is just to demnstrate how you would add your own created Execution Environment to Ansible Automation Platform.
 
-image::https://github.com/HichamMourad/terraform-aap/blob/main/images/create-ee.png?raw=true[]
+image::create-ee.png?raw=true[]
 
 This Execution Environment is now available for use in Ansible Automation Platform.
