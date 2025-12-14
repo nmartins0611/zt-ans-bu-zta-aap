@@ -254,8 +254,8 @@ tee /tmp/setup.yml << EOF
         organization: "Default"
         state: present
         scm_type: git
-#        scm_url: http://gitea:3000/student/terraform-aap.git
-        scm_url: https://github.com/ansible-tmm/aap-hashi-lab.git
+        scm_url: http://gitea:3000/student/aap-hashi-lab.git
+#        scm_url: https://github.com/ansible-tmm/aap-hashi-lab.git
         default_environment: "Terraform Execution Environment"
         controller_username: admin
         controller_password: ansible123!
