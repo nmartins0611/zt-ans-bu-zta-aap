@@ -21,7 +21,7 @@ tabs:
   - name: Ansible Automation Platform
     url: https://control-${guid}.${domain}/
     external: true
-   - name: Terraform Enterprise (TFE)
+  - name: Terraform Enterprise (TFE)
     url: https://tfe-https-${guid}.${domain}/session
     external: true 
   - name: VS Code
