@@ -20,18 +20,17 @@ antora:
 tabs:
   - name: Ansible Automation Platform
     url: https://control-${guid}.${domain}/
-  - name: Gitea
-    url: https://gitea-${guid}.${domain}/
+    external: true
+   - name: Terraform Enterprise (TFE)
+    url: https://tfe-https-${guid}.${domain}/session
+    external: true 
   - name: VS Code
     url: https://vscode-${guid}.${domain}
     external: false
+  - name: HashiCorp Vault
+    url: https://vault-${guid}.${domain}/ui/vault/unseal
+    external: true
   - name: "TERMINAL"
     url: /wetty_vscode
   - name: Cloud (AWS)
     url: /cloud
-  - name: Vault
-    url: https://vault-${guid}.${domain}/ui/vault/unseal
-    external: true
-  - name: Terraform
-    url: https://tfe-https-${guid}.${domain}/session
-    external: true
