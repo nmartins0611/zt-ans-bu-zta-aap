@@ -16,7 +16,7 @@ image::aaptfmain.png[]
 
 == Lab structure
 
-* You will have access to Ansible Automation Platform, Gitea, VS Code (and a terminal), Cloud AWS account, HashiCorp Vault Enterprise, and Terraform Enterprise.
+* You will have access to Ansible Automation Platform, VS Code (and a terminal), Cloud AWS account, HashiCorp Vault Enterprise, and Terraform Enterprise.
 
 * These will be available as tabs at the top of the lab environment.
 

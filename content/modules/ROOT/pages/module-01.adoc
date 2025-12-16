@@ -20,11 +20,22 @@ Centrally from Ansible Automation Platform you will trigger an Ansible Workflow 
 * In this first challenge you will learn
 ** How to create an Ansible Workflow template and run it to create resources in AWS using Terraform
 
-==  Configure th.......
+==  Create a Terraform Enterprise credential type.
+
+image::tfecredtype.png[]
 
 
-=== What is ..
+== Create the Terraform Enterprise API token
 
+image::tfetoken.png[]
+
+== Create an Terraform Enterprise Workspace
+
+image::tfeworkspace1.png[]
+
+== Create the Terraform Enterprise Credential in Ansible Automation Platform
+
+image::tfecred.png[]
 
 === Log in to the `Ansible Automation Platform` and create the Workflow template
 
@@ -53,24 +64,13 @@ Click on the `Credentials` link and examine some of pre-configured credentials
 NOTE: The keys are encrypted so no one, not even an administrator, can see the keys once placed in Ansible Automation Platfrom as a credential.
 
 . Click on `+ Create credential`
-. For the `Name` enter `Terraform Backend Credential`
-. Expand the `Credential Type` drop-down, and select `Terraform backend configuration`
-. In the `Backend configuration` section below you will enter the details similar to the following
-. Start with the following code snippet and paste it into the `Backend configuration` section, but you *MUST make changes to lines 1, 2, 4, and 5.*
-. Update the `bucket`, `key`, `access_key`, and `secret_key` lines for your specific details
+. For the `Name` enter `Terraform Enterprise credential`
+. Expand the `Credential Type` drop-down, and select `Terraform Enterprise credential type`
+. In the `Organization` section enter `rhdp-tf-org`
+. In the `Workspace` section enter `TFE-Demo`
+. In the `Token` section enter the API token you generated earlier in Terraform Enterprise
 . Click on `Create credential` to save the credential
 
-[source,sh,role=execute]
-----
-mm
-----
-
-WARNING: *Before you click on `Create credential` to save the `Backend configuration` section, yours will look SIMILAR to the following BUT WITH YOUR SPECIFIC AWS ENVIRONMENT DETAILS.*
-
-[source,sh]
-----
-mm
-----
 
 == Terraform Inventory
 
@@ -97,16 +97,16 @@ Click the `+ Create Source` and then enter the following details.
 | Field | Value
 
 | Name
-| Terraform Source
+| AWS source for TFE resources
 
 | Execution environment
 | Terraform Execution Environment
 
 | Source
-| Terraform State
+| Amazon EC2
 
 | Credential
-| Terraform Backend Credential
+| AWS Credential
 
 | Verbosity
 | 0 (Warning)
@@ -119,12 +119,23 @@ Click the `+ Create Source` and then enter the following details.
 
 | Cache timeout (seconds)
 | 0
-
-| Source variables
-| backend_type: s3
 |===
 
-== Create a Workflow Template to kick off a Terraform project (Terraform provider for AWS)
+ADD the following to the `Source variables` section
+[source,yaml,role=execute]
+----
+---
+hostnames:
+  - tag:Name
+compose:
+  ansible_host: public_ip_address
+----
+
+Scroll to the bottom Click the blue `Create source` button to **save** the Inventory Source.
+
+image::tfinventorysource.png[]
+
+== Create a Workflow Template to kick off a Terraform Enterprise `**PLAN and APPLY**` operation
 
 In this Task we will create an Ansible Job Template that will kick off a Terrafrom project.
 The Terraform project is a simple project that will leverage the AWS provider to create an EC2 instance in the AWS cloud account you are using.
@@ -143,91 +154,53 @@ Fill out the following fields:
 | Field | Value
 
 | Name
-| Deploy AWS resources using Terraform AWS provider
+| Terraform Enterprise APPLY
 
 | Inventory
 | Terraform Inventory
 
 | Project
-| Terraform Demos Projec
+| Terraform Demos Project
 
 | Playbook
-| playbooks/1deploy-terraform-aws-provider.yml
+| playbooks/terraform_cloud_apply_plan.yml
 
 | Execution environment
 | Terraform Execution Environment
 
 | Credentials
-| "AWS_Credential" *AND* "Terraform Backend Credential"
+| "AWS Credential" *AND* "Terraform Enterprise credential"
 |===
+
+ADD the following to the `extra variables` section
+
+[source,yaml,role=execute]
+----
+---
+aws_region: us-east-1
+aws_name_tag: tfevm
+aws_instance_size: t2.medium
+aws_instance_count: 1
+terraform_provision_resources: true
+----
 
 Scroll to the bottom Click the blue `Create Job Template` button to **save** the job template.
 
+image::templateapply1.png[]
 
-Launch the `Deploy AWS resources using Terraform AWS provider` job template by selecting it and clicking on `🚀 Launch template`, or by simply clicking the `Rocket Launcher` 🚀 icon, depending on where you are in the teplates view.  The job status will show `Running` momentarily.
+Launch the `Terraform Enterprise APPLY` job template by selecting it and clicking on `🚀 Launch template`, or by simply clicking the `Rocket Launcher` 🚀 icon, depending on where you are in the teplates view.  The job status will show `Running` momentarily.
 
 `Observe the output of the Job Template run.`
 
-=== Manually synchronize the Terraform Inventory Source
-Return to the `Inventories` menu in Ansible Automation Platform.
+=== Inspect the Terraform Inventory in Ansible Automation Platform
 Select the `Terraform Inventory`, and then click on the `Hosts` menu.  Notice that there is NO Terraform inventory available yet.
 
 Now click on the `Sources` menu and click on  `🚀 Launch Inventory Update` icon.
 
 Return to the `Hosts` menu, and notice that you have an EC2 instance that was create by Terraform now part of your inventory.
 
-[NOTE]
-====
-**The inventory updates can occur automatically,** but here we didn't because we wanted you to see the before and after results in the `Host` tab of the `Terraform Inventory`.
-====
 
-=== Task 3 SUMMARY
-*In this task you created an AAP Job Template, that kicks off a Terraform Project.  The Terraform Project is using the Terrform Provider for AWS to trigger the creation of the AWS resource(s).  You then synchronized the inventory source that pulled in the inventory created by Terraform.  This is a great way to trigger Terraform Projects from Ansible Automation Platform! **A BETTER TOGETHER STORY!***
-
-=== The Terraform Project that was triggered using the Ansible job template
-Here's the Terraform main.tf project file that was launched using Ansible Automation Platform, if you'd like to see it.
-
-[source,terraform]
-----
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "6.2.0"
-    }
-  }
-  backend "s3" {}
-}
-
-provider "aws" {
-  region = "us-east-1"
-}
-
-# Fetch the default VPC
-data "aws_vpc" "default" {
-  default = true
-}
-
-resource "aws_instance" "tf-demo-aws-ec2-instance-1" {
-  ami           = "ami-0005e0cfe09cc9050"
-  instance_type = "t2.micro"
-  tags = {
-    Name = "tf-demo-aws-ec2-instance-1"
-  }
-
-}
-----
-
-== Create a Workflow Template to kick off a Terraform project (Terraform provider for AWS & Terraform Provider for ANSIBLE Automation Platform (AAP))
-
-In this Task we will create an Ansible Job Template that will kick off a Terrafrom project.  **The Terraform project is a simple project that will create some AWS resources.  It will leverage the ANSIBLE Automation Platform provider to then push the Terraform inventory (ec2 host(s)) created into the Ansible Automation Platform inventory.**
-
-[NOTE]
-====
-**Please note that you can also do this in Azure and Google Cloud in the same way as you are doing here with AWS**
-====
-
-=== Create and Launch the job template
+=== Create and Launch a job template to `**DESTROY**` the created resources
 Click on the `Ansible Automation Platform` tab at the top of lab. (if not already)
 Expand the `Automation Execution` menu on the left.
 `Automation Execution` -> `Templates`.
@@ -239,25 +212,30 @@ Fill out the following fields:
 | Field | Value
 
 | Name
-| Deploy AWS resources using Terraform AWS & ANSIBLE-AAP provider
+| Terraform Enterprise DESTROY
 
 | Inventory
 | Terraform Inventory
 
 | Project
-| Terraform Demos Projec
+| Terraform Demos Project
 
 | Playbook
-| playbooks/2deploy-terraform-ansible-provider.yml
+| playbooks/terraform_cloud_destroy_plan.yml
 
 | Execution environment
 | Terraform Execution Environment
 
 | Credentials
-| "AWS_Credential"  *AND*  "Terraform Backend Credential"
+| "AWS Credential"  *AND*  "Terraform Enterprise credential"
 |===
 
-Scroll to the bottom Click the blue `Create Job Template` button to **save** the job template.
+
+
+
+
+
+
 
 Launch the `Deploy AWS resources using Terraform AWS & ANSIBLE-AAP provider` job template, by selecting it and clicking on `🚀 Launch template`, or by simply clicking the `Rocket Launcher` 🚀 icon, depending on where you are in the view.  The job status will show `Running` momentarily.
 `Observe the output of the Job Template run.`
@@ -267,53 +245,7 @@ Return to the `Inventories` menu in Ansible Automation Platform.
 Select the `Terraform Inventory`, and then click on the `Hosts` menu.
 Notice that you have an additional EC2 instance that was create by Terraform now also part of your inventory.
 
-**The Terrafrom Provider for ANSIBLE Automation Platform pushed the (ec2 host(s)) created into the Ansible Automation Platform inventory.**
+
 
 === SUMMARY
 *In this task you created an AAP Job Template, that kicks off a Terraform Project.  The Terraform Project is using the Terrform Provider for ANSIBLE AUTOMATION PLATORM to trigger the creation of the AWS resource(s).  Terraform (via the Terraform Provider for AAP) then automatically pushed the created resources into the Ansibe Automation Platform Inventory.  The Terraform Provider for AAP is something that Terraform users would most likely use at the Terraform command line.  Here you saw how you can still use this in Ansible Automation Platform.  The Terraform Provider for Ansible Automation Platform can also be used in Terraform projects to trigger Ansible Automation Platform Job Templates.  Further enhancing the **BETTER TOGETHER STORY!**, and additionally providing more options and choice for Automators and Infrastructure operators!*
-
-=== The Terraform Project that was triggered using the Ansible job template
-Here's the Terraform main.tf project file that was launched using Ansible Automation Platform, if you'd like to see it.
-
-[source,terraform]
-----
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "6.2.0"
-    }
-
-    aap = {
-      source = "ansible/aap"
-    }
-  }
-  backend "s3" {}
-}
-
-provider "aws" {
-  region = "us-east-1"
-}
-
-resource "aws_instance" "tf-demo-aws-ec2-instance-2" {
-  ami           = "ami-0005e0cfe09cc9050"
-  instance_type = "t2.micro"
-  tags = {
-    Name = "tf-demo-aws-ec2-instance-2"
-  }
-}
-
-provider "aap" {
-  host     = "https://control"
-  username = "admin"
-  password = "ansible123!"
-  insecure_skip_verify = true
-}
-
-resource "aap_host" "tf-demo-aws-ec2-instance-2" {
-  inventory_id = 2
-  name = "aws_instance_tf-demo-aws-ec2-instance-2"
-  description = "An EC2 instance created by Terraform"
-  variables = jsonencode(aws_instance.tf-demo-aws-ec2-instance-2)
-}
-----
