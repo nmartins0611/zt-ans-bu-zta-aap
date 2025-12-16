@@ -183,8 +183,8 @@ virtualmachines:
         - systemctl reload sshd
   - name: terraform
     image: tfe-rhel-image-1
-    memory: 24G
-    cores: 2
+    memory: 16G
+    cores: 4
     image_size: 120Gi
     tags:
       - key: AnsibleGroup

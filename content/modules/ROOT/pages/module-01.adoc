@@ -28,8 +28,62 @@ An Ansible Credential Type defines a structure (schema) for storing and using se
 
 This task is done in Ansible Automation Platform.
 
-image::tfecredtype.png[]
 
+
+Automation Execution -> Credentials -> Credential Types -> + Create Credential Type
+|===
+| Field | Value
+
+| Name
+| Terraform Enterprise credential type
+
+| Description
+| Terraform Enterprise (and cloud) credential type
+|===
+
+For the `Input configuration` add the following:
+
+[source,yaml,role=execute]
+----
+---
+#INPUT
+fields:
+  - id: hostname
+    type: string
+    label: Terraform Enterprise Hostname
+  - id: org
+    type: string
+    label: Organization
+  - id: workspace
+    type: string
+    label: Workspace
+  - id: token
+    type: string
+    label: Token
+    secret: true
+required:
+  - hostname
+  - org
+  - workspace
+  - token
+----
+
+For the `Injector configuration` add the following:
+
+[source,yaml,role=execute]
+----
+---
+#INJECTOR
+extra_vars:
+  tf_hostname: '{{ hostname }}' # e.g. https://tfe-https-1234567890.apps.ocpvdev01.rhdp.net
+  tf_org: '{{ org }}'
+  tf_workspace: '{{ workspace }}'
+  tf_token: '{{ token }}'
+----
+
+Click on `Create Credential Type` to save the credential type.
+
+image::tfecredtype.png[]
 
 [#task2]
 == Create the Terraform Enterprise API token
@@ -43,16 +97,37 @@ image::tfetoken.png[]
 
 This task is done in Terraform Enterprise.
 
+In the left menu, click on `Workspaces` and then click on `Create a Workspace`.  Select `API-Driven Workflow` as the type of workspace.
+
+image::tfeworkspace.png[]
+
+Fill out the following fields:
+|===
+| Field | Value
+
+| Name
+| TFE-Demo
+
+| Project
+| rhdp-initial-project
+
+| Description
+| My Initial Workspace for my first TFE demo.
+|===
+
+Click on `Create` to save the workspace.
+
 image::tfeworkspace1.png[]
 
 [#task4]
 == Create the Terraform Enterprise Credential in Ansible Automation Platform
 
+Credentials are utilized for authentication when launching Jobs against machines, synchronizing with inventory sources, and importing project content from a version control system.
+In this lab, we have created some different credentials.
+
 This task is done in Ansible Automation Platform.
 
-image::tfecred.png[]
-
-== Log in to the `Ansible Automation Platform` and create the Workflow template
+Log in to the `Ansible Automation Platform` 
 
 Click on the `Ansible Automation Platform` tab at the top of lab.
 
@@ -60,17 +135,6 @@ Log in using the following *Login Credentials:*
 
 * `User:  admin`
 * `Password:  ansible123!`
-
-Credentials are utilized for authentication when launching Jobs against machines, synchronizing with inventory sources, and importing project content from a version control system.
-In this lab, we have created some different credentials, for example.
-
-* `AWS_Credential` - This is the AWS credential for performing actions against resources on AWS cloud.
-For example, creating a VPC, or other AWS resources, or shutting down an instance, or installing and configuring an OS or configuring other AWS services.
-Pretty much anything you need to perform in AWS.
-
-
-* `SSH Controller Credentials` - This is an SSH key for the Ansible Automation Platform.
-Often you will also have SSH machine credentials to gain SSH access to the Operating systems like RHEL.
 
 Expand the `Automation Execution` menu on the left.
 `Automation Execution` -> `Infrastructure` -> `Credentials`.
@@ -81,11 +145,13 @@ NOTE: The keys are encrypted so no one, not even an administrator, can see the k
 . Click on `+ Create credential`
 . For the `Name` enter `Terraform Enterprise credential`
 . Expand the `Credential Type` drop-down, and select `Terraform Enterprise credential type`
+. In the `Terraform Enterprise Hostname` section enter `<Your terraform hostname url>`
 . In the `Organization` section enter `rhdp-tf-org`
 . In the `Workspace` section enter `TFE-Demo`
 . In the `Token` section enter the API token you generated earlier in Terraform Enterprise
 . Click on `Create credential` to save the credential
 
+image::tfecred.png[]
 
 [#task5]
 == Terraform Inventory
@@ -172,7 +238,7 @@ Fill out the following fields:
 | Terraform Enterprise APPLY
 
 | Inventory
-| Terraform Inventory
+| Demo Inventory
 
 | Project
 | Terraform Demos Project
@@ -196,7 +262,8 @@ aws_region: us-east-1
 aws_name_tag: tfevm
 aws_instance_size: t2.medium
 aws_instance_count: 1
-terraform_provision_resources: true
+ec2_os: RHEL-9
+aws_instance_public_key: << Your id_rsa.pub >>
 ----
 
 Scroll to the bottom Click the blue `Create Job Template` button to **save** the job template.
@@ -245,7 +312,7 @@ Fill out the following fields:
 | Terraform Enterprise DESTROY
 
 | Inventory
-| Terraform Inventory
+| Demo Inventory
 
 | Project
 | Terraform Demos Project
