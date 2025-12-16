@@ -4,5 +4,5 @@
 
 In this challenge you will learn how to trigger infrastructure provisioning and automation from Terraform Enterprise.
 
+[#task1]
 == How to trigger infrastructure provisioning and automation from Terraform Enterprise
-

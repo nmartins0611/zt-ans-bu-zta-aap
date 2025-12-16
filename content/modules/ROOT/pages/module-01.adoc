@@ -27,16 +27,36 @@ There are `several prerequisites` that you will need to complete before you can 
 [#task1]
 == Create the Terraform Enterprise API token
 
-This task is done in Terraform Enterprise.
+This task is done in Terraform Enterprise. You will need to create an API token in Terraform Enterprise to use in Ansible Automation Platform to authenticate against Terraform Enterprise.
+
+Login to Terraform Enterprise using the following *Login Credentials:*  
+* `User:  admin`
+* `Password:  ansible123!`
+
+* Select the organization `rhdp-tf-org`.
+* In the left menu, click on `Settings` to expand the organzation settings options, and then click on `API Tokens`.
+
+
+To create the API token, you will need to navigate to the `Settings` menu in Terraform Enterprise.
+* Click on `API Tokens` and then click on `Create Token`.
+* select the `User Tokens` menu option, and then click on `account settings page` link.
+* Click on the `Create an API token` buttom.
+* In the `Description` field enter `Terraform Enterprise API Token for Ansible Automation Platform`.
+* In the `Expiration` field keep the default value of `30 days`.
+* Click on `Generate Token`, and then click on the `Copy to clipboard` button.
+* Copy the API token to your clipboard, save it somewhere where you can easily find it.
 
 image::tfetoken.png[]
+
+image::tfetoken1.png[]
 
 [#task2]
 == Create an Terraform Enterprise Workspace
 
 This task is done in Terraform Enterprise.
 
-In the left menu, click on `Workspaces` and then click on `Create a Workspace`.  Select `API-Driven Workflow` as the type of workspace.
+=== Create the Terraform Enterprise Workspace
+Go back to the main menu. In the left menu, click on `Workspaces` and then click on `Create a workspace`.  Select `API-Driven Workflow` as the type of workspace.
 
 image::tfeworkspace.png[]
 
@@ -58,12 +78,46 @@ Click on `Create` to save the workspace.
 
 image::tfeworkspace1.png[]
 
+The workspace is now created. You can now use this workspace to run Terraform plans and applies.
+
+image::tfeworkspace2.png[]
+
+=== Add the AWS Keys to the Terraform Enterprise Workspace
+
+While in the `TFE-Demo` workspace, click on the `Variables` menu option in the left menu.
+Click on the `Variables` tab.
+
+Click on the `+ Add variable` button.
+Enter the following details:
+* Select the `Environment variable` variable type.
+* In the `Key` field enter `AWS_ACCESS_KEY_ID`.
+* In the `Value` field enter the AWS Access Key ID. Get this from the `Cloud(AWS)` tab in your lab.
+* Select the `Sensitive` checkbox.
+* Click on `Add variable` to save the variable.
+
+image::tfevariables.png[]
+
+Repeat the process for the `AWS_SECRET_ACCESS_KEY` variable.
+
+Click on the `+ Add variable` button.
+Enter the following details:
+* Select the `Environment variable` variable type.
+* In the `Key` field enter `AWS_SECRET_ACCESS_KEY`.
+* In the `Value` field enter the AWS Secret Access Key. Get this from the `Cloud(AWS)` tab in your lab.
+* Select the `Sensitive` checkbox.
+* Click on `Add variable` to save the variable.
+
+image::tfevariables1.png[]
+
+You have now added the AWS keys to the Terraform Enterprise Workspace.
+You can now use these keys to authenticate against the AWS cloud account.
 
 [#task3]
 ==  Create a Terraform Enterprise credential type.
-An Ansible Credential Type defines a structure (schema) for storing and using secrets like passwords, SSH keys, or API tokens, allowing secure management within Ansible Automation Platform for connecting to systems in this example Terraform Enterprise.
 
 This task is done in Ansible Automation Platform.
+
+An Ansible Credential Type defines a structure (schema) for storing and using secrets like passwords, SSH keys, or API tokens, allowing secure management within Ansible Automation Platform for connecting to systems in this example Terraform Enterprise.
 
 Automation Execution -> Credentials -> Credential Types -> + Create Credential Type
 |===
