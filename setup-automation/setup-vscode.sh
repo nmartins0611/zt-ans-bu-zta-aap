@@ -5,10 +5,17 @@ rpm -Uhv https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm
 
 subscription-manager register --org=${SATELLITE_ORG} --activationkey=${SATELLITE_ACTIVATIONKEY}
 setenforce 0
+
 echo "%rhel ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/rhel_sudoers
 chmod 440 /etc/sudoers.d/rhel_sudoers
 sudo -u rhel mkdir -p /home/rhel/.ssh
 sudo -u rhel chmod 700 /home/rhel/.ssh
+
+if [ -f /home/rhel/.ssh/id_rsa ]; then
+    echo "SSH key already exists. Removing old key..."
+    sudo -u rhel rm -f /home/rhel/.ssh/id_rsa /home/rhel/.ssh/id_rsa.pub
+fi
+
 sudo -u rhel ssh-keygen -t rsa -b 4096 -C "rhel@$(hostname)" -f /home/rhel/.ssh/id_rsa -N ""
 sudo -u rhel chmod 600 /home/rhel/.ssh/id_rsa*
 
