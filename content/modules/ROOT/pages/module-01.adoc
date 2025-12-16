@@ -251,7 +251,7 @@ Fill out the following fields:
 
 
 
-=== Create the `Terraform Enterprise DESTROY Workflow` workflow template, and it's nodes
+== Create the `Terraform Enterprise DESTROY Workflow` workflow template, and it's nodes
 
 
 
