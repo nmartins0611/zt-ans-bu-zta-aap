@@ -476,4 +476,6 @@ image::tfedestroy1.png[]
 * You created Workflow templates in Ansible Automation Platform that kick off Terraform Enterprise to provision cloud resources, and then Ansible Automation Platform performed further automation operations on the resources.
 * You created a Workflow template to destroy the resources created by Terraform.
 
-This work further enhances the **BETTER TOGETHER STORY!**, and additionally providing more options and choice for Automators and Infrastructure operators!*
+NOTE: **Even though this lab is focused on Terraform Enterprise and Ansible Automation Platform, you can also use HCP Terraform (also known as Terraform Cloud) and Ansible Automation Platform togetherin the EXACT SAME WAY!**
+
+This work further enhances the **BETTER TOGETHER STORY!**, and additionally providing more options and choice for Automators and Infrastructure operators!
