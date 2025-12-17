@@ -319,7 +319,7 @@ Scroll to the bottom Click the blue `Create  Job Template` button to **save** th
 
 image::templateapply1.png[]
 
-=== Create the `Terraform Enterprise APPLY Workflow` workflow template, and it's nodes
+=== Create the `WF-Terraform Enterprise APPLY` workflow template, and it's nodes
 
 Click on the `Ansible Automation Platform` tab at the top of lab.
 (if not already) Expand the `Automation Execution` menu on the left.
@@ -380,9 +380,9 @@ image::tfeapplyinventory.png[]
 image::rhelnginx.png[]
 
 [#task7]
-== Create the `Terraform Enterprise DESTROY Workflow` workflow template, and its nodes
+== Create the `WF-Terraform Enterprise DESTROY` workflow template, and its nodes
 
-In this task we will create a Workflow template to trigger a `Terraform Enterprise DESTROY` operation to destroy the previously created resources.
+In this task we will create a Workflow template to trigger a `Terraform Enterprise DESTROY` operation to destroy the previously created resources also followed up by and inventory sync to udpate the resources from the Ansible inventory.
 
 === Create the `Terraform Enterprise DESTROY` job template
 
@@ -413,23 +413,52 @@ Fill out the following fields:
 | Terraform Execution Environment
 
 | Credentials
-| "Terraform Enterprise credential"
+| Terraform Enterprise credential
 |===
 
+Scroll to the bottom Click the blue `Create Job Template` button to **save** the job template.
 
-=== Launch the `Terraform Enterprise DESTROY Workflow` template
+=== Create the `Terraform Enterprise DESTROY Workflow` workflow template, and it's nodes
+
+Click on the `Ansible Automation Platform` tab at the top of lab.
+(if not already) Expand the `Automation Execution` menu on the left.
+`Automation Execution` -> `Templates`.
+Now click on `+ Create Workflow job template`
+
+Fill out the following fields:
+|===
+| Field | Value
+
+| Name
+| WF-Terraform Enterprise DESTROY
+|===
+
+Scroll to the bottom Click the blue `Create Workflow Job Template` button to **save** the Workflow.
+
+=== Create the nodes for the `WF-Terraform Enterprise DESTROY` workflow template
+
+* Select `+ Add step` and then select the `Terraform Enterprise DESTROY` job template you created earlier, Select `Next` to continue, and then `Finish` to save the node.
+
+* Click on the elipsis `...` at the end of the node, and then select `+ Add step and link`.
+* For this next step change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE Inventory`. Select `Next` then `Finish` to save this second step.
+
+Click on the `Save` button to save the workflow template.
+
+=== Launch the `WF-Terraform Enterprise DESTROY` workflow template
 
 Launch the `Terraform Enterprise DESTROY Workflow` template by selecting it and clicking on `🚀 Launch template`, or by simply clicking the `Rocket Launcher` 🚀 icon. The job status will show `Running` momentarily.
 
 * Observe the output of the Workflow Template run. You will see the nodes running and the workflow visualizer showing the flow of the workflow.
 
-* Observice the resources that were destroyed by Terraform in Ansible Automation Platform -> Inventory -> Terraform Inventory -> Hosts.
-
-* Observe the resource count in the Terraform Enterprise console. You will see the resource count should be 0.
+* Quickly switch to the `Terraform Enterprise` tab in your lab and observe the `destroy` being performed. Also notice the resouce count in the Terraform Enterprise console. You will see the resource count should be 0.
 
 image::tfedestroy1.png[]
 
+* Observe the resources that were destroyed by Terraform in Ansible Automation Platform -> Inventory -> Terraform Inventory -> Hosts.
+** Here you will see that the host has been removed from the inventory and the resources have been destroyed.
+
 === SUMMARY
+
 * In this lab section you created an configured AAP and Terraform Enterprise to work together.
 * You created Workflow templates in Ansible Automation Platform that kick off Terraform Enterprise to provision cloud resources, and then Ansible Automation Platform performed further automation operations on the resources.
 * You created a Workflow template to destroy the resources created by Terraform.
