@@ -341,27 +341,43 @@ image::wftemplateapply1.png[]
 === Create the nodes for the `WF-Terraform Enterprise APPLY` workflow template
 
 * Select `+ Add step` and then select the `Terraform Enterprise APPLY` job template you created earlier, Select `Next` to continue, and then `Finish` to save the node.
-* Click on the elipsis `...` at the end of the node, and then select `+ Add step and link`.
-* For this next step change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE Inventory`. Select `Next` then `Finish` to save this second step. This will synchronize the inventory source you created earlier.
-* Click on the elipsis `...` at the end of the node, and then select `+ Add step and link`.
-
 
 image::wftemplateapply2.png[]
 
-Launch the `Terraform Enterprise APPLY Workflow` template by selecting it and clicking on `🚀 Launch template`, or by simply clicking the `Rocket Launcher` 🚀 icon, depending on where you are in the templates view.  The job status will show `Running` momentarily.
+* Click on the elipsis `...` at the end of the node, and then select `+ Add step and link`.
+* For this next step change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE Inventory`. Select `Next` then `Finish` to save this second step. This will synchronize the inventory source you created earlier.
+
+image::wftemplateapply3.png[]
+
+* Click on the elipsis `...` at the end of the node, and then select `+ Add step and link`.
+* For this next step keep the `Node Type` to `Job Template` and select the `Install Nginx on RHEL` job template. Select `Next` then `Finish` to save this step.
+
+Click on the `Save` button to save the workflow template.
+
+image::wftemplateapply4.png[]
+
+=== Launch the `WF-Terraform Enterprise APPLY` workflow template
+
+Launch the `WF-Terraform Enterprise APPLY` workflow template by selecting it and clicking on `🚀 Launch template`, or by simply clicking the `Rocket Launcher` 🚀 icon. The job status will show `Running` momentarily.
 
 * Observe the output of the Workflow Template run. You will see the nodes running and the workflow visualizer showing the flow of the workflow.
 
+image::wftemplateapply5.png[]
+
+* Quickly switch to the `Terraform Enterprise` tab in your lab and observe the `plan` and then the `apply` being performed. Alspo notice the resouce count in the Terraform Enterprise console.
+
+image::tfeapply1.png[]
 
 === Inspect the Terraform Inventory in Ansible Automation Platform
-Select the `Terraform Inventory`, and then click on the `Hosts` menu.  Notice that there is NO Terraform inventory available yet.
+Select the `Terraform Inventory`, and then click on the `Hosts` menu. Notice that there is a new host that was created by Terraform and is now part of your Ansible inventory.
 
-Now click on the `Sources` menu and click on  `🚀 Launch Inventory Update` icon.
+image::tfeapplyinventory.png[]
 
-Return to the `Hosts` menu, and notice that you have an EC2 instance that was create by Terraform now part of your inventory.
+=== Validate the Nginx installation
 
-* Observe the resource count in the Terraform Enterprise console. You will see the resources created by Terraform.
+* Open a browser tab and navigate to the public IP address of the EC2 instance that was created by Terraform. You will see the following page:
 
+image::rhelnginx.png[]
 
 [#task7]
 == Create the `Terraform Enterprise DESTROY Workflow` workflow template, and its nodes
@@ -411,7 +427,7 @@ Launch the `Terraform Enterprise DESTROY Workflow` template by selecting it and 
 
 * Observe the resource count in the Terraform Enterprise console. You will see the resource count should be 0.
 
-
+image::tfedestroy1.png[]
 
 === SUMMARY
 * In this lab section you created an configured AAP and Terraform Enterprise to work together.
