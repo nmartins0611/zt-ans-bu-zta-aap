@@ -363,6 +363,7 @@ image::wftemplateapply3.png[]
 
 * Click on the elipsis `...` at the end of the node, and then select `+ Add step and link`.
 * For this next step keep the `Node Type` to `Job Template` and select the `Install Nginx on RHEL` job template. Select `Next` then `Finish` to save this step.
+** NOTE: The `Install Nginx on RHEL` job template is a job template that is already created for you in Ansible Automation Platform. It is used to install Nginx on the RHEL hosts.
 
 Click on the `Save` button to save the workflow template.
 
