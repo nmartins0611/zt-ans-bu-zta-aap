@@ -205,7 +205,7 @@ NOTE: The keys are encrypted so no one, not even an administrator, can see the k
 . Click on `+ Create credential`
 . For the `Name` enter `Terraform Enterprise credential`
 . Expand the `Credential Type` drop-down, and select `Terraform Enterprise credential type`
-. In the `Terraform Enterprise Hostname` section enter `<Your terraform hostname url>`
+. In the `Terraform Enterprise Hostname` section enter `**<Your terraform hostname url>**`
 . In the `Organization` section enter `rhdp-tf-org`
 . In the `Workspace` section enter `TFE-Demo`
 . In the `Token` section enter the API token you generated earlier in Terraform Enterprise
@@ -280,7 +280,8 @@ Click on the `Sync inventory source` button in the top right corner of the scree
 [#task6]
 == Create a Workflow Template to kick off a Terraform Enterprise `**PLAN and APPLY**` operation
 
-In this Task we will create an Ansible Job Template that will kick off a Terrafrom project.
+In this Task we will create an Ansible Job Template that will kick off a Terrafrom project, and then create the Workflow Template that will kick off the Job Template and then synchronize the inventory source.
+
 The Terraform project is a simple project that will leverage the AWS provider to create an EC2 instance in the AWS cloud account you are using.
 
 NOTE: *Please note that you can also do this in Azure and Google Cloud in the same way as you are here with AWS*
@@ -314,6 +315,17 @@ Fill out the following fields:
 | Credentials
 | Terraform Enterprise credential
 |===
+
+ADD the following to the `Source variables` section
+[source,yaml,role=execute]
+----
+---
+aws_region: us-east-1
+aws_name_tag: tfevm
+aws_instance_size: t2.medium
+aws_instance_count: 1
+aws_instance_public_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAKzl1JGwZh92P1ABxIVHE52I2nJk+h7ED4B6GgbMXAl hmourad@hmourad-mac
+----
 
 Scroll to the bottom Click the blue `Create  Job Template` button to **save** the job template.
 
