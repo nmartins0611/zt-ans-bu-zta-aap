@@ -46,6 +46,17 @@ To create the API token, you will need to navigate to the `Settings` menu in Ter
 * Click on the `Create an API token` buttom.
 * In the `Description` field enter `Terraform Enterprise API Token for Ansible Automation Platform`.
 * In the `Expiration` field keep the default value of `30 days`.
+
+|===
+| Field | Value
+
+| Description
+| Terraform Enterprise API Token for Ansible Automation Platform
+
+| Expiration
+| 30 days
+|===
+
 * Click on `Generate Token`, and then click on the `Copy to clipboard` button.
 * Copy the API token to your clipboard, save it somewhere where you can easily find it.
 
@@ -71,7 +82,7 @@ Fill out the following fields:
 | TFE-Demo
 
 | Project
-| rhdp-initial-project
+| **rhdp-initial-project**
 
 | Description
 | My Initial Workspace for my first TFE demo.
@@ -81,7 +92,7 @@ Click on `Create` to save the workspace.
 
 image::tfeworkspace1.png[]
 
-The workspace is now created. You can now use this workspace to run Terraform plans and applies.
+The workspace is now created. You can now use this workspace for Terraform Enterprise runs.
 
 image::tfeworkspace2.png[]
 
@@ -121,6 +132,13 @@ You can now use these keys to authenticate against the AWS cloud account.
 ==  Create a Terraform Enterprise credential type.
 
 This task is done in Ansible Automation Platform.
+
+Click on the `Ansible Automation Platform` tab at the top of lab.
+
+Log in using the following *Login Credentials:*  
+
+* `User:  admin`
+* `Password:  ansible123!`
 
 An Ansible Credential Type defines a structure (schema) for storing and using secrets like passwords, SSH keys, or API tokens, allowing secure management within Ansible Automation Platform for connecting to systems in this example Terraform Enterprise.
 
@@ -189,13 +207,6 @@ This task is done in Ansible Automation Platform.
 
 Log in to the `Ansible Automation Platform` 
 
-Click on the `Ansible Automation Platform` tab at the top of lab.
-
-Log in using the following *Login Credentials:*  
-
-* `User:  admin`
-* `Password:  ansible123!`
-
 Expand the `Automation Execution` menu on the left.
 `Automation Execution` -> `Infrastructure` -> `Credentials`.
 Click on the `Credentials` link and examine some of pre-configured credentials
@@ -210,6 +221,28 @@ NOTE: The keys are encrypted so no one, not even an administrator, can see the k
 . In the `Workspace` section enter `TFE-Demo`
 . In the `Token` section enter the API token you generated earlier in Terraform Enterprise
 . Click on `Create credential` to save the credential
+
+|===
+| Field | Value
+
+| Name
+| Terraform Enterprise credential
+
+| Credential Type
+| Terraform Enterprise credential type
+
+| Terraform Enterprise Hostname
+| **<Your terraform hostname url>** # This will look like: https://tfe-https-12345-a.apps.#######.rhdp.net
+
+| Organization
+| rhdp-tf-org
+
+| Workspace
+| TFE-Demo
+
+| Token
+| <Your terraform api token> # This is the API token you generated earlier in Terraform Enterprise
+|===
 
 image::tfecred.png[]
 
@@ -249,7 +282,7 @@ Click the `+ Create Source` and then enter the following details.
 | AWS Credential
 
 | Verbosity
-| 0 (Warning)
+| 1 (Info)
 
 | Overwrite
 | Check
