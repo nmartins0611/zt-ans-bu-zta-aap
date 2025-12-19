@@ -302,6 +302,7 @@ hostnames:
   - tag:Name
 compose:
   ansible_host: public_ip_address
+  ansible_ssh_pipelining: "true"  
 ----
 
 Scroll to the bottom Click the blue `Create source` button to **save** the Inventory Source.
@@ -334,7 +335,7 @@ Fill out the following fields:
 | Terraform Enterprise APPLY
 
 | Inventory
-| Demo Inventory
+| **Demo Inventory**
 
 | Project
 | Terraform Demos Project
@@ -447,7 +448,7 @@ Fill out the following fields:
 | Terraform Enterprise DESTROY
 
 | Inventory
-| Demo Inventory
+| **Demo Inventory**
 
 | Project
 | Terraform Demos Project
