@@ -190,11 +190,38 @@ export VAULT_ADDR=http://127.0.0.1:8200
 vault login -address=http://127.0.0.1:8200 -method=userpass username=admin password=ansible123!
 ----
 
-* Run the following command to create the Application Role:
+* Run the following command to create the AppRole for Terraform Enterprise:
 
 [source,bash,role=execute]
 ----
 vault write auth/approle/role/terraform policies=terraform-policy
 ----
 
+* Now get the Role ID and Secret ID for the AppRole:
+
+[source,bash,role=execute]
+----
+vault read auth/approle/role/terraform/role-id
+
+then
+
+vault write -f auth/approle/role/terraform/secret-id
+----
+
+* Copy the Role ID and Secret ID to your clipboard.  You will need these momentarily
+
+==== Test the AppRole authentication method
+
+Let's test the AppRole authentication method by using the Vault CLI.
+
+[source,bash,role=execute]
+----
+vault write auth/approle/login \
+    role_id=<terraform-role-id> \
+    secret_id=<terraform-secret-id>
+----
+
+image::approle4.png[]
+
 * You have now created an Application Role in Vault Enterprise (AppRole) for Terraform Enterprise so that Terraform Enterprise can authenticate against the Vault secret engine.
+
