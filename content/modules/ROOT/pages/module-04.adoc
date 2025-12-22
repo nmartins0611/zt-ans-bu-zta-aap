@@ -49,10 +49,37 @@ image::workspace2.png[]
 Now you will need to configure the Workspace to use the GitHub repository you cloned earlier into your GitHub account.
 
 * Select the `GitHub` option from the dropdown, and then click on the `GitHub.com` button.
+* For the `VCS Provider` field, select `GitHub.com`
+* You will now be launced to step 2 (set up provider), which is to setup the GitHub repository connection
+* Click the `Register a new OAuth Application` link to register a new OAuth application with GitHub.
 
- `Name` field, enter `aap-hashi-lab-2`
-* For the `Description` field, enter `Terraform Enterprise Workspace for the AAP and HashiCorp Lab`
-* For the `VCS Provider` field, select `GitHub`
+image::workspace3.png[]
+
+* Authenticate to your GitHub account, and authorize the Terraform Enterprise application to access your GitHub account.
+* It will have automatically populated some of the fields for you as they relate to Terraform Enterprise
+* Scroll down and click on the `Register application` button
+
+image::workspace4.png[]
+
+* The applciation will now be registered, and you will need to click the `Generate a new client secret` button to generate a new client secret. Copy both the `Client ID` and `Client Secret`, you will need these momentarily.
+
+image::workspace5.png[]
+
+* Go back to the Terraform Enterprise UI, and paste the `Client ID` and `Client Secret` into the respective fields, and provide a `Name` for VCS provider.  For the nameI use my initial, followed by dash and github, example: `jdoe-github`
+* Click on the `Connect and Continue` button to save the VCS provider configuration
+
+image::workspace6.png[]
+
+* On the next screen, you will need to choose the repository you want to use for this workspace.  For this lab, we will use the repository you cloned earlier into your GitHub account
+* On the following screen, you will need to provide the `Workspace Name`.  For this lab, we will use `TFE-Demo-VCS`
+* For the `Description` field, enter `Using GitHub commits to trigger Plan/Apply Runs`
+* Expand the `Advanced Options` section, and check both of the `Auto-apply` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.
+* Scroll down the bottom of the screen and click on the `Create` button to save the workspace configuration
+
+image::workspace7.png[]
+
+
+
 * For the `Repository` field, enter `https://github.com/ansible-tmm/aap-hashi-lab-2.git`
 * Click on the `Create` button.
 
