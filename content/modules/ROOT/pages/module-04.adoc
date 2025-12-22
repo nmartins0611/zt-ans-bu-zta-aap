@@ -1,6 +1,20 @@
 :doctype: book
 
-= Bring in HashiCorp Vault Enterprise to your automation pipeline
+= Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 2
+
+In this challenge you will learn how to trigger infrastructure provisioning and automation from Terraform Enterprise.
+
+There are a number of prerequisites that you will need to complete before you can start this lab.
+
+In this part we will continue the prerequisites and put the final touches on the Terraform Enterprise Workspace.
+
+* Terraform Enterprise
+** Cloning a GitHub repository to your account
+** Create a Terraform Enterprise Workspace that used Version Control System (VCS) to store the Terraform code
+
+
+
+
 
 In this challenge you will learn how to bring in HashiCorp Vault Enterprise to your automation pipeline.
 

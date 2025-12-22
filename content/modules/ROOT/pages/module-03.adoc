@@ -1,6 +1,6 @@
 :doctype: book
 
-= Trigger Infrastructure Provisioning and automation from Terraform Enterprise
+= Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 1
 
 In this challenge you will learn how to trigger infrastructure provisioning and automation from Terraform Enterprise.
 
@@ -10,6 +10,8 @@ There are a number of prerequisites that you will need to complete before you ca
 * Terraform Enterprise
 ** Cloning a GitHub repository to your account
 ** Create a Terraform Enterprise Workspace that used Version Control System (VCS) to store the Terraform code
+
+Part 1 of this lab will focus on configuring the Vault Enterprise Secret Engine.
 
 [#task1]
 == Configure the Vault Enterprise Secret Engine
