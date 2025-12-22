@@ -222,8 +222,9 @@ vault write auth/approle/login \
 ----
 
 image::approle4.png[]
+* **Copy the token to your clipboard. You will need this a bit later**
 
-* You have now created an Application Role in Vault Enterprise (AppRole) for Terraform Enterprise so that Terraform Enterprise can authenticate against the Vault secret engine.
+You have now created an Application Role in Vault Enterprise (AppRole) for Terraform Enterprise so that Terraform Enterprise can authenticate against the Vault secret engine.
 
 We need to repeat this process to create an AppRole for Ansible Automation Platform.
 
@@ -313,5 +314,57 @@ vault write auth/approle/login \
     secret_id=<aap-secret-id>
 ----
 
-* You have now created an Application Role in Vault Enterprise (AppRole) for Ansible Automation Platform so that Ansible Automation Platform can authenticate against the Vault secret engine.
+* **Copy the token to your clipboard. You will need this momentarily**
 
+You have now created an Application Role in Vault Enterprise (AppRole) for Ansible Automation Platform so that Ansible Automation Platform can authenticate against the Vault secret engine.
+
+== Configure Ansible Automation Platform to use the AppRole authentication method
+
+In this task we will configure Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine.
+
+=== Create a new credential in Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine. `Vault lookup credential`
+
+* Open the `Ansible Automation Platform` tab in your lab
+* Click on the `Automation Execution` menu option in the left menu.
+* Click on the `Infrastructure` menu option in the left menu.
+* Click on the `Credentials` menu option in the left menu.
+* Click on the `+ Create credential` button on the right.
+* For the `Name` field, enter `Vault lookup credential`
+* For the `Credential Type` field, select `HashiCorp Vault Secret Lookup`
+* For the `Server URL` field, enter `http://vault:8200`
+* For the `Token` field, enter the token you copied to your clipboard earlier
+* Further below for the `Path to Auth` field, make sure it says `approle`
+* Further below or the `API Version` field, select `v2` from the dropdown
+* Click on the `Create credential` button.
+
+image::aapvaultlookupcred1.png[]
+
+image::aapvaultlookupcred2.png[]
+
+Once you have saved the credential, go back into it, and select `Test` to validate this.
+
+image::aapvaultlookupcred3.png[]
+
+You have now configured Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine.
+
+=== Create ANOTHER credential in Ansible Automation Platform to use.  This will be a machine credential to SSH to the inventory RHEL hosts, and it will use the Vault lookup credential we created earlier.
+
+* Open the `Ansible Automation Platform` tab in your lab
+* Click on the `Automation Execution` menu option in the left menu.
+* Click on the `Infrastructure` menu option in the left menu.
+* Click on the `Credentials` menu option in the left menu.
+* Click on the `+ Create credential` button on the right.
+* For the `Name` field, enter `Vault MACHINE SSH credential`
+* For the `Credential Type` field, select `Machine`
+* For the `Username` field, enter `ec2-user`
+* Click on the `KEY` icon to the right of the `SSH Private Key` field
+* On the `Secret Management System` dialig box, fill in the following details:
+** For the `Credential Type` field, select `Vault lookup credential`
+** For the `Name of Secret Backend` field, enter the `secret`
+** For the `Path to Secret` field, enter `rhel-server/ssh-keys/latest`
+** For the `Path to Auth` field, enter `approle`
+** For the `Key Name` field, enter `private_key`
+** Click on the `Finish` to save this dialog box
+* Click on the `Create credential` button. You will see a summary of the credential you just created
+
+image::aapvaultsshcred1.png[]
