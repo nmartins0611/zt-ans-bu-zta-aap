@@ -368,3 +368,7 @@ You have now configured Ansible Automation Platform to use the AppRole authentic
 * Click on the `Create credential` button. You will see a summary of the credential you just created
 
 image::aapvaultsshcred1.png[]
+
+image::aapvaultsshcred2.png[]
+
+Don't worry about testing this credential yet, as it will error out until there are some SSH private_keys in the Vault secret engine.
