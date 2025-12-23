@@ -26,7 +26,6 @@ The following repository contains the Terraform code for the infrastructure you 
 [source,bash,role=execute]
 ----
 git clone https://github.com/ansible-tmm/aap-hashi-lab-2.git
-cd aap-hashi-lab-2
 ----
 
 Later in this lab, you will be committing changes to the Terraform code in the GitHub repository, which in turn will trigger the Terraform infrastructure provisioning and automation, and will leverage secrets from Vault Enterprise.
@@ -74,14 +73,19 @@ image::workspace6.png[]
 * On the following screen, you will need to provide the `Workspace Name`.  For this lab, we will use `TFE-Demo-VCS`
 * For the `Description` field, enter `Using GitHub commits to trigger Plan/Apply Runs`
 * Expand the `Advanced Options` section, and check both of the `Auto-apply` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.
+* For the `Terraform Working Directory` field, enter `TF_templates/AWS/`
 * Scroll down the bottom of the screen and click on the `Create` button to save the workspace configuration
 
 image::workspace7.png[]
 
+While you still have GitHub open, navigate to the repository you cloned earlier into your GitHub account please perform the following:
 
+* Navigate to the repository `SETTINGS` -> `WEBHOOKS`
+* You will see the Terraform Enterprise webhook configuration, click on the `Edit` button
+* Scroll down to the `SSL verification` section, and check the `Disable` checkbox
 
-* For the `Repository` field, enter `https://github.com/ansible-tmm/aap-hashi-lab-2.git`
-* Click on the `Create` button.
+image::workspace8.png[]
+
 
 
 
