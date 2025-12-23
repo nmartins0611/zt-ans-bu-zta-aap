@@ -150,6 +150,7 @@ path "auth/token/lookup-self" {
 ----
 
 * Click on the `Create policy` button.
+
 image::terraformpolicy.png[]
 
 You have now created a new policy for the Terraform Enterprise to read the secret from the Vault secret engine.
@@ -224,6 +225,7 @@ vault write auth/approle/login \
 ----
 
 image::approle4.png[]
+
 * **Copy the token to your clipboard. You will need this a bit later**
 
 You have now created an Application Role in Vault Enterprise (AppRole) for Terraform Enterprise so that Terraform Enterprise can authenticate against the Vault secret engine.
