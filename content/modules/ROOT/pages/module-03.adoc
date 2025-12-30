@@ -4,6 +4,10 @@
 
 In this part we will continue the prerequisites and put the final touches on the Terraform Enterprise Workspace.
 
+The follwoing diagram shows the overall scenario that we started in the previous lab section. Let's work through to completion of this scenario.
+
+image::module2-3scenario.png[]
+
 * Terraform Enterprise
 ** Cloning a GitHub repository to your account
 ** Create a Terraform Enterprise Workspace that uses Version Control System (VCS, in this case GitHub) to store the Terraform code
