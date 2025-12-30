@@ -4,6 +4,10 @@
 
 In this challenge you will learn how to trigger infrastructure provisioning and automation from Terraform Enterprise.
 
+The follwoing diagram shows the overall scenario that we will be covering in this, and the following lab sections. Let's work through to completion of this scenario.
+
+image::module2-3scenario.png[]
+
 There are a number of prerequisites that you will need to complete before you can start this lab.
 
 * Vault Enterprise
