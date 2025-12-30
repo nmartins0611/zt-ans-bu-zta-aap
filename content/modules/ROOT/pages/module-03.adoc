@@ -1,379 +1,100 @@
 :doctype: book
 
-= Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 1
+= Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 2
 
-In this challenge you will learn how to trigger infrastructure provisioning and automation from Terraform Enterprise.
+In this part we will continue the prerequisites and put the final touches on the Terraform Enterprise Workspace.
 
-There are a number of prerequisites that you will need to complete before you can start this lab.
-
-* Vault Enterprise
 * Terraform Enterprise
 ** Cloning a GitHub repository to your account
-** Create a Terraform Enterprise Workspace that used Version Control System (VCS) to store the Terraform code
+** Create a Terraform Enterprise Workspace that uses Version Control System (VCS, in this case GitHub) to store the Terraform code
+** Trigger Terraform infrastructure provisioning and automation by committing changes to the Terraform code in the GitHub repository.
 
-Part 1 of this lab will focus on configuring the Vault Enterprise Secret Engine.
+
+
+
+In this challenge you will learn how to bring in HashiCorp Vault Enterprise to your automation pipeline.
 
 [#task1]
-== Configure the Vault Enterprise Secret Engine
+== Clone the GitHub repository to your account
 
-Open the Vault Enterprise UI in your browser.
-In the `Method` dropdown, select `Userpass`.
-Enter the following details to login to the Vault Enterprise UI.
+NOTE: You can perform this task in the `TERMINAL` tab from your lab environment (on the vscode terminal prompt), in VS Code directly tab in your lab environment, OR you can do this directly in the GitHub web interface. Whatever is easier for you.
 
-* `User:  admin`
-* `Password:  ansible123!`
-* Click on the `Sign In` button.
+The following repository contains the Terraform code for the infrastructure you will be provisioning.
 
-image::vaultlogin.png[]
-
-* Click on the `Vault` menu option in the left menu.
-* Click on the `Secrets Engines` menu option.
-* Click on the `+ Enable new engine` button.
-
-image::vaultengine1.png[]
-
-* Select the `KV` secrets engine from the `Generic` section.
-Enter the following details:
-
-|===
-| Field | Value
-
-| Path
-| secret
-
-| Version
-| 2
-|===
-
-* Scroll down and in the `Version` dropdown, select `2`. (This is the latest version of the KV secrets engine.) Must be 2.
-* Scroll down and click on the `Enable Engine` button.
-
-image::vaultengine2.png[]
-
-=== Create a new secret for your AWS keys in this secret engine
-
-* Select the `Create secret +` option on the right
-* In the `Path for this secret` field, enter `aws_creds`
-* In the `Secret data` section, enter the following details:
-
-* Get the AWS Access Key ID and AWS Secret Access Key from the `Cloud(AWS)` tab in your lab.
-|===
-| Field | Value
-
-| access_key
-| <Your AWS Access Key ID>
-
-| secret_key
-| <Your AWS Secret Access Key>
-|===
-
-* Click on the `Save` button.
-
-image::vaultawscreds.png[]
-
-You have now created a new secret for your AWS keys in the Vault secret engine. You can now use these keys to authenticate against the AWS cloud account.
-
-=== Validate that you can read the secret from the Vault secret engine
-
-Let's validate that you can read the secret from the Vault secret engine by using the Vault CLI.
-
-* Open the `TERMINAL` tab from your lab
-* You will be at the `vscode` terminal prompt
-* SSH to the `vault` server by typing `ssh rhel@vault`, type `yes` when prompted
+* https://github.com/ansible-tmm/aap-hashi-lab-2.git
 
 [source,bash,role=execute]
 ----
-ssh rhel@vault
+git clone https://github.com/ansible-tmm/aap-hashi-lab-2.git
 ----
 
-* Type `yes` when prompted to continue
-* Enter the password `ansible123!` when prompted
-* Run the following commands to login to the Vault CLI:
-
-[source,bash,role=execute]
-----
-export VAULT_ADDR=http://127.0.0.1:8200
-vault login -address=http://127.0.0.1:8200 -method=userpass username=admin password=ansible123!
-----
-
-* You are now logged in to the Vault CLI.
-* Run either of the following commands to read the secret from the Vault secret engine:
-
-[source,bash,role=execute]
-----
-vault kv get secret/aws_creds
-
-OR
-
-vault kv get -mount=secret aws_creds
-----
-
-image::vaultawscreds2.png[]
-
-You should see the AWS Access Key ID and AWS Secret Access Key in the output.
-
-=== Create an Application Role in Vault Enterprise (AppRole) for Terraform Enterprise
-
-In this task we will create an Application Role in Vault Enterprise (AppRole) for Terraform Enterprise so that Terraform Enterprise can authenticate against the Vault secret engine.
-
-Before creating the Application Role, we need to create a `Policy` that will allow the Terraform Enterprise to read the secret from the Vault secret engine.
-
-* Back in the Vault Enterprise UI, click on the `Policies` menu option in the left menu.
-* Click on the `ACL Policies` menu option in the left menu.
-* Click on the `Create ACL policy +` button on the right.
-* For the `Name` field, enter `terraform-policy`
-* Enter the following into the `Policy` body:
-
-[source,hcl,role=execute]
-----
-# Read AWS credentials
-path "secret/data/aws_creds" {
-  capabilities = ["read"]
-}
-# Write SSH keys
-path "secret/data/*/ssh-keys/*" {
-  capabilities = ["create", "read", "update", "delete"]
-}
-path "secret/data/rhel-server/ssh-keys/*" {
-  capabilities = ["create", "read", "update", "delete"]
-}
-# Allow creating child tokens 
-path "auth/token/create" {
-  capabilities = ["create", "update"]
-}
-path "auth/token/renew-self" {
-  capabilities = ["update"]
-}
-path "auth/token/lookup-self" {
-  capabilities = ["read"]
-}
-----
-
-* Click on the `Create policy` button.
-
-image::terraformpolicy.png[]
-
-You have now created a new policy for the Terraform Enterprise to read the secret from the Vault secret engine.
-
-Now let's enable the AppRole authentication method in Vault Enterprise UI.
-
-* Select the `Access` menu option in the left menu.
-* Click on the `Authentication Methods` menu option in the left menu.
-* Click on the `+ Enable new method +` button on the right.
-* Click on the `AppRole` tile.
-
-image::approle1.png[]
-
-* In the `Path` field, keep it at the default of `approle`
-* Click on `Enable method` to enable the AppRole authentication method
-
-image::approle2.png[]
-
-NOTE: The Vault UI only supports the configuration of the AppRole authentication method. You will need to use the Vault CLI to create the Application Role.
-
-image::approle3.png[]
-
-* Open the `TERMINAL` tab from your lab
-* You will be at the `vscode` terminal prompt
-* SSH to the `vault` server by typing `ssh rhel@vault`, type `yes` when prompted
-
-[source,bash,role=execute]
-----
-ssh rhel@vault
-----
-
-* Type `yes` when prompted to continue
-* Enter the password `ansible123!` when prompted
-
-* Run the following command to login to the Vault CLI (**if you are not already logged in**):
-
-[source,bash,role=execute]
-----
-export VAULT_ADDR=http://127.0.0.1:8200
-vault login -address=http://127.0.0.1:8200 -method=userpass username=admin password=ansible123!
-----
-
-* Run the following command to create the AppRole for Terraform Enterprise:
-
-[source,bash,role=execute]
-----
-vault write auth/approle/role/terraform token_policies=terraform-policy
-----
-
-* Now get the Role ID and Secret ID for the AppRole for Terraform Enterprise:
-
-[source,bash,role=execute]
-----
-vault read auth/approle/role/terraform/role-id
-
-then
-
-vault write -f auth/approle/role/terraform/secret-id
-----
-
-* Copy the Role ID and Secret ID to your clipboard. You will need these momentarily
-
-==== Test the AppRole authentication method
-
-Let's test the AppRole authentication method by using the Vault CLI.
-
-[source,bash,role=execute]
-----
-vault write auth/approle/login \
-    role_id=<terraform-role-id> \
-    secret_id=<terraform-secret-id>
-----
-
-image::approle4.png[]
-
-* **Copy the token to your clipboard. You will need this a bit later**
-
-You have now created an Application Role in Vault Enterprise (AppRole) for Terraform Enterprise so that Terraform Enterprise can authenticate against the Vault secret engine.
-
-We need to repeat this process to create an AppRole for Ansible Automation Platform.
-
-=== Create an Application Role in Vault Enterprise (AppRole) for Ansible Automation Platform
-
-In this task we will create an Application Role in Vault Enterprise (AppRole) for Ansible Automation Platform so that Ansible Automation Platform can authenticate against the Vault secret engine.
-
-Before creating the Application Role, we need to create a `Policy` that will allow the Ansible Automation Platform to read the secret from the Vault secret engine.
-
-* Back in the Vault Enterprise UI, click on the `Policies` menu option in the left menu.
-* Click on the `ACL Policies` menu option in the left menu.
-* Click on the `Create ACL policy +` button on the right.
-* For the `Name` field, enter `aap-policy`
-* Enter the following into the `Policy` body:
-
-[source,hcl,role=execute]
-----
-# Allow AAP to read SSH keys
-path "secret/data/rhel-server/ssh-keys/*" {
-  capabilities = ["read"]
-}
-
-path "secret/data/*/ssh-keys/*" {
-  capabilities = ["read"]
-}
-
-# Allow AAP to write instance metadata
-path "secret/data/*/metadata" {
-  capabilities = ["create", "read", "update"]
-}
-----
-
-* Click on the `Create policy` button.
-
-image::aappolicy.png[]
-
-You have now created a new policy for Ansible Automation Platform to read the secret from the Vault secret engine.
-
-* Open the `TERMINAL` tab from your lab
-* You will be at the `vscode` terminal prompt
-* SSH to the `vault` server by typing `ssh rhel@vault`, type `yes` when prompted
-
-[source,bash,role=execute]
-----
-ssh rhel@vault
-----
-
-* Type `yes` when prompted to continue
-* Enter the password `ansible123!` when prompted
-
-* Run the following command to login to the Vault CLI (**if you are not already logged in**):
-
-[source,bash,role=execute]
-----
-export VAULT_ADDR=http://127.0.0.1:8200
-vault login -address=http://127.0.0.1:8200 -method=userpass username=admin password=ansible123!
-----
-
-* Run the following command to create the AppRole for Ansible Automation Platform:
-
-[source,bash,role=execute]
-----
-vault write auth/approle/role/aap token_policies=aap-policy
-----
-
-* Now get the Role ID and Secret ID for the AppRole for (Ansible Automation Platform):
-
-[source,bash,role=execute]
-----
-vault read auth/approle/role/aap/role-id
-
-then
-
-vault write -f auth/approle/role/aap/secret-id
-----
-
-* Copy the Role ID and Secret ID to your clipboard. You will need these momentarily
-
-==== Test the AppRole authentication method
-
-Let's test the AppRole authentication method by using the Vault CLI.
-
-[source,bash,role=execute]
-----
-vault write auth/approle/login \
-    role_id=<aap-role-id> \
-    secret_id=<aap-secret-id>
-----
-
-* **Copy the token to your clipboard. You will need this momentarily**
-
-You have now created an Application Role in Vault Enterprise (AppRole) for Ansible Automation Platform so that Ansible Automation Platform can authenticate against the Vault secret engine.
+Later in this lab, you will be committing changes to the Terraform code in the GitHub repository, which in turn will trigger the Terraform infrastructure provisioning and automation, and will leverage secrets from Vault Enterprise.
 
 [#task2]
-== Configure Ansible Automation Platform to use the AppRole authentication method
+== Set up the Terraform Enterprise Workspace
 
-In this task we will configure Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine.
+Back in the Terraform Enterprise UI, click on the `Workspaces` menu option in the left menu.
 
-=== Create a new credential in Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine. `Vault lookup credential`
+Click on the `New` button on the right, and select `Workspace` from the dropdown.
+Enter the following details:
+* For the `Project` field, select `rhdp-initial-project` from the dropdown, and select `Create`
 
-* Open the `Ansible Automation Platform` tab in your lab
-* Click on the `Automation Execution` menu option in the left menu.
-* Click on the `Infrastructure` menu option in the left menu.
-* Click on the `Credentials` menu option in the left menu.
-* Click on the `+ Create credential` button on the right.
-* For the `Name` field, enter `Vault lookup credential`
-* For the `Credential Type` field, select `HashiCorp Vault Secret Lookup`
-* For the `Server URL` field, enter `http://vault:8200`
-* For the `Token` field, enter the token you copied to your clipboard earlier
-* Further below for the `Path to Auth` field, make sure it says `approle`
-* Further below or the `API Version` field, select `v2` from the dropdown
-* Click on the `Create credential` button.
+image::workspace1.png[]
 
-image::aapvaultlookupcred1.png[]
+* On the next screen choose `Version Control Workflow`For the Workspace type
 
-image::aapvaultlookupcred2.png[]
+image::workspace2.png[]
 
-Once you have saved the credential, go back into it, and select `Test` to validate this.
+Now you will need to configure the Workspace to use the GitHub repository you cloned earlier into your GitHub account.
 
-image::aapvaultlookupcred3.png[]
+* Select the `GitHub` option from the dropdown, and then click on the `GitHub.com` button.
+* For the `VCS Provider` field, select `GitHub.com`
+* You will now be launced to step 2 (set up provider), which is to setup the GitHub repository connection
+* Click the `Register a new OAuth Application` link to register a new OAuth application with GitHub.
 
-You have now configured Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine.
+image::workspace3.png[]
 
-=== Create ANOTHER credential in Ansible Automation Platform to use.  This will be a machine credential to SSH to the inventory RHEL hosts, and it will use the Vault lookup credential we created earlier.
+* Authenticate to your GitHub account, and authorize the Terraform Enterprise application to access your GitHub account.
+* It will have automatically populated some of the fields for you as they relate to Terraform Enterprise
+* Scroll down and click on the `Register application` button
 
-* Open the `Ansible Automation Platform` tab in your lab
-* Click on the `Automation Execution` menu option in the left menu.
-* Click on the `Infrastructure` menu option in the left menu.
-* Click on the `Credentials` menu option in the left menu.
-* Click on the `+ Create credential` button on the right.
-* For the `Name` field, enter `Vault MACHINE SSH credential`
-* For the `Credential Type` field, select `Machine`
-* For the `Username` field, enter `ec2-user`
-* Click on the `KEY` icon to the right of the `SSH Private Key` field
-* On the `Secret Management System` dialig box, fill in the following details:
-** For the `Credential Type` field, select `Vault lookup credential`
-** For the `Name of Secret Backend` field, enter the `secret`
-** For the `Path to Secret` field, enter `rhel-server/ssh-keys/latest`
-** For the `Path to Auth` field, enter `approle`
-** For the `Key Name` field, enter `private_key`
-** Click on the `Finish` to save this dialog box
-* Click on the `Create credential` button. You will see a summary of the credential you just created
+image::workspace4.png[]
 
-image::aapvaultsshcred1.png[]
+* The applciation will now be registered, and you will need to click the `Generate a new client secret` button to generate a new client secret. Copy both the `Client ID` and `Client Secret`, you will need these momentarily.
 
-image::aapvaultsshcred2.png[]
+image::workspace5.png[]
 
-Don't worry about testing this credential yet, as it will error out until there are some SSH private_keys in the Vault secret engine.
+* Go back to the Terraform Enterprise UI, and paste the `Client ID` and `Client Secret` into the respective fields, and provide a `Name` for VCS provider.  For the nameI use my initial, followed by dash and github, example: `jdoe-github`
+* Click on the `Connect and Continue` button to save the VCS provider configuration
+
+image::workspace6.png[]
+
+* On the next screen, you will need to choose the repository you want to use for this workspace.  For this lab, we will use the repository you cloned earlier into your GitHub account
+* On the following screen, you will need to provide the `Workspace Name`.  For this lab, we will use `TFE-Demo-VCS`
+* For the `Description` field, enter `Using GitHub commits to trigger Plan/Apply Runs`
+* Expand the `Advanced Options` section, and check both of the `Auto-apply` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.
+* For the `Terraform Working Directory` field, enter `TF_templates/AWS/`
+* Scroll down the bottom of the screen and click on the `Create` button to save the workspace configuration
+
+image::workspace7.png[]
+
+While you still have GitHub open, navigate to the repository you cloned earlier into your GitHub account please perform the following:
+
+* Navigate to the repository `SETTINGS` -> `WEBHOOKS`
+* You will see the Terraform Enterprise webhook configuration, click on the `Edit` button
+* Scroll down to the `SSL verification` section, and check the `Disable` checkbox
+
+image::workspace8.png[]
+
+
+
+
+
+
+
+
+
+[#task3]
+== Trigger infrastructure provisioning and automation
+
+

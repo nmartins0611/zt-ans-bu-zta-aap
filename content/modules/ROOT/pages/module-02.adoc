@@ -1,176 +1,379 @@
 :doctype: book
 
-= How to create a HashiCorp-enabled Execution Environment
+= Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 1
 
-In this challenge we will discuss how to create an Execution Environment that will enable Terraform Enterprise (HCP Terraform) and HashiCorp Vault Enterprise usage in Ansible Automation Platform. It will include all the dependencies needed.
+In this challenge you will learn how to trigger infrastructure provisioning and automation from Terraform Enterprise.
+
+There are a number of prerequisites that you will need to complete before you can start this lab.
+
+* Vault Enterprise
+* Terraform Enterprise
+** Cloning a GitHub repository to your account
+** Create a Terraform Enterprise Workspace that used Version Control System (VCS) to store the Terraform code
+
+Part 1 of this lab will focus on configuring the Vault Enterprise Secret Engine.
 
 [#task1]
-== What is an Execution Environment?
-All automation in Red Hat Ansible Automation Platform runs on container images called automation execution environments.
-Automation execution environments create a common language for communicating automation dependencies, and offer a standard way to build and distribute the automation environment.
+== Configure the Vault Enterprise Secret Engine
 
-In the previous challenge an Execution Environment called `Terraform Execution Environment` was already created for you. It included the new **hashicorp.terraform**, and **hashicorp.vault** collections, the Terraform binary, other cloud collections, and other dependencies.
+Open the Vault Enterprise UI in your browser.
+In the `Method` dropdown, select `Userpass`.
+Enter the following details to login to the Vault Enterprise UI.
 
-**We feel it's important to understand how to create an Execution Environment, for this specific scenario.**
-NOTE: *You can skip this challenge if you are not interested in learning how to create an Execution Environment.*
+* `User:  admin`
+* `Password:  ansible123!`
+* Click on the `Sign In` button.
 
-*To use HashiCorp Terraform Enterprise (HCP Terraform) and HashiCorp Vault Enterprise in YOUR Ansible Automation Platform environment you must create and Execution Environment* that includes the Terraform Enterprise (HCP Terraform) and HashiCorp Vault Enterprise collections, the Terraform binary, other cloud collections, and other dependencies.
+image::vaultlogin.png[]
 
+* Click on the `Vault` menu option in the left menu.
+* Click on the `Secrets Engines` menu option.
+* Click on the `+ Enable new engine` button.
 
-The tool needed to create an `execution environment` is called `ansible-builder`
+image::vaultengine1.png[]
 
-[#task2]
-== Introduction.
-
-Estimated time to complete: _5 minutes_
-
-In this challenge you will learn:
-
-* How to create the necessary configuration files needed to create an execution environment
-
-* How to create the execution environment container image using the `ansbile-builder` tool
-
-* How to add the new execution environment to Ansible Automation Platform
-
-[#task3]
-== Execution Environments
-
-To trigger Terraform Enterprise (HCP Terraform) and HashiCorp Vault Enterprise commands from within Ansible Automation Platform, you will need to create an execution environment container image that contains the Terraform binary and the Red Hat certified collection for HashiCorp Terraform and HashiCorp Vault.
-
-This is easy to do using https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/latest/html/creating_and_using_execution_environments/assembly-using-builder[ansible-builder].
-
-[#task4]
-== How to create the configuration files for the execution environment
-
-To create an execution environment with `ansible-builder`, we need an execution environment definition file.
-The file name will be `execution-environment.yml`
-
-Below is what the `execution-environment.yml` file will look like:
-
-[source,yaml,role=execute]
-----
----
-version: 3
-
-images:
-  base_image:
-    name: registry.redhat.io/ansible-automation-platform-26/ee-minimal-rhel9:latest
-
-dependencies:
-  galaxy: requirements.yml
-
-options:
-  package_manager_path: /usr/bin/microdnf
-
-additional_build_steps:
-  prepend_base:
-    - RUN $PYCMD -m pip install --upgrade pip setuptools
-  append_base:
-    - RUN curl "https://releases.hashicorp.com/terraform/1.14.1/terraform_1.14.1_linux_amd64.zip" -o "/terraform.zip"
-    - RUN unzip /terraform.zip -d /terraform
-    - RUN mv /terraform/terraform /bin
-
-----
-
-This file defines the rules `ansible-builder` should use to create the execution environment container, including:
-
-. `version`: the version of ansible-builder to use
-. `images`: here you define the base image to use for the container.
-*_You are using the  `ee-minimal-rhel9:latest` base image for the build process_*
-. `dependencies`: in this section you can declare dependencies for optionally galaxy (ansible collections), python, and other system dependencies.
-Notice this section includes a statement `galaxy: requirements.yml`, this is the file used to define dependent collections found on Ansible Galaxy to be included within the Execution Environment being built
-. `additional_build_steps`: here we can list commands to be inserted into the Dockerfile/Containerfile to be executed.
-In this example, we are also downloading and installing the HashiCorp Terraform binary.
-`prepend_base` is to include commands to be used `before` the main build steps.
-`append_base` is to include commands to be used `after` the main build steps.
-
-
-Below is what the `requirements.yml` file will look like:
-
-[source,yaml,role=execute]
-----
-collections:
-  - name: amazon.aws
-  - name: cloud.terraform
-  - name: hashicorp.terraform
-  - name: hashicorp.vault
-  - name: google.cloud
-  - name: azure.azcollection
-
-----
-
-This file defines the Ansible content collections you want to include in your execution environment.
-
-. Include the cloud collections `amazon.aws`, `cloud.terraform`, `google.cloud`, and `azure.azcollection` collections. I include these to allow Terraform Enterprise (and HCP Terraform) to spin up  cloud infrastructure on AWS, Azure and GCP.
-. Most importantly, we are including the `hashicorp.terraform` and `hashicorp.vault` collections. These will allow you from Ansible Automation Platform to trigger Terraform Enterprise (and HCP Terraform) and HashiCorp Vault Enterprise operations.
-. If additional collections are desired, you would include them in the `requirements.yml` file as well
-
-
-[#task5]
-== How to run `ansible-builder` to build the execution environment container
-
-Run `ansible-builder` to build the execution environment container.
-
-Below is the command to run `ansible-builder` to build the execution environment container.
-
-[source,bash,role=execute]
-----
-ansible-builder build -v 3 --tag hashicorp-ee
-----
-
-This will build the container image tagged with `hashicorp-ee`.
-This will take a few minutes.
-
-image::ansible-builder-success.png[]
-
-To see the newly created image on a RHEL system, you can also use the `podman` command.
-
-[source,bash,role=execute]
-----
-podman images
-----
-
-At this point, you would typically push the container image to a registry such as `Quay` or `Dockerhub` or your own `Private Automation Hub`.
-If you have a Quay or Dockerhub account already, feel free to create a repository, push the image as you normally would, and use it in the following steps, 
-
-*_Example commands_* on how to tag and then push the Execution Environment image to Quay.io
-
-[source,bash,role=execute]
-----
-podman tag localhost/hashicorp-ee  quay.io/[username]/hashicorp-ee
-
-podman login --username [username] --password [mypassowrd] quay.io
-
-podman push quay.io/[username]/hashicorp-ee
-----
-
-[#task6]
-== How to add the Terraform Execution Environment to Ansible Automation Platform
-
-To add an execution environment to Ansible Automation Platform, you can follow the steps below.
-
-Expand the `Automation Execution` menu on the left.
-
-Navigate to  `Automation Execution` -> `Infrastructure` -> `Execution Environments`.
-
-Click on `+ Create execution environment` and enter the following information.
+* Select the `KV` secrets engine from the `Generic` section.
+Enter the following details:
 
 |===
 | Field | Value
 
-| Name
-| myHashiCorp EE (or whatever you want to call it)
+| Path
+| secret
 
-| Image
-| quay.io/acme_corp/terraform_ee (or whatever you may havecall it)
-
-| Pull
-| Only pull the image if not present before running
-
-| Registry credential
-| Quay Registry Credential (if you are using a private registry)
+| Version
+| 2
 |===
 
-Click on `Create execution environment`.
+* Scroll down and in the `Version` dropdown, select `2`. (This is the latest version of the KV secrets engine.) Must be 2.
+* Scroll down and click on the `Enable Engine` button.
 
-This Execution Environment would now be available for use in Ansible Automation Platform.
+image::vaultengine2.png[]
+
+=== Create a new secret for your AWS keys in this secret engine
+
+* Select the `Create secret +` option on the right
+* In the `Path for this secret` field, enter `aws_creds`
+* In the `Secret data` section, enter the following details:
+
+* Get the AWS Access Key ID and AWS Secret Access Key from the `Cloud(AWS)` tab in your lab.
+|===
+| Field | Value
+
+| access_key
+| <Your AWS Access Key ID>
+
+| secret_key
+| <Your AWS Secret Access Key>
+|===
+
+* Click on the `Save` button.
+
+image::vaultawscreds.png[]
+
+You have now created a new secret for your AWS keys in the Vault secret engine. You can now use these keys to authenticate against the AWS cloud account.
+
+=== Validate that you can read the secret from the Vault secret engine
+
+Let's validate that you can read the secret from the Vault secret engine by using the Vault CLI.
+
+* Open the `TERMINAL` tab from your lab
+* You will be at the `vscode` terminal prompt
+* SSH to the `vault` server by typing `ssh rhel@vault`, type `yes` when prompted
+
+[source,bash,role=execute]
+----
+ssh rhel@vault
+----
+
+* Type `yes` when prompted to continue
+* Enter the password `ansible123!` when prompted
+* Run the following commands to login to the Vault CLI:
+
+[source,bash,role=execute]
+----
+export VAULT_ADDR=http://127.0.0.1:8200
+vault login -address=http://127.0.0.1:8200 -method=userpass username=admin password=ansible123!
+----
+
+* You are now logged in to the Vault CLI.
+* Run either of the following commands to read the secret from the Vault secret engine:
+
+[source,bash,role=execute]
+----
+vault kv get secret/aws_creds
+
+OR
+
+vault kv get -mount=secret aws_creds
+----
+
+image::vaultawscreds2.png[]
+
+You should see the AWS Access Key ID and AWS Secret Access Key in the output.
+
+=== Create an Application Role in Vault Enterprise (AppRole) for Terraform Enterprise
+
+In this task we will create an Application Role in Vault Enterprise (AppRole) for Terraform Enterprise so that Terraform Enterprise can authenticate against the Vault secret engine.
+
+Before creating the Application Role, we need to create a `Policy` that will allow the Terraform Enterprise to read the secret from the Vault secret engine.
+
+* Back in the Vault Enterprise UI, click on the `Policies` menu option in the left menu.
+* Click on the `ACL Policies` menu option in the left menu.
+* Click on the `Create ACL policy +` button on the right.
+* For the `Name` field, enter `terraform-policy`
+* Enter the following into the `Policy` body:
+
+[source,hcl,role=execute]
+----
+# Read AWS credentials
+path "secret/data/aws_creds" {
+  capabilities = ["read"]
+}
+# Write SSH keys
+path "secret/data/*/ssh-keys/*" {
+  capabilities = ["create", "read", "update", "delete"]
+}
+path "secret/data/rhel-server/ssh-keys/*" {
+  capabilities = ["create", "read", "update", "delete"]
+}
+# Allow creating child tokens 
+path "auth/token/create" {
+  capabilities = ["create", "update"]
+}
+path "auth/token/renew-self" {
+  capabilities = ["update"]
+}
+path "auth/token/lookup-self" {
+  capabilities = ["read"]
+}
+----
+
+* Click on the `Create policy` button.
+
+image::terraformpolicy.png[]
+
+You have now created a new policy for the Terraform Enterprise to read the secret from the Vault secret engine.
+
+Now let's enable the AppRole authentication method in Vault Enterprise UI.
+
+* Select the `Access` menu option in the left menu.
+* Click on the `Authentication Methods` menu option in the left menu.
+* Click on the `+ Enable new method +` button on the right.
+* Click on the `AppRole` tile.
+
+image::approle1.png[]
+
+* In the `Path` field, keep it at the default of `approle`
+* Click on `Enable method` to enable the AppRole authentication method
+
+image::approle2.png[]
+
+NOTE: The Vault UI only supports the configuration of the AppRole authentication method. You will need to use the Vault CLI to create the Application Role.
+
+image::approle3.png[]
+
+* Open the `TERMINAL` tab from your lab
+* You will be at the `vscode` terminal prompt
+* SSH to the `vault` server by typing `ssh rhel@vault`, type `yes` when prompted
+
+[source,bash,role=execute]
+----
+ssh rhel@vault
+----
+
+* Type `yes` when prompted to continue
+* Enter the password `ansible123!` when prompted
+
+* Run the following command to login to the Vault CLI (**if you are not already logged in**):
+
+[source,bash,role=execute]
+----
+export VAULT_ADDR=http://127.0.0.1:8200
+vault login -address=http://127.0.0.1:8200 -method=userpass username=admin password=ansible123!
+----
+
+* Run the following command to create the AppRole for Terraform Enterprise:
+
+[source,bash,role=execute]
+----
+vault write auth/approle/role/terraform token_policies=terraform-policy
+----
+
+* Now get the Role ID and Secret ID for the AppRole for Terraform Enterprise:
+
+[source,bash,role=execute]
+----
+vault read auth/approle/role/terraform/role-id
+
+then
+
+vault write -f auth/approle/role/terraform/secret-id
+----
+
+* Copy the Role ID and Secret ID to your clipboard. You will need these momentarily
+
+==== Test the AppRole authentication method
+
+Let's test the AppRole authentication method by using the Vault CLI.
+
+[source,bash,role=execute]
+----
+vault write auth/approle/login \
+    role_id=<terraform-role-id> \
+    secret_id=<terraform-secret-id>
+----
+
+image::approle4.png[]
+
+* **Copy the token to your clipboard. You will need this a bit later**
+
+You have now created an Application Role in Vault Enterprise (AppRole) for Terraform Enterprise so that Terraform Enterprise can authenticate against the Vault secret engine.
+
+We need to repeat this process to create an AppRole for Ansible Automation Platform.
+
+=== Create an Application Role in Vault Enterprise (AppRole) for Ansible Automation Platform
+
+In this task we will create an Application Role in Vault Enterprise (AppRole) for Ansible Automation Platform so that Ansible Automation Platform can authenticate against the Vault secret engine.
+
+Before creating the Application Role, we need to create a `Policy` that will allow the Ansible Automation Platform to read the secret from the Vault secret engine.
+
+* Back in the Vault Enterprise UI, click on the `Policies` menu option in the left menu.
+* Click on the `ACL Policies` menu option in the left menu.
+* Click on the `Create ACL policy +` button on the right.
+* For the `Name` field, enter `aap-policy`
+* Enter the following into the `Policy` body:
+
+[source,hcl,role=execute]
+----
+# Allow AAP to read SSH keys
+path "secret/data/rhel-server/ssh-keys/*" {
+  capabilities = ["read"]
+}
+
+path "secret/data/*/ssh-keys/*" {
+  capabilities = ["read"]
+}
+
+# Allow AAP to write instance metadata
+path "secret/data/*/metadata" {
+  capabilities = ["create", "read", "update"]
+}
+----
+
+* Click on the `Create policy` button.
+
+image::aappolicy.png[]
+
+You have now created a new policy for Ansible Automation Platform to read the secret from the Vault secret engine.
+
+* Open the `TERMINAL` tab from your lab
+* You will be at the `vscode` terminal prompt
+* SSH to the `vault` server by typing `ssh rhel@vault`, type `yes` when prompted
+
+[source,bash,role=execute]
+----
+ssh rhel@vault
+----
+
+* Type `yes` when prompted to continue
+* Enter the password `ansible123!` when prompted
+
+* Run the following command to login to the Vault CLI (**if you are not already logged in**):
+
+[source,bash,role=execute]
+----
+export VAULT_ADDR=http://127.0.0.1:8200
+vault login -address=http://127.0.0.1:8200 -method=userpass username=admin password=ansible123!
+----
+
+* Run the following command to create the AppRole for Ansible Automation Platform:
+
+[source,bash,role=execute]
+----
+vault write auth/approle/role/aap token_policies=aap-policy
+----
+
+* Now get the Role ID and Secret ID for the AppRole for (Ansible Automation Platform):
+
+[source,bash,role=execute]
+----
+vault read auth/approle/role/aap/role-id
+
+then
+
+vault write -f auth/approle/role/aap/secret-id
+----
+
+* Copy the Role ID and Secret ID to your clipboard. You will need these momentarily
+
+==== Test the AppRole authentication method
+
+Let's test the AppRole authentication method by using the Vault CLI.
+
+[source,bash,role=execute]
+----
+vault write auth/approle/login \
+    role_id=<aap-role-id> \
+    secret_id=<aap-secret-id>
+----
+
+* **Copy the token to your clipboard. You will need this momentarily**
+
+You have now created an Application Role in Vault Enterprise (AppRole) for Ansible Automation Platform so that Ansible Automation Platform can authenticate against the Vault secret engine.
+
+[#task2]
+== Configure Ansible Automation Platform to use the AppRole authentication method
+
+In this task we will configure Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine.
+
+=== Create a new credential in Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine. `Vault lookup credential`
+
+* Open the `Ansible Automation Platform` tab in your lab
+* Click on the `Automation Execution` menu option in the left menu.
+* Click on the `Infrastructure` menu option in the left menu.
+* Click on the `Credentials` menu option in the left menu.
+* Click on the `+ Create credential` button on the right.
+* For the `Name` field, enter `Vault lookup credential`
+* For the `Credential Type` field, select `HashiCorp Vault Secret Lookup`
+* For the `Server URL` field, enter `http://vault:8200`
+* For the `Token` field, enter the token you copied to your clipboard earlier
+* Further below for the `Path to Auth` field, make sure it says `approle`
+* Further below or the `API Version` field, select `v2` from the dropdown
+* Click on the `Create credential` button.
+
+image::aapvaultlookupcred1.png[]
+
+image::aapvaultlookupcred2.png[]
+
+Once you have saved the credential, go back into it, and select `Test` to validate this.
+
+image::aapvaultlookupcred3.png[]
+
+You have now configured Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine.
+
+=== Create ANOTHER credential in Ansible Automation Platform to use.  This will be a machine credential to SSH to the inventory RHEL hosts, and it will use the Vault lookup credential we created earlier.
+
+* Open the `Ansible Automation Platform` tab in your lab
+* Click on the `Automation Execution` menu option in the left menu.
+* Click on the `Infrastructure` menu option in the left menu.
+* Click on the `Credentials` menu option in the left menu.
+* Click on the `+ Create credential` button on the right.
+* For the `Name` field, enter `Vault MACHINE SSH credential`
+* For the `Credential Type` field, select `Machine`
+* For the `Username` field, enter `ec2-user`
+* Click on the `KEY` icon to the right of the `SSH Private Key` field
+* On the `Secret Management System` dialig box, fill in the following details:
+** For the `Credential Type` field, select `Vault lookup credential`
+** For the `Name of Secret Backend` field, enter the `secret`
+** For the `Path to Secret` field, enter `rhel-server/ssh-keys/latest`
+** For the `Path to Auth` field, enter `approle`
+** For the `Key Name` field, enter `private_key`
+** Click on the `Finish` to save this dialog box
+* Click on the `Create credential` button. You will see a summary of the credential you just created
+
+image::aapvaultsshcred1.png[]
+
+image::aapvaultsshcred2.png[]
+
+Don't worry about testing this credential yet, as it will error out until there are some SSH private_keys in the Vault secret engine.
