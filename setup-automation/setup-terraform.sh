@@ -31,7 +31,7 @@ awk -v new_license="$TFE_LIC" '
 mv "${YAML_FILE}.tmp" "$YAML_FILE"
 
 systemctl daemon-reload
-systemctl restart terraform-enterpise
+systemctl restart terraform-enterprise
 sleep 5
 
 CERT_DIR="/home/ec2-user/tfeinstallfiles/certs/"
