@@ -2,8 +2,7 @@
 
 HOSTNAME=tfe-https-${GUID}.apps.ocpvdev01.rhdp.net
 
-
-sed -i "/name: \"TFE_HOSTNAME\"/!b;n;s/value: \".*\"/value: \"$HOSTNAME\"/" /etc/containers/systemd/tfe.yaml
+#sed -i "/name: \"TFE_HOSTNAME\"/!b;n;s/value: \".*\"/value: \"$HOSTNAME\"/" /etc/containers/systemd/tfe.yaml
 
 mv /etc/containers/systemd/tfe.yaml /etc/containers/systemd/tfe_old.yaml
 
@@ -99,6 +98,7 @@ spec:
 
 EOF
 
+sed -i "/name: \"TFE_HOSTNAME\"/!b;n;s/value: \".*\"/value: \"$HOSTNAME\"/" /etc/containers/systemd/tfe.yaml
 
 
 systemctl daemon-reload
