@@ -88,6 +88,7 @@
       REG_KEY: "{{ reg_username }}"
       REG_PASS: "{{ reg_password }}"
       SSH_KEY: "{{ ssh_key }}"
+      VAULT_LIC: "{{ vaultlic }}"
 
   - name: Output script result
     ansible.builtin.debug:
