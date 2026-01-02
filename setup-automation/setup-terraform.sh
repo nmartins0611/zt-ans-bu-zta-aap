@@ -5,97 +5,99 @@ HOSTNAME=tfe-https-${GUID}.apps.ocpvdev01.rhdp.net
 
 sed -i "/name: \"TFE_HOSTNAME\"/!b;n;s/value: \".*\"/value: \"$HOSTNAME\"/" /etc/containers/systemd/tfe.yaml
 
-#mv /etc/containers/systemd/tfe.yaml /etc/containers/systemd/tfe_old.yaml 
-# cat > "/etc/containers/systemd/tfe.yaml" << EOF
-# ---
-# apiVersion: v1
-# kind: Pod
-# metadata:
-#   name: terraform-enterprise
-#   labels:
-#     app: terraform-enterprise
-# spec:
-#   restartPolicy: Never
-#   containers:
-#     - name: terraform-enterprise
-#       image: images.releases.hashicorp.com/hashicorp/terraform-enterprise:1.0.2
-#       imagePullPolicy: IfNotPresent
-#       env:
-#         - name: TFE_OPERATIONAL_MODE
-#           value: disk
-#         - name: TFE_LICENSE
-#           value: "$TFE_LIC"
-#         - name: TFE_HOSTNAME
-#           value: rheltfe
-#         - name: TFE_HTTP_PORT
-#           value: "8080"
-#         - name: TFE_HTTPS_PORT
-#           value: "8443"
-#         - name: TFE_TLS_CERT_FILE
-#           value: /home/ec2-user/tfeinstallfiles/certs/cert.pem
-#         - name: TFE_TLS_KEY_FILE
-#           value: /home/ec2-user/tfeinstallfiles/certs/key.pem
-#         - name: TFE_TLS_CA_BUNDLE_FILE
-#           value: /home/ec2-user/tfeinstallfiles/certs/bundle.pem
-#         - name: TFE_DISK_CACHE_VOLUME_NAME
-#           value: terraform-enterprise_terraform-enterprise-cache
-#         - name: TFE_ENCRYPTION_PASSWORD
-#           value: tfeseed
-#       ports:
-#         - containerPort: 8080
-#           hostPort: 80
-#         - containerPort: 8443
-#           hostPort: 443
-#         - containerPort: 9090
-#           hostPort: 9090
-#       securityContext:
-#         readOnlyRootFilesystem: true
-#         capabilities:
-#           add:
-#             - CAP_IPC_LOCK
-#         seLinuxOptions:
-#           type: spc_t
-#       volumeMounts:
-#         - name: certs
-#           mountPath: /etc/ssl/private/terraform-enterprise
-#         - name: log
-#           mountPath: /var/log/terraform-enterprise
-#         - name: run
-#           mountPath: /run
-#         - name: tmp
-#           mountPath: /tmp
-#         - name: data
-#           mountPath: /var/lib/terraform-enterprise
-#         - name: docker-sock
-#           mountPath: /run/docker.sock
-#         - name: terraform-cache
-#           mountPath: /var/cache/tfe-task-worker/terraform
-#   volumes:
-#     - name: certs
-#       hostPath:
-#         path: /home/ec2-user/tfeinstallfiles/certs
-#         type: Directory
-#     - name: log
-#       emptyDir:
-#         medium: Memory
-#     - name: run
-#       emptyDir:
-#         medium: Memory
-#     - name: tmp
-#       emptyDir:
-#         medium: Memory
-#     - name: data
-#       hostPath:
-#         path: /opt/terraform-enterprise
-#         type: Directory
-#     - name: docker-sock
-#       hostPath:
-#         path: /run/podman/podman.sock
-#         type: File
-#     - name: terraform-cache
-#       persistentVolumeClaim:
-#         claimName: terraform-enterprise_terraform-enterprise-cache
-# EOF
+mv /etc/containers/systemd/tfe.yaml /etc/containers/systemd/tfe_old.yaml
+
+cat > "/etc/containers/systemd/tfe.yaml" << EOF
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  labels:
+    app: "terraform-enterprise"
+  name: "terraform-enterprise"
+spec:
+  restartPolicy: "Never"
+  containers:
+  - env:
+    - name: "TFE_OPERATIONAL_MODE"
+      value: "disk"
+    - name: "TFE_LICENSE"
+      value: "$TFE_LIC"
+    - name: "TFE_HOSTNAME"
+      value: "tfe-https-lrpx2.apps.ocpvdev01.rhdp.net"
+    - name: "TFE_HTTP_PORT"
+      value: "8080"
+    - name: "TFE_HTTPS_PORT"
+      value: "8443"
+    - name: "TFE_TLS_CERT_FILE"
+      value: "/etc/ssl/private/terraform-enterprise/cert.pem"
+    - name: "TFE_TLS_KEY_FILE"
+      value: "/etc/ssl/private/terraform-enterprise/key.pem"
+    - name: "TFE_TLS_CA_BUNDLE_FILE"
+      value: "/etc/ssl/private/terraform-enterprise/bundle.pem"
+    - name: "TFE_DISK_CACHE_VOLUME_NAME"
+      value: "terraform-enterprise_terraform-enterprise-cache"
+    - name: "TFE_ENCRYPTION_PASSWORD"
+      value: 'tfeseed'
+    image: "images.releases.hashicorp.com/hashicorp/terraform-enterprise:1.0.2"
+    name: "terraform-enterprise"
+    imagePullPolicy: "IfNotPresent"
+    ports:
+    - containerPort: 8080
+      hostPort: 80
+    - containerPort: 8443
+      hostPort: 443
+    - containerPort: 9090
+      hostPort: 9090
+    securityContext:
+      capabilities:
+        add:
+        - "CAP_IPC_LOCK"
+      readOnlyRootFilesystem: true
+      seLinuxOptions:
+        type: "spc_t"
+    volumeMounts:
+    - mountPath: "/etc/ssl/private/terraform-enterprise"
+      name: "certs"
+    - mountPath: "/var/log/terraform-enterprise"
+      name: "log"
+    - mountPath: "/run"
+      name: "run"
+    - mountPath: "/tmp"
+      name: "tmp"
+    - mountPath: "/var/lib/terraform-enterprise"
+      name: "data"
+    - mountPath: "/run/docker.sock"
+      name: "docker-sock"
+    - mountPath: "/var/cache/tfe-task-worker/terraform"
+      name: "terraform-enterprise_terraform-enterprise-cache-pvc"
+  volumes:
+  - hostPath:
+      path: "/home/ec2-user/tfeinstallfiles/certs/"
+      type: "Directory"
+    name: "certs"
+  - emptyDir:
+      medium: "Memory"
+    name: "log"
+  - emptyDir:
+      medium: "Memory"
+    name: "run"
+  - emptyDir:
+      medium: "Memory"
+    name: "tmp"
+  - hostPath:
+      path: "/opt/terraform-enterprise"
+      type: "Directory"
+    name: "data"
+  - hostPath:
+      path: "/run/podman/podman.sock"
+      type: "File"
+    name: "docker-sock"
+  - name: "terraform-enterprise_terraform-enterprise-cache-pvc"
+    persistentVolumeClaim:
+      claimName: "terraform-enterprise_terraform-enterprise-cache"
+
+EOF
 
 
 
