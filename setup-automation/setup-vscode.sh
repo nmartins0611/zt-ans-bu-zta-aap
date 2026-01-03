@@ -53,6 +53,13 @@ auth: none
 cert: false
 EOF
 
+tee /etc/systemd/system/code-server@rhel.service.d/override.conf << EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/code-server /home/rhel/lab_exercises
+EOF
+
+systemctl daemon-reload
 systemctl start code-server
 dnf install unzip nano git podman -y 
 
@@ -78,7 +85,16 @@ dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.
 yum install terraform -y
 #
 #
+# Delete the AWS CLI zip - clean up
+FILE="/home/rhel/awscliv2.zip"
+if [ -f "$FILE" ]; then
+  echo "File exists, deleting: $FILE"
+  rm -f "$FILE"
+else
+  echo "File does not exist: $FILE"
+fi
 
+#
 # Create directory if it doesn't exist
 mkdir -p /home/rhel/.aws
 # Create the credentials file
@@ -88,6 +104,17 @@ aws_access_key_id = $AWS_ACCESS_KEY_ID
 aws_secret_access_key = $AWS_SECRET_ACCESS_KEY
 EOF
 
+#
+# Delete the test directory - clean up
+DIR="/home/rhel/test"
+if [ -d "$DIR" ]; then
+  echo "Directory exists, deleting: $DIR"
+  rm -rf "$DIR"
+else
+  echo "Directory does not exist: $DIR"
+fi
+
+#
 # Set proper ownership and permissions
 chown rhel:rhel /home/rhel/.aws/credentials
 chmod 600 /home/rhel/.aws/credentials
