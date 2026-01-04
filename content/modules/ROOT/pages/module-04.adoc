@@ -121,9 +121,7 @@ ansible-builder build -v 3 --tag hashicorp-ee
 ----
 
 This will build the container image tagged with `hashicorp-ee`.
-This will take a few minutes.
-
-image::ansible-builder-success.png[]
+This will take a few minutes, depending on your machine, and the number of content collections you are including in the execution environment.
 
 To see the newly created image on a RHEL system, you can also use the `podman` command.
 
@@ -161,16 +159,16 @@ Click on `+ Create execution environment` and enter the following information.
 | Field | Value
 
 | Name
-| myHashiCorp EE (or whatever you want to call it)
+| myHashiCorp EE (or whatever you would want to name it)
 
 | Image
-| quay.io/acme_corp/terraform_ee (or whatever you may havecall it)
+| quay.io/acme_corp/terraform_ee (or whatever you would have named it)
 
 | Pull
 | Only pull the image if not present before running
 
 | Registry credential
-| Quay Registry Credential (if you are using a private registry)
+| Quay Registry Credential (Only needed if you are using a private registry)
 |===
 
 Click on `Create execution environment`.
