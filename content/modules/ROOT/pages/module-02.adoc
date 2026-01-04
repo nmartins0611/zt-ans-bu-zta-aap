@@ -259,18 +259,60 @@ In this task we will configure Ansible Automation Platform to use the AppRole au
 * For the `Name` field, enter `Vault lookup credential`
 * For the `Credential Type` field, select `HashiCorp Vault Secret Lookup`
 * For the `Server URL` field, enter `http://vault:8200`
-* For the `Token` field, enter the token you copied to your clipboard earlier
+* For the `AppRole role_id` field, enter the `<generated role id>` you copied earlier
+* For the `AppRole secret_id` field, enter the `<generated secret id>` you copied earlier
 * Further below for the `Path to Auth` field, make sure it says `approle`
 * Further below or the `API Version` field, select `v2` from the dropdown
 * Click on the `Create credential` button.
+
+|===
+| Field | Value
+
+| Name
+| Vault lookup credential
+
+| Credential Type
+| HashiCorp Vault Secret Lookup
+
+| Server URL
+| http://vault:8200
+
+| AppRole role_id
+| <generated role id>
+
+| AppRole secret_id
+| <generated secret id>
+|===
 
 image::aapvaultlookupcred1.png[]
 
 image::aapvaultlookupcred2.png[]
 
-Once you have saved the credential, go back into it, and select `Test` to validate this.
+Once you have saved the credential, go back into it, and select `Test` to validate this. We know we created the AWS credentials in the Vault secret engine, so this test should pass.
+
+* Enter the following details into the `Test external credential` dialog box:
+
+|===
+| Field | Value
+
+| Name of Secret Backend
+| secret
+
+| Path to Secret
+| aws_creds
+
+| Path to Auth
+| approle
+
+| Key Name
+| access_key
+|===
 
 image::aapvaultlookupcred3.png[]
+
+* Click on the `Run` button to test credential lookup. You should see a success message in the output.
+
+image::aapvaultlookupcred4.png[]
 
 You have now configured Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine.
 
