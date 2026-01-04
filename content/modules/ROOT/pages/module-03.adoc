@@ -9,28 +9,26 @@ The follwoing diagram shows the overall scenario that we started in the previous
 image::module2-3scenario.png[]
 
 * Terraform Enterprise
-** Cloning a GitHub repository to your account
+** Import a GitHub repository to your account
 ** Create a Terraform Enterprise Workspace that uses Version Control System (VCS, in this case GitHub) to store the Terraform code
 ** Trigger Terraform infrastructure provisioning and automation by committing changes to the Terraform code in the GitHub repository.
-
-
-
 
 In this challenge you will learn how to bring in HashiCorp Vault Enterprise to your automation pipeline.
 
 [#task1]
-== Clone the GitHub repository to your account
+== Import the GitHub repository to your account
 
-NOTE: You can perform this task in the `TERMINAL` tab from your lab environment (on the vscode terminal prompt), in VS Code directly tab in your lab environment, OR you can do this directly in the GitHub web interface. Whatever is easier for you.
-
+NOTE: To create your own UNLINKED GitHub repository, Use the GitHub.com UI to `IMPORT REPOSITORY` from an existing repository.
 The following repository contains the Terraform code for the infrastructure you will be provisioning.
 
-* https://github.com/ansible-tmm/aap-hashi-lab-2.git
+* https://github.com/ansible-tmm/aap-hashi-lab-2.git  # This is the repository you will be importing to your account
+* While logged in to Github.com with your acccount, the top right corner click on the `+` icon, and select `Import repository`
 
-[source,bash,role=execute]
-----
-git clone https://github.com/ansible-tmm/aap-hashi-lab-2.git
-----
+image::importrepo.png[]
+
+* In the `Repository URL` field, enter the URL of the repository you want to import, in this case: https://github.com/ansible-tmm/aap-hashi-lab-2.git
+* Scroll down and enter a `Repository name` for your new repository, in this case: `aap-hashi-lab-2` (or another name if you prefer)
+* Click on the `Begin import` button to import the repository to your account.
 
 Later in this lab, you will be committing changes to the Terraform code in the GitHub repository, which in turn will trigger the Terraform infrastructure provisioning and automation, and will leverage secrets from Vault Enterprise.
 
