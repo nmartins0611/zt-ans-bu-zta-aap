@@ -316,7 +316,9 @@ image::aapvaultlookupcred4.png[]
 
 You have now configured Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine.
 
-=== Create ANOTHER credential in Ansible Automation Platform to use.  This will be a machine credential to SSH to the inventory RHEL hosts, and it will use the Vault lookup credential we created earlier.
+=== Create ANOTHER credential in Ansible Automation Platform
+
+*This will be a machine credential to SSH to the inventory RHEL hosts, and it will use the Vault lookup credential we created earlier.*
 
 * Open the `Ansible Automation Platform` tab in your lab
 * Click on the `Automation Execution` menu option in the left menu.
@@ -327,17 +329,55 @@ You have now configured Ansible Automation Platform to use the AppRole authentic
 * For the `Credential Type` field, select `Machine`
 * For the `Username` field, enter `ec2-user`
 * Click on the `KEY` icon to the right of the `SSH Private Key` field
+
+|===
+| Field | Value
+
+| Name
+| Vault MACHINE SSH credential
+
+| Credential Type
+| Machine
+
+| Username
+| ec2-user
+
+| SSH Private Key
+| **Click on the `KEY` icon to the right of the `SSH Private Key` field**
+|===
+
+image::aapvaultsshcred1.png[]
+
+
 * On the `Secret Management System` dialig box, fill in the following details:
-** For the `Credential Type` field, select `Vault lookup credential`
+** For the `Credential` field, select `Vault lookup credential` from the dropdown
 ** For the `Name of Secret Backend` field, enter the `secret`
 ** For the `Path to Secret` field, enter `rhel-server/ssh-keys/latest`
 ** For the `Path to Auth` field, enter `approle`
 ** For the `Key Name` field, enter `private_key`
 ** Click on the `Finish` to save this dialog box
-* Click on the `Create credential` button. You will see a summary of the credential you just created
 
-image::aapvaultsshcred1.png[]
+|===
+| Field | Value
+
+| Credential
+| Vault lookup credential
+
+| Name of Secret Backend
+| secret
+
+| Path to Secret
+| rhel-server/ssh-keys/latest
+
+| Path to Auth
+| approle
+
+| Key Name
+| private_key
+|===
 
 image::aapvaultsshcred2.png[]
+
+* Click on the `Create credential` button. You will see a summary of the credential you just created
 
 Don't worry about testing this credential yet, as it will error out until there are some SSH private_keys in the Vault secret engine.
