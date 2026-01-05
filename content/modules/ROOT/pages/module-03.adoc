@@ -193,11 +193,11 @@ image::gitcommit1.png[]
 
 === What will happen now in Terraform Enterprise
 
-Below you will see the plan and apply in Terraform Enterprise, and the resources that will be created.
+* Below you will see the plan and apply in Terraform Enterprise, and the resources that will be created.
 
 image::planapply1.png[]
 
-Please observe the output of the plan and apply.
+* Please observe the output of the plan and apply.
 
 image::planapply2.png[]
 
