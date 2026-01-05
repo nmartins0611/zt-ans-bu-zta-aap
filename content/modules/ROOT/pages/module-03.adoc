@@ -78,11 +78,11 @@ BACK in the `Terraform Enterprise UI`, please do the following:
 * Paste the `Client ID` to the Client ID field.
 * Paset the `Client Secret` to the Client Secret field.
 * Click on the `Connect and Continue` button to save the VCS provider configuration
-* You will be redirected to GitHub.com to authorize the Terraform Enterprise application to access your GitHub account, please authenticate and authorize!.
-* Scroll to the bottom of the screen and click on the `Skip and Finish` button
 
 image::workspace6.png[]
 
+* You will be redirected to GitHub.com to authorize the Terraform Enterprise application to access your GitHub account, please authenticate and authorize!.
+* Scroll to the bottom of the screen and click on the `Skip and Finish` button
 * On the next screen, you will need to choose the repository you want to use for this workspace. For this lab, we will use the repository you imported earlier into your GitHub account
 
 image::workspace6-1.png[]
@@ -103,6 +103,9 @@ image::workspace6-1.png[]
 
 | Terraform Working Directory
 | **TF_templates/AWS/**
+
+| Auto-apply
+| Check both of the `Auto-apply` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.
 |===
 
 * Scroll down the bottom of the screen and click on the `Create` button to save the workspace configuration
