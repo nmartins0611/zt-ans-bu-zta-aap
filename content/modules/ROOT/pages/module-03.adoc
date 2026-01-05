@@ -124,6 +124,7 @@ While you still have GitHub open, navigate to the repository you cloned earlier 
 image::workspace8.png[]
 
 * You will now see that the Terraform Enterprise Workspace is now created successfully.
+* Don't accept the auto detected variables, and click on `Go to Workspace Overview`
 
 image::workspace9.png[]
 
@@ -151,7 +152,7 @@ image::workspace10.png[]
 | Yes
 
 | aap_host
-| Add **YOUR AAP host here**, example: `https://control-guid#-1.apps.ocpvdev01.rhdp.net
+| Add **YOUR AAP host here**, example: `https://control-guid#-1.apps.ocpvdev01.rhdp.net`
 | No
 
 | aap_username
@@ -190,9 +191,31 @@ Now we're all set to trigger the infrastructure provisioning and automation from
 
 image::gitcommit1.png[]
 
-=== What will happen now?
+=== What will happen now in Terraform Enterprise
 
-Plan and Apply in Terraform Enterprise will be triggered, and the infrastructure will be provisioned.
-TFE will then trigger the `WF-Launched by TFE` workflow template
-Terraform Inventory will be synchronized with the new resources
-Ansible Automation Platform will then use the new resources to install Nginx on the new EC2 instances (Getting the SSH private key from Vault Enterprise)
+Below you will see the plan and apply in Terraform Enterprise, and the resources that will be created.
+
+image::planapply1.png[]
+
+Please observe the output of the plan and apply.
+
+image::planapply2.png[]
+
+=== What will happen now in Ansible Automation Platform
+
+* Terraform Enterprise will then trigger the `WF-Launched by TFE` workflow template in Ansible Automation Platform.
+* After a few minutes, you will see the workflow template successfully completed.
+
+image::tfewf1.png[]
+
+* If you look at the job template output, you will see the Nginx installation completed successfully on all the new EC2 instances.
+
+image::tfewf2.png[]
+
+* The Terraform Inventory in Ansible Automation Platform will be synchronized with the new resources.
+* The RHEL ec2 instances will have Ngninx installed and running on them.
+
+== Summary
+The following scenario is what you competed in module 2 and module 3 of this lab.
+
+image::module2-3scenario.png[]
