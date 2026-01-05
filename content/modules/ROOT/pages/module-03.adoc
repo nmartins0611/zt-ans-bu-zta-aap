@@ -117,6 +117,8 @@ While you still have GitHub open, navigate to the repository you cloned earlier 
 * Navigate to the repository `SETTINGS` -> `WEBHOOKS`
 * You will see the Terraform Enterprise webhook configuration, click on the `Edit` button
 * Scroll down to the `SSL verification` section, and check the `Disable` checkbox
+* For the `Which events would you like to trigger this webhook?` section, select `Just the push event.`
+* Scroll down and click on the `Update Webhook` button to save the webhook configuration
 * Authenticate to your GitHub account if prompted
 
 image::workspace8.png[]
