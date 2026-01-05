@@ -429,7 +429,7 @@ image::newwjt.png[]
 
 NOTE: `Prompt on launch` is needed because Terraform Enterprise cannot supply or override Ansible job template variables unless Ansible Automation Platform explicitly allows it. Without `Prompt on launch`, Ansible Automation Platform treats the job template as fully static, and external systems (like Terraform Enterprise) are blocked from injecting runtime values.
 
-=== Create the nodes for the `WF-Launched by TFE` workflow template
+=== Create the nodes for the "WF-Launched by TFE" workflow template
 
 * Select `+ Add step` and then change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE Inventory`, Select `Next` to continue, and then `Finish` to save the node.
 * Click on the elipsis `...` at the end of the node, and then select `+ Add step and link`.
@@ -438,4 +438,4 @@ NOTE: `Prompt on launch` is needed because Terraform Enterprise cannot supply or
 
 image::newwjt2.png[]
 
-Now we're ALMOST SET to trigger the infrastructure provisioning and automation from Terraform Enterprise, later in the next lab section.
+Now we're **ALMOST SET** to trigger the infrastructure provisioning and automation from Terraform Enterprise, later in the next lab section.
