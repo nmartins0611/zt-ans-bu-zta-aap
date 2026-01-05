@@ -88,6 +88,20 @@ image::workspace6-1.png[]
 * For the `Description` field, enter `Using GitHub commits to trigger Plan/Apply Runs`
 * Expand the `Advanced Options` section, and check both of the `Auto-apply` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.
 * For the `Terraform Working Directory` field, enter `TF_templates/AWS/`
+
+|===
+| Field | Value
+
+| Workspace Name
+| TFE-Demo-VCS
+
+| Description
+| Using GitHub commits to trigger Plan/Apply Runs
+
+| Terraform Working Directory
+| TF_templates/AWS/
+|===
+
 * Scroll down the bottom of the screen and click on the `Create` button to save the workspace configuration
 
 image::workspace7.png[]
@@ -97,14 +111,59 @@ While you still have GitHub open, navigate to the repository you cloned earlier 
 * Navigate to the repository `SETTINGS` -> `WEBHOOKS`
 * You will see the Terraform Enterprise webhook configuration, click on the `Edit` button
 * Scroll down to the `SSL verification` section, and check the `Disable` checkbox
+* Authenticate to your GitHub account if prompted
 
 image::workspace8.png[]
 
+* You will now see that the Terraform Enterprise Workspace is now created successfully.
 
+image::workspace9.png[]
 
+* Don't accept the auto detected variables, and click on `Go to Workspace Overview`
+* Click on the `Go to Workspace Overview` link to navigate to the workspace dashboard
+* On this page, click on the `Configure Variables` button
 
+image::workspace10.png[]
 
+* On the next screen, add the following `Terraform variables`:
 
+|===
+| Field | Value | Sensitive
+
+| vault_addr
+| Add your vault host here, example: https://vault-48hl9-1.apps.ocpvdev01.rhdp.net
+| No
+
+| vault_role_id
+| <your vault role id>
+| No
+
+| vault_secret_id
+| <your vault secret id>
+| Yes
+
+| aap_host
+| Add your AAP host here, example: https://control-48hl9-1.apps.ocpvdev01.rhdp.net
+| No
+
+| aap_username
+| admin
+| No
+
+| aap_password
+| ansible123!
+| Yes
+
+| aws_access_key
+| <your aws access key id>
+| No
+
+| aws_secret_key
+| <your aws secret access key>
+| Yes
+|===
+
+image::workspacevars1.png[]
 
 
 
