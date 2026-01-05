@@ -380,4 +380,52 @@ image::aapvaultsshcred2.png[]
 
 * Click on the `Create credential` button. You will see a summary of the credential you just created
 
+image::aapvaultsshcred3.png[]
+
 Don't worry about testing this credential yet, as it will error out until there are some SSH private_keys in the Vault secret engine.
+
+[#task3]
+== Create the Job Template and Workflow template that will be triggered by Terraform Enterprise
+
+In this task we will create a Job Template and Workflow template that will be triggered by Terraform Enterprise.
+
+=== Duplicate the `Install Nginx on RHEL` job template
+
+Click on the `Ansible Automation Platform` tab at the top of lab. (if not already) Expand the `Automation Execution` menu on the left. `Automation Execution` -> `Templates`.
+
+* Now click on `Elipsis` at the end of the `Install Nginx on RHEL` job template and select `Duplicate template`.
+* Edit this duplicated Job Template and make 2 small changes
+** Change the `Name` field to `Install Nginx on RHEL - TFE-VCS`
+** Change the `Credentials` field, remove existing credential, and add the `Vault MACHINE SSH credential` we created earlier
+* Click on the `Save job template` button to save the job template
+
+image::updatedjt.png[]
+
+=== Create a new `Worflow Job Template`
+
+* Click on the `+ Create workflow job template` button
+* Fill out the following fields:
+|===
+| Field | Value
+
+| Name
+| WF-Launched by TFE
+
+| Organization
+| **Default**
+|===
+
+* Click on the `Create workflow job template` button to save the workflow job template
+
+image::newwjt.png[]
+
+=== Create the nodes for the `WF-Launched by TFE` workflow template
+
+* Select `+ Add step` and then change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE Inventory`, Select `Next` to continue, and then `Finish` to save the node.
+* Click on the elipsis `...` at the end of the node, and then select `+ Add step and link`.
+* For this next step change the `Node Type` to `Job Template` and select the `**Install Nginx on RHEL - TFE-VCS**` job template you created earlier. Select `Next` then `Finish` to save this second step.
+* Click on the `Save` button to save the workflow template.
+
+image::newwjt2.png[]
+
+Now we're all set to trigger the infrastructure provisioning and automation from Terraform Enterprise, later in the next lab section.

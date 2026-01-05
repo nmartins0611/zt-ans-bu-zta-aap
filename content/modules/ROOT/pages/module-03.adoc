@@ -170,4 +170,21 @@ image::workspacevars1.png[]
 [#task3]
 == Trigger infrastructure provisioning and automation
 
+Now we're all set to trigger the infrastructure provisioning and automation from Terraform Enterprise by committing changes to the Terraform code in the GitHub repository, later in the next lab section.
 
+=== Commit changes to the Terraform code in the GitHub repository
+
+* Navigate to the repository you cloned earlier into your GitHub account
+* Click on the `Code` tab, and go to the `TF_templates/AWS/` folder
+* Select the `terraform.tfvars` file, and on the right click on the `Pencil` and select `In place`
+* Chance the `instance_count = 0` to `instance_count = 2`
+* Click on the `Commit changes` button to commit the changes to the repository, then click `Commit` directly to the main branch
+
+image::gitcommit1.png[]
+
+=== What will happen now?
+
+Plan and Apply in Terraform Enterprise will be triggered, and the infrastructure will be provisioned.
+TFE will then trigger the `WF-Launched by TFE` workflow template
+Terraform Inventory will be synchronized with the new resources
+Ansible Automation Platform will then use the new resources to install Nginx on the new EC2 instances (Getting the SSH private key from Vault Enterprise)

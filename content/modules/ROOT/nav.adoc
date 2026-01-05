@@ -10,6 +10,7 @@
 * xref:module-02.adoc[2. Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 1]
 ** xref:module-02.adoc#task1[Configure the Vault Enterprise Secret Engine]
 ** xref:module-02.adoc#task2[Configure Ansible Automation Platform to use the AppRole authentication method]
+** xref:module-02.adoc#task3[Create the Job Template and Workflow template that will be triggered by Terraform Enterprise]
 
 * xref:module-03.adoc[3. Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 2]
 ** xref:module-03.adoc#task1[Import the GitHub repository to your account]
