@@ -1,4 +1,4 @@
-* xref:module-01.adoc[1. Terraform Enterprise & Red Hat Ansible Automation Platform]
+* xref:module-01.adoc[Module-1. Terraform Enterprise & Red Hat Ansible Automation Platform]
 ** xref:module-01.adoc#task1[Create the Terraform Enterprise API token]
 ** xref:module-01.adoc#task2[Create an Terraform Enterprise Workspace]
 ** xref:module-01.adoc#task3[Create a Terraform Enterprise credential type]
@@ -7,17 +7,17 @@
 ** xref:module-01.adoc#task6[Create a Workflow Template to kick off a Terraform Enterprise PLAN and APPLY operation]
 ** xref:module-01.adoc#task7[Create the Terraform Enterprise DESTROY Workflow workflow template, and its nodes]
 
-* xref:module-02.adoc[2. Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 1]
+* xref:module-02.adoc[Module-2. Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 1]
 ** xref:module-02.adoc#task1[Configure the Vault Enterprise Secret Engine]
 ** xref:module-02.adoc#task2[Configure Ansible Automation Platform to use the AppRole authentication method]
 ** xref:module-02.adoc#task3[Create the Job Template and Workflow template that will be triggered by Terraform Enterprise]
 
-* xref:module-03.adoc[3. Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 2]
+* xref:module-03.adoc[Module-3. Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 2]
 ** xref:module-03.adoc#task1[Import the GitHub repository to your account]
 ** xref:module-03.adoc#task2[Set up the Terraform Enterprise Workspace]
 ** xref:module-03.adoc#task3[Trigger infrastructure provisioning and automation]
 
-* xref:module-04.adoc[4. How to create a HashiCorp-enabled Execution Environment]
+* xref:module-04.adoc[Module-4. How to create a HashiCorp-enabled Execution Environment]
 ** xref:module-04.adoc#task1[What is an Execution Environment?]
 ** xref:module-04.adoc#task2[Introduction]
 ** xref:module-04.adoc#task3[Execution Environments]
