@@ -405,6 +405,17 @@ Click on the `Ansible Automation Platform` tab at the top of lab. (if not alread
 ** Change the `Credentials` field:
 *** REMOVE the existing SSH Credential
 *** ADD the `Vault MACHINE SSH credential` we created earlier
+
+|===
+| Field | Value
+
+| Name
+| **Install Nginx on RHEL - TFE-VCS**
+
+| Credential
+| **Vault MACHINE SSH credential**
+|===
+
 * Click on the `Save job template` button to save the job template
 
 image::updatedjt.png[]
