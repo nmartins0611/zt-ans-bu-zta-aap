@@ -15,7 +15,7 @@ There are a number of prerequisites that you will need to complete before you ca
 ** Cloning a GitHub repository to your account
 ** Create a Terraform Enterprise Workspace that used Version Control System (VCS) to store the Terraform code
 
-Part 1 of this lab will focus on configuring the Vault Enterprise Secret Engine.
+Part 1 of this lab module will focus on configuring the Vault Enterprise Secret Engine.
 
 [#task1]
 == Configure the Vault Enterprise Secret Engine
@@ -37,6 +37,9 @@ image::vaultlogin.png[]
 image::vaultengine1.png[]
 
 * Select the `KV` secrets engine from the `Generic` section.
+
+image::vaultkv.png[]
+
 Enter the following details:
 
 |===

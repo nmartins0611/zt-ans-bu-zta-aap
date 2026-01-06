@@ -432,11 +432,11 @@ image::tfeapplyinventory.png[]
 * From the Terraform Enterprise console, in the job run output you will see the resources that were created by Terraform.
 * From here get the public IP address (or DNS name) of the EC2 instance that was created by Terraform. 
 * You can also get the public IP address from the Ansible Automation Platform -> Inventory -> Terraform Inventory -> Hosts. Click on the host and then click on the `Details` tab.
-* Use `http` as the protocol.
 
 image::tfeapplyip.png[]
 
-* Open a browser tab and navigate to the public IP address of the EC2 instance that was created by Terraform. You will see the following page:
+* Open a browser tab and navigate to the public IP address of the EC2 instance that was created by Terraform.
+* Use `http` as the protocol. You will see the following page:
 
 image::rhelnginx.png[]
 
