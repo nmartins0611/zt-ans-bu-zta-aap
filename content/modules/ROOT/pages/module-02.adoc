@@ -296,7 +296,7 @@ image::aapvaultlookupcred1.png[]
 
 image::aapvaultlookupcred2.png[]
 
-Once you have saved the credential, go back into it, and select `Test` to validate this. **We know we created the AWS credentials in the Vault secret engine earlier, so this test should pass.**
+**Once you have saved the credential, go back into it**, and select `Test` to validate this. **We know we created the AWS credentials in the Vault secret engine earlier, so this test should pass.**
 
 * Enter the following details into the `Test external credential` dialog box:
 
@@ -350,7 +350,7 @@ You have now configured Ansible Automation Platform to use the AppRole authentic
 | Username
 | ec2-user
 
-| SSH Private Key
+| **SSH Private Key**
 | **Click on the `KEY` icon to the right of the `SSH Private Key` field**
 |===
 
@@ -388,7 +388,7 @@ image::aapvaultsshcred2.png[]
 
 * Click on the `Create credential` button. You will see a summary of the credential you just created
 
-Don't worry about testing this credential yet, as it will error out until there are some SSH private_keys in the Vault secret engine.
+NOTE: Don't worry about testing this credential yet, as it will error out until there are some SSH private_keys in the Vault secret engine.
 
 [#task3]
 == Create the Job Template and Workflow template that will be triggered by Terraform Enterprise
