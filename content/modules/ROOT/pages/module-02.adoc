@@ -431,10 +431,10 @@ image::updatedjt.png[]
 | **WF-Launched by TFE**   (Please use that name exactly)
 
 | Organization
-| **Default**
+| **[red]#Default#**
 
 | **Inventory**
-| Ckeck the **Prompt on launch** checkbox
+| Ckeck the **[red]#Prompt on launch#** checkbox
 |===
 
 * Click on the `Create workflow job template` button to save the workflow job template
