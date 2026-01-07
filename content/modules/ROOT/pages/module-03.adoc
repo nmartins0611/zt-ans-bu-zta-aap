@@ -182,7 +182,7 @@ image::workspacevars1.png[]
 [#task3]
 == Trigger infrastructure provisioning and automation
 
-Now we're all set to trigger the infrastructure provisioning and automation from Terraform Enterprise by committing changes to the Terraform code in the GitHub repository, later in the next lab section.
+Now we're all set to trigger the infrastructure provisioning and automation from Terraform Enterprise by committing changes to the Terraform code in the GitHub repository.
 
 === Perform a quick test run in the Terraform Enterprise Workspace
 
@@ -221,7 +221,10 @@ image::planapply2.png[]
 
 === What will happen now in Ansible Automation Platform
 
-* Terraform Enterprise will then trigger the `WF-Launched by TFE` workflow template in Ansible Automation Platform.
+* Terraform Enterprise will then trigger the `WF-Launched by TFE` workflow template in Ansible Automation Platform. You will see the workflow in a `Running` state.
+
+image::tfewf0.png[]
+
 * After a few minutes, you will see the workflow template successfully completed.
 
 image::tfewf1.png[]
