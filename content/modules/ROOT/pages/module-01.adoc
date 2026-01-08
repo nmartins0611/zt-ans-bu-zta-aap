@@ -367,10 +367,11 @@ image::templateapply1.png[]
 
 === Create the `WF-Terraform Enterprise APPLY` workflow template, and it's nodes
 
-Click on the `Ansible Automation Platform` tab at the top of lab.
+* Click on the `Ansible Automation Platform` tab at the top of lab.
 (if not already) Expand the `Automation Execution` menu on the left.
 `Automation Execution` -> `Templates` -> `Create Job Template`.
-Now click on `+ Create Workflow job template`
+
+* Now click on `+ Create Workflow job template`
 
 Fill out the following fields:
 |===
@@ -394,7 +395,7 @@ image::wftemplateapply1.png[]
 image::wftemplateapply2.png[]
 
 * Click on the elipsis `...` at the end of the node, and then select `+ Add step and link`.
-* For this next step change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE Inventory`. Select `Next` then `Finish` to save this second step. This will synchronize the inventory source you created earlier.
+* For this next step change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`. Select `Next` then `Finish` to save this second step. This will synchronize the inventory source you created earlier.
 
 image::wftemplateapply3.png[]
 
@@ -421,11 +422,6 @@ This showing that Ansible Automation Platform was able to trigger the Terraform 
 
 image::tfeapply1.png[]
 
-=== Inspect the Terraform Inventory in Ansible Automation Platform
-Select the `Terraform Inventory`, and then click on the `Hosts` menu. Notice that there is a new host that was created by Terraform and is now part of your Ansible inventory.
-
-image::tfeapplyinventory.png[]
-
 === Validate the Nginx installation
 
 * From the Terraform Enterprise console, in the job run output you will see the resources that were created by Terraform.
@@ -439,18 +435,28 @@ image::tfeapplyip.png[]
 
 image::rhelnginx.png[]
 
+=== Inspect the Terraform Inventory in Ansible Automation Platform
+
+* Switch back to the Ansible Automation Platform browser tab. 
+* Select the `Terraform Inventory`, and then click on the `Hosts` menu. Notice that there is a new host that was created by Terraform and is now part of your Ansible inventory, and hence can be used for further automation operations.
+
+image::tfeapplyinventory.png[]
+
 [#task7]
 == Create the `WF-Terraform Enterprise DESTROY` workflow template, and its nodes
 
 In this task we will create a Workflow template to trigger a `Terraform Enterprise DESTROY` operation to destroy the previously created resources also followed up by and inventory sync to udpate the resources from the Ansible inventory.
 
+* Click on the `Ansible Automation Platform` tab at the top of lab.
+
 === Create the `Terraform Enterprise DESTROY` job template
 
+
 Start by creating the another job template to trigger a `Terraform Entperprise destroy operation` to destroy the created resources.
-Click on the `Ansible Automation Platform` tab at the top of lab. (if not already)
-Expand the `Automation Execution` menu on the left.
-`Automation Execution` -> `Templates`.
-Now click on `+ Create Template` then scroll down and click  `Create job template`
+
+* Click on the `Ansible Automation Platform` tab at the top of lab. (if not already)
+* Expand the `Automation Execution` menu on the left. `Automation Execution` -> `Templates`.
+* Now click on `+ Create Template` then click  `Create job template`
 
 Fill out the following fields:
 
@@ -480,10 +486,12 @@ Scroll to the bottom Click the blue `Create Job Template` button to **save** the
 
 === Create the `Terraform Enterprise DESTROY Workflow` workflow template, and it's nodes
 
-Click on the `Ansible Automation Platform` tab at the top of lab.
+* Click on the `Ansible Automation Platform` tab at the top of lab.
+
 (if not already) Expand the `Automation Execution` menu on the left.
-`Automation Execution` -> `Templates`.
-Now click on `+ Create Workflow job template`
+
+* `Automation Execution` -> `Templates` -> `+Create template`.
+* Now click on `+ Create Workflow job template`
 
 Fill out the following fields:
 |===
@@ -503,7 +511,7 @@ Scroll to the bottom Click the blue `Create Workflow Job Template` button to **s
 * Select `+ Add step` and then select the `Terraform Enterprise DESTROY` job template you created earlier, Select `Next` to continue, and then `Finish` to save the node.
 
 * Click on the elipsis `...` at the end of the node, and then select `+ Add step and link`.
-* For this next step change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE Inventory`. Select `Next` then `Finish` to save this second step.
+* For this next step change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`. Select `Next` then `Finish` to save this second step.
 
 Click on the `Save` button to save the workflow template.
 
