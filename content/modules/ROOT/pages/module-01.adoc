@@ -31,6 +31,10 @@ image::module1scenario.png[]
 
 You will need to create an API token in Terraform Enterprise to use in Ansible Automation Platform to authenticate against Terraform Enterprise.
 
+**This is the top menu of the lab. You can use this to pop out Ansible Automation Platform and Terraform Enterprise, and Vault Enterprise in new browser tabs.**
+
+image::labtopmenu.png[]
+
 Login to Terraform Enterprise using the following *Login Credentials:*  
 
 * `User:  admin`
