@@ -350,7 +350,7 @@ Fill out the following fields:
 | Terraform Enterprise credential
 |===
 
-ADD the following to the `Source variables` section
+ADD the following to the `Extra variables` section
 [source,yaml,role=execute]
 ----
 ---
@@ -369,7 +369,7 @@ image::templateapply1.png[]
 
 Click on the `Ansible Automation Platform` tab at the top of lab.
 (if not already) Expand the `Automation Execution` menu on the left.
-`Automation Execution` -> `Templates`.
+`Automation Execution` -> `Templates` -> `Create Job Template`.
 Now click on `+ Create Workflow job template`
 
 Fill out the following fields:
@@ -414,7 +414,10 @@ Launch the `WF-Terraform Enterprise APPLY` workflow template by selecting it and
 
 image::wftemplateapply5.png[]
 
-* Quickly switch to the `Terraform Enterprise` tab in your lab and observe the `plan` and then the `apply` being performed. Alspo notice the resouce count in the Terraform Enterprise console.
+* Quickly switch to the `Terraform Enterprise` tab in your lab and observe the `plan` and then the `apply` being performed. 
+* Click on the `Run` menu option on the left. You will see the `plan` and then the `apply` being performed. Also notice the resouce count in the Terraform Enterprise console.
+
+This showing that Ansible Automation Platform was able to trigger the Terraform Enterprise `plan` and `apply` operations successfully.
 
 image::tfeapply1.png[]
 
