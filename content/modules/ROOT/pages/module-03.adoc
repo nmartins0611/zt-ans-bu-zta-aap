@@ -86,7 +86,7 @@ image::workspace6.png[]
 
 * You will be redirected to GitHub.com to authorize the Terraform Enterprise application to access your GitHub account, please `authenticate and authorize`.
 * Scroll to the bottom of the screen and click on the `Skip and Finish` button
-* On the next screen, you will need to choose the repository you want to use for this workspace. For this lab, we will ***use the repository you imported earlier into your GitHub account**
+* On the next screen, you will need to choose the repository you want to use for this workspace. For this lab, we will ***use the repository you imported earlier into your GitHub account** We had named it `aap-hashi-lab-2` earlier (Unless you chose to name it something else).
 
 image::workspace6-1.png[]
 
