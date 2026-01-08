@@ -225,6 +225,7 @@ image::planapply2.png[]
 * **Terraform Enterprise created the SSH Keys for the RHEL ec2 instances in the Vault Enterprise secret engine.**
 
 If you'd like to see the SSH private key that was created, you can navigate to the Vault Enterprise UI
+
 * Click on the `Secrets Engine` menu on the left.
 * Select the `secret` secret engine
 * Navigate to the `rhel-server/ssh-keys/latest` path.
