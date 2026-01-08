@@ -222,6 +222,17 @@ image::planapply1.png[]
 
 image::planapply2.png[]
 
+* **Terraform Enterprise created the SSH Keys for the RHEL ec2 instances in the Vault Enterprise secret engine.**
+
+If you'd like to see the SSH private key that was created, you can navigate to the Vault Enterprise UI
+* Click on the `Secrets Engine` menu on the left.
+* Select the `secret` secret engine
+* Navigate to the `rhel-server/ssh-keys/latest` path.
+* Click on the `Secret` menu item.
+* You will see the SSH private key.
+
+image::vaultsshkey.png[]
+
 === What will happen now in Ansible Automation Platform
 
 * Terraform Enterprise will then trigger the `WF-Launched by TFE` workflow template in Ansible Automation Platform. You will see the workflow in a `Running` state.
@@ -233,12 +244,13 @@ image::tfewf0.png[]
 image::tfewf1.png[]
 
 * If you look at the job template output, you will see the Nginx installation completed successfully on all the new EC2 instances.
+* **Ansible Automation Platform retrieved the SSH private key for the RHEL ec2 instances, from Vault Enterprise, to allow Ansible to connect to the instances and install Nginx.**
 
 image::tfewf2.png[]
 
 * The Terraform Inventory in Ansible Automation Platform will be synchronized with the new resources.
 * The RHEL ec2 instances will have Nginx installed and running on them.
-* Feel free to navigate to the public IP address of the EC2 instances and verify the Nginx installation.
+** Feel free to navigate to the public IP address of the EC2 instances and verify the Nginx installation.
 
 == Summary
 The following scenario is what you competed in module 2 and module 3 of this lab. 
