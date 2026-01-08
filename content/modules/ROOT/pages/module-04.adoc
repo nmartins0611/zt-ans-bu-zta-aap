@@ -25,8 +25,6 @@ The tool needed to create an `execution environment` is called `ansible-builder`
 [#task2]
 == Introduction.
 
-Estimated time to complete: _5 minutes_
-
 In this challenge you will learn:
 
 * How to create the necessary configuration files needed to create an execution environment

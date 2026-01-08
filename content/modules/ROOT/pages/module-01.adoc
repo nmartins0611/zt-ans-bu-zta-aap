@@ -11,8 +11,6 @@ Terraform (Enterprise and HCP Terraform) can be a simple way to deploy infrastru
 
 image::aaptfmain.png[]
 
-Estimated time to complete: _45 minutes_
-
 In the following challenge tasks you will use Ansible Automation Platform and Terraform Enterprise together.
 Centrally from Ansible Automation Platform you will trigger an Ansible Workflow that will use Terraform to create cloud Infrastructure, and then synchronize the inventory back into Ansible Automation Platform, and go on to perform other configuration and orchestration tasks.
 
