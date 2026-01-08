@@ -4,15 +4,13 @@ Welcome to {lab_name}
 
 *Ansible Automation Platform* has the abiity to automate and extend tools that are currently used in organizations. This is important as it means that you can integrate technologies that you are already using and have invested time and skills in. Using Ansible Automation Platform as a central automation platform to use these tools can extend their scope and improve their usage in your team. Use Ansible Automation Platform as a force multiplier to get more value from tools you already have throughout your organization!
 
-image::main.png
+image::main.png[]
 
 Ansible Automation Platform and HashiCorp Terraform Enterprise (and Vault Enterprise) are great tools that can be used together to automate the entire infrastructure lifecycle, from build to deploy, to manage, and to retire infrastructure.
 
 Terraform excels at day-zero cloud infrastructure provisioning (IaC), building consistent fleets and golden images. However, for day-one configuration and application deployment, Ansible Automation Platform is more suitable. While both tools have overlapping capabilities, it's simpler to view Terraform for initial provisioning and Ansible for ongoing configuration and orchestration, aligning tools with team responsibilities (e.g., Cloud Ops for build, App Teams for deployment). Seamless transition between day-zero and day-one requires robust inventory synchronization and data exchange between Terraform Enterprise (HCP Terraform also (called terraform cloud)) and Ansible Automation Platform.
 
 Beyond deployment, Ansible Automation Platform manages day-two operations like health checks, incident response, patching, and optimization. When decommissioning infrastructure, Terraform Enterprise efficiently handles resources it provisioned, but Ansible Automation Platform is crucial for cleaning up other related components not owned by Terraform (e.g., load balancers, security groups). This holistic view across the hybrid cloud infrastructure lifecycle, from provisioning to retirement, necessitates strong integration and communication between Terraform Enterprise and Ansible Automation Platform.
-
-image::aaptfmain.png
 
 == Lab structure
 

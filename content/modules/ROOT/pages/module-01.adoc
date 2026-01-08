@@ -1,7 +1,6 @@
 :doctype: book
 
 = *Red Hat Ansible Automation Platform and HashiCorp Terraform Enterprise*
-image::main.png[]
 
 * Welcome to the `Terraform Enterprise & Red Hat Ansible Automation Platform` lab.
 
