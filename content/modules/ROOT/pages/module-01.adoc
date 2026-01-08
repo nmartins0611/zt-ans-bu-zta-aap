@@ -40,11 +40,10 @@ Login to Terraform Enterprise using the following *Login Credentials:*
 * `User:  admin`
 * `Password:  ansible123!`
 
-* Select the organization `rhdp-tf-org`.
-* In the left menu, click on `Settings` to expand the organzation settings options, and then click on `API Tokens`.
-* Click on `API Tokens` and then click on `Create Token`.
-* select the `User Tokens` menu option, and then click on `account settings page` link.
-* Click on the `Create an API token` buttom.
+* Select the user icon in the top left.
+* Select the `Account Settings`.
+* In the left menu, click on `Tokens`.
+* Click on the `Create an API token` button in the top right.
 * In the `Description` field enter `Terraform Enterprise API Token for Ansible Automation Platform`.
 * In the `Expiration` field keep the default value of `30 days`.
 
@@ -61,18 +60,21 @@ Login to Terraform Enterprise using the following *Login Credentials:*
 * Click on `Generate Token`, and then click on the `Copy to clipboard` button.
 * Copy the API token to your clipboard, save it somewhere where you can easily find it.
 
+image::tfetoken0.png[]
+
 image::tfetoken.png[]
 
 image::tfetoken1.png[]
 
 [#task2]
-== Create an Terraform Enterprise Workspace
+== Create a Terraform Enterprise Workspace
 
 This task is done in Terraform Enterprise.
 
 === Create the Terraform Enterprise Workspace
-Go back to the main menu by clicking on the Terraform Enterprise logo in the top left corner. 
+Go back to the main menu by clicking on the `Terraform Enterprise logo` in the top left corner. 
 
+* Select the organization `rhdp-tf-org`.
 * In the left menu, click on `Workspaces`
 * Click on `Create a workspace`.  Select `API-Driven Workflow` as the type of workspace.
 
