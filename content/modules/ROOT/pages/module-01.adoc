@@ -239,7 +239,7 @@ NOTE: The keys are encrypted so no one, not even an administrator, can see the k
 | Terraform Enterprise credential type
 
 | Terraform Enterprise Hostname
-| https://tfe-https-${guid}.${domain}    **<Your terraform hostname url>** #This will look like: https://tfe-https-12345-a.apps.#######.rhdp.net
+| https://tfe-https-{guid}.{domain}    **<Your terraform hostname url>** #This will look like: https://tfe-https-12345-a.apps.#######.rhdp.net
 
 | Organization (**Terraform Organization**)
 | **rhdp-tf-org**

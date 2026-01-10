@@ -287,7 +287,7 @@ Create a new credential in Ansible Automation Platform to use the AppRole authen
 | HashiCorp Vault Secret Lookup
 
 | Server URL
-| https://vault-${guid}.${domain}    **YOUR VAULT host here**, example: `https://vault-guid#-1.apps.ocpvdev01.rhdp.net`
+| https://vault-{guid}.{domain}    **YOUR VAULT host here**, example: `https://vault-guid#-1.apps.ocpvdev01.rhdp.net`
 
 | AppRole role_id
 | <generated role id>
