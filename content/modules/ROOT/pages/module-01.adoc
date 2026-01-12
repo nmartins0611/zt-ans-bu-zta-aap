@@ -445,7 +445,7 @@ image::tfeapplyip.png[link=self, window=blank, width=100%]
 
 * Open a browser tab and navigate to the public IP address of the EC2 instance that was created by Terraform.
 * Use `http` as the protocol.
-* If prompted that the site doesn't support a secuure connection, please click on the `Continue to site` button. 
+* If prompted that the site doesn't support a secure connection, please click on the `Continue to site` button. 
 
 You will see the following page:
 

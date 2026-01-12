@@ -226,8 +226,10 @@ NOTE: In a real-world scenario, you would commit changes to the Terraform code i
 
 image::gitcommit1.png[link=self, window=blank, width=100%]
 
-=== What will happen now in Terraform Enterprise
+=== What will happen now in Terraform Enterprise and Vault Enterprise
 
+* Navigate to the Terraform Enterprise UI, and click on the `Runs` menu option on the left. (if you're not already there).
+* It may take a few moments to see the new run appear in the list.
 * Below you will see the plan and apply in Terraform Enterprise, and the resources that will be created.
 
 image::planapply1.png[link=self, window=blank, width=100%]
@@ -238,13 +240,13 @@ image::planapply2.png[link=self, window=blank, width=100%]
 
 * **Terraform Enterprise created the SSH Keys for the RHEL ec2 instances in the Vault Enterprise secret engine.**
 
-If you'd like to see the SSH private key that was created, you can navigate to the Vault Enterprise UI
+If you'd like to see the SSH private key that was created, you can navigate to the `Vault Enterprise UI`
 
 * Click on the `Secrets Engine` menu on the left.
 * Select the `secret` secret engine
 * Navigate to the `rhel-server/ssh-keys/latest` path.
 * Click on the `Secret` menu item.
-* You will see the SSH private key.
+* You will see the SSH key details.
 
 image::vaultsshkey.png[link=self, window=blank, width=100%]
 
@@ -259,13 +261,20 @@ image::tfewf0.png[link=self, window=blank, width=100%]
 image::tfewf1.png[link=self, window=blank, width=100%]
 
 * If you look at the job template output, you will see the Nginx installation completed successfully on all the new EC2 instances.
-* **Ansible Automation Platform retrieved the SSH private key for the RHEL ec2 instances, from Vault Enterprise, to allow Ansible to connect to the instances and install Nginx.**
+* **Ansible Automation Platform retrieved the SSH private key for the RHEL ec2 instances, from Vault Enterprise, to allow Ansible to connect to the instances and install Nginx and setup the Insurance company's website.**
 
 image::tfewf2.png[link=self, window=blank, width=100%]
 
 * The Terraform Inventory in Ansible Automation Platform will be synchronized with the new resources.
 * The RHEL ec2 instances will have Nginx installed and running on them.
-** Feel free to navigate to the public IP address of the EC2 instances and verify the Nginx installation.
+** Feel free to navigate to the `public IP address` or `DNS name` of the EC2 instances and verify the Nginx installation. You can get the public IP address or DNS names from the Terraform Enterprise UI, or from the Ansible Automation Platform UI.
+* Please use the `http` protocol to access the website.
+* If prompted that the site doesn't support a secure connection, please click on the `Continue to site` button. 
+
+You will see the following page:
+
+image::rhelnginx.png[link=self, window=blank, width=100%]
+
 
 == Summary
 The following scenario is what you competed in module 2 and module 3 of this lab. 
