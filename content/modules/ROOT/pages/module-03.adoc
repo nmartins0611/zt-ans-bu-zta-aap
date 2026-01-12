@@ -63,7 +63,6 @@ image::workspace2.png[link=self, window=blank, width=100%]
 Now you will need to configure the Workspace to use the GitHub repository you cloned earlier into your GitHub account.
 
 * Select the `GitHub` option from the dropdown, and then click on the `GitHub.com` button.
-* For the `VCS Provider` field, select `GitHub.com`
 * You will now be launced to step 2 (`Set up provider`), which is to setup the GitHub repository connection
 * Click the `Register a new OAuth Application` link to register a new OAuth application with GitHub.
 
@@ -121,7 +120,7 @@ image::workspace6-1.png[link=self, window=blank, width=100%]
 | Check both of the `Auto-apply` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.
 |===
 
-* Scroll down the bottom of the screen and click on the `Create` button to save the workspace configuration
+* Scroll down
 
 image::workspace7.png[link=self, window=blank, width=100%]
 
@@ -140,12 +139,11 @@ While you still have the GitHub UI open, navigate to the repository you cloned e
 image::workspace8.png[link=self, window=blank, width=100%]
 
 * In Terraform Enterprise UI, You will now see that the Terraform Enterprise Workspace is now created successfully.
-* DON'T accept the auto detected variables, and click on `Go to Workspace Overview`
+* DO NOT accept the auto detected variables
+* Click on the `Go to Workspace Overview` link to navigate to the workspace dashboard
 
 image::workspace9.png[link=self, window=blank, width=100%]
 
-* DON'T accept the auto detected variables, and click on `Go to Workspace Overview`
-* Click on the `Go to Workspace Overview` link to navigate to the workspace dashboard
 * On this page, click on the `Configure Variables` button
 
 image::workspace10.png[link=self, window=blank, width=100%]
@@ -156,7 +154,8 @@ image::workspace10.png[link=self, window=blank, width=100%]
 | Key | Value | Sensitive
 
 | aap_host
-| https://control-{guid}.{domain}    **YOUR AAP host here**, example: `https://control-guid#-1.apps.ocpvdev01.rhdp.net`
+| https://control-{guid}.{domain} +
+**YOUR AAP hostname url will look like:** https://control-guid#-1.apps.ocpvdev01.rhdp.net
 | No
 
 | aap_username
@@ -176,7 +175,8 @@ image::workspace10.png[link=self, window=blank, width=100%]
 | Yes
 
 | vault_addr
-| https://vault-{guid}.{domain}    **YOUR VAULT host here**, example: `https://vault-guid#-1.apps.ocpvdev01.rhdp.net`
+| https://vault-{guid}.{domain} +
+**YOUR VAULT hostname url will look like:** https://vault-guid#-1.apps.ocpvdev01.rhdp.net
 | No
 
 | vault_role_id

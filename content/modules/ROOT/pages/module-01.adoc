@@ -222,7 +222,7 @@ NOTE: The keys are encrypted so no one, not even an administrator, can see the k
 
 . Click on `+ Create credential`
 . For the `Name` enter `Terraform Enterprise credential`
-. Expand the `Credential Type` drop-down, and select `Terraform Enterprise credential type`
+. Expand the `Credential Type` drop-down, and select `Terraform Enterprise credential type` (**Start typing the name, OR click on the `Load more` button to see the credential type**)
 . In the `Terraform Enterprise Hostname` section enter `**<Your terraform hostname url>**`
 . In the `Organization` (**Terraform Organization**) section enter `**rhdp-tf-org**`
 . In the `Workspace` section enter `**TFE-Demo**`
@@ -236,10 +236,11 @@ NOTE: The keys are encrypted so no one, not even an administrator, can see the k
 | Terraform Enterprise credential
 
 | Credential Type
-| Terraform Enterprise credential type
+| Terraform Enterprise credential type (**Start typing the name, OR click on the `Load more` button to see the credential type**)
 
 | Terraform Enterprise Hostname
-| https://tfe-https-{guid}.{domain}    **<Your terraform hostname url>** #This will look like: https://tfe-https-12345-a.apps.#######.rhdp.net
+| https://tfe-https-{guid}.{domain} +
+**Your terraform hostname url will look like:** https://tfe-https-12345-a.apps.#######.rhdp.net
 
 | Organization (**Terraform Organization**)
 | **rhdp-tf-org**
@@ -291,8 +292,8 @@ In `Ansible Automation Platform`, create the Terraform inventory source
 | Verbosity
 | 1 (Info)
 
-| Overwrite
-| Check
+| **Overwrite**
+| **Check**
 
 | Update on launch
 | Check
@@ -335,7 +336,7 @@ NOTE: Please note that you can also do this in Azure and Google Cloud in the sam
 Click on the `Ansible Automation Platform` tab at the top of lab.
 (if not already) Expand the `Automation Execution` menu on the left.
 
-`Automation Execution` -> `Templates` -> `+ Create job template`, then click on `Create job template`
+`Automation Execution` -> `Templates` -> `+ Create template`, then click on `Create job template`
 
 Fill out the following fields - **Table below:**
 
@@ -453,7 +454,8 @@ image::rhelnginx.png[link=self, window=blank, width=100%]
 
 === Inspect the Terraform Inventory in Ansible Automation Platform
 
-* Switch back to the Ansible Automation Platform browser tab. 
+* Switch back to the Ansible Automation Platform browser tab.
+* Expand the `Automation Execution` menu on the left. `Automation Execution` -> `Infrastructure` -> `Inventories`.
 * Select the `Terraform Inventory`, and then click on the `Hosts` menu. Notice that there is a new host that was created by Terraform and is now part of your Ansible inventory, and hence can be used for further automation operations.
 
 image::tfeapplyinventory.png[link=self, window=blank, width=100%]

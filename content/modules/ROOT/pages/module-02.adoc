@@ -293,7 +293,8 @@ Create a new credential in Ansible Automation Platform to use the AppRole authen
 | HashiCorp Vault Secret Lookup
 
 | Server URL
-| https://vault-{guid}.{domain}    **YOUR VAULT host here**, example: `https://vault-guid#-1.apps.ocpvdev01.rhdp.net`
+| https://vault-{guid}.{domain} +
+**YOUR VAULT hostname url will look like:** https://vault-guid#-1.apps.ocpvdev01.rhdp.net
 
 | AppRole role_id
 | <generated role id>
@@ -374,7 +375,7 @@ You have now configured Ansible Automation Platform to use the AppRole authentic
 image::aapvaultsshcred1.png[link=self, window=blank, width=100%]
 
 
-* On the `Secret Management System` dialig box, fill in the following details:
+* On the `Secret Management System` dialog box, fill in the following details:
 ** For the `Credential` field, select `Vault lookup credential` from the dropdown
 ** For the `Name of Secret Backend` field, enter the `secret`
 ** For the `Path to Secret` field, enter `rhel-server/ssh-keys/latest`
