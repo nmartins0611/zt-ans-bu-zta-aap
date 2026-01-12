@@ -74,7 +74,7 @@ image::workspace3.png[link=self, window=blank, width=100%]
 
 image::workspace4.png[link=self, window=blank, width=100%]
 
-* The applciation will now be registered, and you will need to click the `Generate a new client secret` button to generate a new client secret. 
+* The application will now be registered, and you will need to click the `Generate a new client secret` button to generate a new client secret. 
 * You will be prompted to login to your GitHub account, please do so.
 * Copy both the `Client ID` and `Client Secret`, you will need these momentarily.
 * Scroll down and click on `Update application` button to save the application configuration

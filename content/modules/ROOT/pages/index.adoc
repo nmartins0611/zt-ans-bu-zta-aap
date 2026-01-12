@@ -6,7 +6,7 @@ Welcome to {lab_name}
 
 image::main.png[link=self, window=blank, width=100%]
 
-Ansible Automation Platform and HashiCorp Terraform Enterprise (and Vault Enterprise) are great tools that can be used together to automate the entire infrastructure lifecycle, from build to deploy, to manage, and to retire infrastructure.
+Ansible Automation Platform and HashiCorp Terraform and HashiCorp Vault are great tools that can be used together to automate the entire infrastructure lifecycle, from build to deploy, to manage, and to retire infrastructure.
 
 Terraform excels at day-zero cloud infrastructure provisioning (IaC), building consistent fleets and golden images. However, for day-one configuration and application deployment, Ansible Automation Platform is more suitable. While both tools have overlapping capabilities, it's simpler to view Terraform for initial provisioning and Ansible for ongoing configuration and orchestration, aligning tools with team responsibilities (e.g., Cloud Ops for build, App Teams for deployment). Seamless transition between day-zero and day-one requires robust inventory synchronization and data exchange between Terraform Enterprise (HCP Terraform also (called terraform cloud)) and Ansible Automation Platform.
 
