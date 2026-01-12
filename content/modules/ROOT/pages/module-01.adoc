@@ -429,13 +429,13 @@ image::wftemplateapply5.png[link=self, window=blank, width=100%]
 * If you were still at the Adding of an API Token screen, click on the `Terraform Enterprise` LOGO in the top left. Select the `rhdp-tf-org` organization, then select the `TFE-Demo` workspace, and then click on the `Runs` menu option on the left.
 * Click on the `Run` menu option on the left. You will see the `plan` and then the `apply` being performed. Also notice the resouce count in the Terraform Enterprise console.
 
-This showing that Ansible Automation Platform was able to trigger the Terraform Enterprise `plan` and `apply` operations successfully.
+This shows that Ansible Automation Platform was able to trigger the Terraform Enterprise `plan` and `apply` operations successfully. Great Job!
 
 image::tfeapply1.png[link=self, window=blank, width=100%]
 
 === Validate the Nginx installation
 
-**Please make sure that the Ansible Workflow completed successfully before proceeding. AAP has to have completed the `Install Nginx on RHEL` job template successfully before proceeding to validate the Nginx installation.**
+**Please make sure that the Ansible Workflow completed successfully before proceeding. AAP has to have completed the entire workflow, including the `Install Nginx on RHEL` job template successfully before proceeding to validate the Nginx installation.**
 
 * From the Terraform Enterprise console, in the job run output you will see the resources that were created by Terraform.
 * From here get the public IP address (or DNS name) of the EC2 instance that was created by Terraform. 
