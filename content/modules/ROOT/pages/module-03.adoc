@@ -139,12 +139,12 @@ While you still have the GitHub UI open, navigate to the repository you cloned e
 
 image::workspace8.png[link=self, window=blank, width=100%]
 
-* You will now see that the Terraform Enterprise Workspace is now created successfully.
-* Don't accept the auto detected variables, and click on `Go to Workspace Overview`
+* In Terraform Enterprise UI, You will now see that the Terraform Enterprise Workspace is now created successfully.
+* DON'T accept the auto detected variables, and click on `Go to Workspace Overview`
 
 image::workspace9.png[link=self, window=blank, width=100%]
 
-* Don't accept the auto detected variables, and click on `Go to Workspace Overview`
+* DON'T accept the auto detected variables, and click on `Go to Workspace Overview`
 * Click on the `Go to Workspace Overview` link to navigate to the workspace dashboard
 * On this page, click on the `Configure Variables` button
 
@@ -201,18 +201,22 @@ Now we're all set to trigger the infrastructure provisioning and automation from
 
 Let's perform a quick test to make sure we set up the Terraform Enterprise Workspace correctly.  This will be a `Plan only` run, so we will not actually create any resources.
 
+* Click on the `Runs` menu option on the left.
+* For the `Run Type` select `Plan only`
 * Click on the `+ New Run` button in the top right of the Workspace overview screen.
 * Click on the `Start` button to perform a quick test run of the Terraform code in the Terraform Enterprise Workspace.
 
 image::testplanonly2.png[link=self, window=blank, width=100%]
 
-* You will see the plan run completed successfully.
+* In a few moments You will see the `TEST PLAN RUN` completed successfully. This is a test run to make sure the Terraform Enterprise Workspace is configured correctly.
 
 image::testplanonly3.png[link=self, window=blank, width=100%]
 
 **GREAT! We are all set to commit changes to the Terraform code in the GitHub repository to trigger the infrastructure provisioning and automation.**
 
 === Commit changes to the Terraform code in the GitHub repository
+
+NOTE: In a real-world scenario, you would commit changes to the Terraform code in the GitHub repository to a separate branch. Then you would create a pull request to merge the changes into the main branch. Then Terraform Enterprise will trigger the infrastructure provisioning and automation. For this lab, we will simply change the `instance_count` variable to 2, to create 2 RHEL ec2 instances.
 
 * Navigate to the repository you cloned earlier into your GitHub account
 * Click on the `Code` tab, and go to the `TF_templates/AWS/` folder
