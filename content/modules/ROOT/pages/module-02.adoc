@@ -235,14 +235,18 @@ vault write auth/approle/role/aapterraform token_policies=aap-terraform-policy
 * You should see the following output: `Success! Data written to: auth/approle/role/aapterraform`
 * Now get the `Role ID` and `Secret ID` for the AppRole:
 
+Run the following command to get the `Role ID`:
 [source,bash,role=execute]
 ----
 vault read auth/approle/role/aapterraform/role-id
+----
 
-then
-
+Then run the following command to get the `Secret ID`:
+[source,bash,role=execute]
+----
 vault write -f auth/approle/role/aapterraform/secret-id
 ----
+
 
 * **Copy the Role ID and Secret ID to your clipboard. You will need these momentarily**
 
@@ -256,6 +260,8 @@ vault write auth/approle/login \
     role_id=<aapterraform-role-id> \
     secret_id=<aapterraform-secret-id>
 ----
+
+If you see key / value pairs in the output, you have successfully authenticated against the Vault secret engine using the AppRole authentication method! Great Job!
 
 image::approle4.png[link=self, window=blank, width=100%]
 

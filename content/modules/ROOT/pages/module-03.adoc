@@ -32,8 +32,11 @@ The following repository contains the Terraform code for the infrastructure you 
 image::importrepo.png[link=self, window=blank, width=100%]
 
 * In the `Repository URL` field, enter the URL of the repository you want to import, in this case: https://github.com/ansible-tmm/aap-hashi-lab-2.git
-* Scroll down and enter a `Repository name` for your new repository, in this case: `aap-hashi-lab-2` (or another name if you prefer)
+* Scroll down and enter an `Owner` and `Repository name` for your new repository, in this case: `YOUR GITHUB USERNAME` and `aap-hashi-lab-2` (or another name if you prefer)
+* Keep it at `Public` repository type.
 * Click on the `Begin import` button to import the repository to your account.
+
+image::importrepo1.png[link=self, window=blank, width=100%]
 
 Later in this lab, you will be committing changes to the Terraform code in the GitHub repository, which in turn will trigger the Terraform infrastructure provisioning and automation, and will retrieve secrets from Vault Enterprise.
 
