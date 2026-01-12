@@ -35,6 +35,7 @@ image::importrepo.png[link=self, window=blank, width=100%]
 * Scroll down and enter an `Owner` and `Repository name` for your new repository, in this case: `YOUR GITHUB USERNAME` and `aap-hashi-lab-2` (or another name if you prefer)
 * Keep it at `Public` repository type.
 * Click on the `Begin import` button to import the repository to your account.
+* The repository will be ready in a minute or two.
 
 image::importrepo1.png[link=self, window=blank, width=100%]
 
@@ -54,6 +55,8 @@ Back in the Terraform Enterprise UI, click on the `Workspaces` menu option in th
 image::workspace1.png[link=self, window=blank, width=100%]
 
 * On the next screen choose `Version Control Workflow` for the Workspace type
+
+image::workspace1-1.png[link=self, window=blank, width=100%]
 
 image::workspace2.png[link=self, window=blank, width=100%]
 
