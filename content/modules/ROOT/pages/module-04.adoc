@@ -112,6 +112,7 @@ This file defines the Ansible content collections you want to include in your ex
 .. `hashicorp.terraform:` Automation of Terraform Enterprise (and HCP Terraform) operations using API calls. No Terraform binary is needed.
 .. `cloud.terraform:` Requires the Terraform binary to be installed in the execution environment or on a dedicated Terraform Host
 
+NOTE: You will find a copy of the `execution-environment.yml` and `requirements.yml` files in the repository you imported in an earlier module.
 
 [#task5]
 == How to run `ansible-builder` to build the execution environment container
