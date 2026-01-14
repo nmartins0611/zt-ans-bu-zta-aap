@@ -446,7 +446,7 @@ image::updatedjt.png[link=self, window=blank, width=100%]
 | Field | Value
 
 | Name
-| **WF-Launched by TFE**   (Please use that name exactly)
+| **WF-Launched by TFE**    (Please use that name exactly)
 
 | Organization
 | **Default**
@@ -463,10 +463,16 @@ NOTE: `Prompt on launch` is needed because Terraform Enterprise cannot supply or
 
 === Create the nodes for the "WF-Launched by TFE" workflow template
 
-* Select `+ Add step` and then change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`, Select `Next` to continue, and then `Finish` to save the node.
+* Select `+ Add step` and then
+* For this next step Change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`.
+* Select `Next` then `Finish` to save this node. This will synchronize the inventory source you created earlier.
+
+
 * Click on the vertical ellipsis `...` at the end of the node you just created, and then select `+ Add step and link`.
-* For this next step change the `Node Type` to `Job Template` and select the `**Install Nginx on RHEL - TFE-VCS**` job template you created earlier. Select `Next` then `Finish` to save this second step.
-* Click on the `Save` button to save the workflow template.
+* For this next step 
+** Keep the `Node Type` to `Job Template` and select the `**Install Nginx on RHEL - TFE-VCS**` job template. 
+** Change the `Status` to `Run on Success`.
+* Select `Next` then `Finish` to save this step. This will install Nginx on the RHEL hosts.
 
 image::newwjt2.png[link=self, window=blank, width=100%]
 

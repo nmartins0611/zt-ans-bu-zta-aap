@@ -86,7 +86,7 @@ Fill out the following fields - **Table below:**
 | Field | Value
 
 | Name
-| TFE-Demo
+| **TFE-Demo**    (Please use that name exactly)
 
 | Project
 | **rhdp-initial-project**
@@ -132,7 +132,7 @@ Enter the following details:
 image::tfevariables1.png[link=self, window=blank, width=100%]
 
 You have now added the AWS keys to the Terraform Enterprise Workspace.
-You can now use these keys to authenticate against the AWS cloud account.
+These keys can now be used by Terraform to authenticate against the AWS cloud account.
 
 [#task3]
 ==  Create a Terraform Enterprise credential type.
@@ -210,7 +210,8 @@ image::tfecredtype.png[link=self, window=blank, width=100%]
 == Create the Terraform Enterprise Credential in Ansible Automation Platform
 
 Credentials are utilized for authentication when launching Jobs against machines, synchronizing with inventory sources, and importing project content from a version control system.
-In this lab, we have created some different credentials.
+
+You will now create a credential in Ansible Automation Platform to use with the Terraform Enterprise credential type.
 
 This task is done in Ansible Automation Platform.
 
@@ -408,13 +409,19 @@ image::wftemplateapply1.png[link=self, window=blank, width=100%]
 image::wftemplateapply2.png[link=self, window=blank, width=100%]
 
 * Click on the vertical ellipsis `...` at the end of the node we just created, and then select `+ Add step and link`.
-* For this next step change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`. Select `Next` then `Finish` to save this second step. This will synchronize the inventory source you created earlier.
+* For this next step 
+** Change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`. 
+** Change the `Status` to `Run on Success`.
+* Select `Next` then `Finish` to save this second step. This will synchronize the inventory source you created earlier.
 
 image::wftemplateapply3.png[link=self, window=blank, width=100%]
 
 * Click on the vertical ellipsis `...` at the end of the node we just created, and then select `+ Add step and link`.
-* For this next step keep the `Node Type` to `Job Template` and select the `Install Nginx on RHEL` job template. Select `Next` then `Finish` to save this step.
+* For this next step 
+** Keep the `Node Type` to `Job Template` and select the `Install Nginx on RHEL` job template. 
 ** The `Install Nginx on RHEL` job template is a job template that is already created for you in Ansible Automation Platform. It is used to install Nginx on the RHEL hosts.
+** Change the `Status` to `Run on Success`.
+* Select `Next` then `Finish` to save this step. This will install Nginx on the RHEL hosts.
 
 Click on the `Save` button to save the workflow template.
 
@@ -531,9 +538,14 @@ Scroll to the bottom Click the blue `Create Workflow Job Template` button to **s
 * Select `+ Add step` and then select the `Terraform Enterprise DESTROY` job template you created earlier, Select `Next` to continue, and then `Finish` to save the node.
 
 * Click on the vertical ellipsis `...` at the end of the node we just created, and then select `+ Add step and link`.
-* For this next step change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`. Select `Next` then `Finish` to save this second step.
+* For this next step 
+** Change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`. 
+** Change the `Status` to `Run on Success`.
+* Select `Next` then `Finish` to save this second step. This will synchronize the inventory source you created earlier.
 
 Click on the `Save` button to save the workflow template.
+
+image::wftemplatedestroy1.png[link=self, window=blank, width=100%]
 
 === Launch the `WF-Terraform Enterprise DESTROY` workflow template
 

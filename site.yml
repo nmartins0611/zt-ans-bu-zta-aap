@@ -1,6 +1,6 @@
 ---
 site:
-  title: Ansible Automation Platform and HashiCorp. Terraform, Vault, and AAP!
+  title: Ansible Automation Platform, HashiCorp Terraform and Vault!
   url: https://rhpds.github.io/zt-ans-bu-hashi-aap/modules/index.html
   start_page: modules::index.adoc
 

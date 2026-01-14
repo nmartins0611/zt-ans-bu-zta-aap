@@ -10,7 +10,7 @@ image::module2-3scenario.png[link=self, window=blank, width=100%]
 
 Let's work through to completion of this scenario.
 
-NOTE:  You MUST have a github account to complete this lab.
+NOTE:  You MUST have a github account to complete this lab. Having said that if you want to use a GitLAB account, you can do so by creating a new GitLAB account and using that instead of a GitHub account. The instructions will be nearly identical. The only difference are the values from TFE did not auto fill in gitlab when creating the OAuth application, so you have to copy and paste those values manually.
 
 * Terraform Enterprise
 ** Import a GitHub repository to your account
@@ -44,7 +44,7 @@ Later in this lab, you will be committing changes to the Terraform code in the G
 [#task2]
 == Set up the Terraform Enterprise Workspace
 
-We now want to create a new Terraform Enterprise Workspace that uses *Version Control System (VCS)* to store the Terraform code. By doing this, you will be able to trigger the Terraform infrastructure provisioning and Ansible automation by committing changes to the Terraform code in the GitHub repository that you imported earlier.
+We now want to create a new Terraform Enterprise Workspace that uses `*Version Control System (VCS)*` to store the Terraform code. By doing this, you will be able to trigger the Terraform infrastructure provisioning and Ansible automation by committing changes to the Terraform code in the GitHub repository that you imported earlier.
 
 Back in the Terraform Enterprise UI, click on the `Workspaces` menu option in the left menu.
 
@@ -101,7 +101,7 @@ image::workspace6-1.png[link=self, window=blank, width=100%]
 
 * The Workspace Name will default ot the repository name. Change the `Workspace Name` to `TFE-Demo-VCS`
 * For the `Description` field, enter `Using GitHub commits to trigger Plan/Apply Runs`
-* Expand the `Advanced Options` section, and check both of the `Auto-apply` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.
+* Expand the `*Advanced Options*` section, and check both of the `*Auto-apply*` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.
 * For the `Terraform Working Directory` field, enter `TF_templates/AWS/`
 
 |===
@@ -116,8 +116,8 @@ image::workspace6-1.png[link=self, window=blank, width=100%]
 | Terraform Working Directory
 | **TF_templates/AWS/**
 
-| Auto-apply
-| Check both of the `Auto-apply` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.
+| **Auto-apply**
+| **Check both of the `Auto-apply` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.**
 |===
 
 * Scroll down
@@ -139,7 +139,7 @@ While you still have the GitHub UI open, navigate to the repository you cloned e
 image::workspace8.png[link=self, window=blank, width=100%]
 
 * In Terraform Enterprise UI, You will now see that the Terraform Enterprise Workspace is now created successfully.
-* DO NOT accept the auto detected variables
+* **DO NOT accept the auto detected variables**
 * Click on the `Go to Workspace Overview` link to navigate to the workspace dashboard
 
 image::workspace9.png[link=self, window=blank, width=100%]

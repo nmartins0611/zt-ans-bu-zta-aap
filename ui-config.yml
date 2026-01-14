@@ -13,7 +13,7 @@ tabs:
   - name: VS Code
     url: https://vscode-${guid}.${domain}
     external: false
-  - name: "TERMINAL"
+  - name: "Terminal"
     url: /wetty_vscode
   - name: Cloud (AWS)
     url: /cloud

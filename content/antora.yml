@@ -1,12 +1,12 @@
 name: modules
-title: Ansible Automation Platform and HashiCorp. Terraform, Vault, and AAP!
+title: Ansible Automation Platform, HashiCorp Terraform and Vault!
 version: master
 nav:
   - modules/ROOT/nav.adoc
 
 asciidoc:
   attributes:
-    lab_name: "Ansible Automation Platform and HashiCorp. Terraform, Vault, and AAP!"
+    lab_name: "Ansible Automation Platform, HashiCorp Terraform and Vault!"
     release-version: master
     page-pagination: true
     my_var: "foo"
