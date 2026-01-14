@@ -148,6 +148,8 @@ Log in using the following *Login Credentials:*
 
 An Ansible Credential Type defines a structure (schema) for storing and using secrets like passwords, SSH keys, or API tokens, allowing secure management within Ansible Automation Platform for connecting to systems in this example Terraform Enterprise.
 
+NOTE: A credential type for HCP Terraform (also works for Terraform Enterprise) will be native in AAP in the coming months. Stay tuned for this. At the moment you have to manually create this credential type.
+
 Expand: `Automation Execution` -> `Infrastructure` -> `Credential Types` -> `+ Create Credential Type`
 
 |===
