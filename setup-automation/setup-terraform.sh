@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HOSTNAME=tfe-https-${GUID}.apps.ocpvdev01.rhdp.net
+HOSTNAME=tfe-https-${GUID}.${DOMAIN}
 
 #sed -i "/name: \"TFE_HOSTNAME\"/!b;n;s/value: \".*\"/value: \"$HOSTNAME\"/" /etc/containers/systemd/tfe.yaml
 
