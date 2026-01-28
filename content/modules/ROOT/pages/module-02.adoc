@@ -473,7 +473,8 @@ NOTE: `Prompt on launch` is needed because Terraform Enterprise cannot supply or
 ** Keep the `Node Type` to `Job Template` and select the `**Install Nginx on RHEL - TFE-VCS**` job template. 
 ** Change the `Status` to `Run on Success`.
 * Select `Next` then `Finish` to save this step. This will install Nginx on the RHEL hosts.
+* Click on the `Save` button to save the workflow template.
 
 image::newwjt2.png[link=self, window=blank, width=100%]
 
-Now we're **ALMOST SET** to trigger the infrastructure provisioning and automation from Terraform Enterprise, in the next lab section.
+In the next lab section we perform the GitHub requirements so that we can trigger the infrastructure provisioning and automation from Terraform Enterprise.
