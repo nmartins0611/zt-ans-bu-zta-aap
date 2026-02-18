@@ -1,69 +1,70 @@
 ---
-# containers:
-  # - name: gitea
-  #   image: gitea/gitea:1.16.8-rootless
-  #   ports:
-  #     - name: gitea
-  #       containerPort: 3000
-  #       protocol: TCP
-  #   environment:
-  #     GITEA__DEFAULT__RUN_MODE: dev
-  #     GITEA__database__DB_TYPE: sqlite3
-  #     GITEA__database__PATH: /data/gitea/gitea.db
-  #     GITEA__picture__DISABLE_GRAVATAR: "true"
-  #     GITEA__repository__DEFAULT_PRIVATE: "false"
-  #     GITEA__repository__DEFAULT_PUSH_CREATE_PRIVATE: "false"
-  #     GITEA__repository__ENABLE_PUSH_CREATE_ORG: "true"
-  #     GITEA__repository__ENABLE_PUSH_CREATE_USER: "true"
-  #     GITEA__repository__ONLY_ALLOW_PUSH_IF_GITEA_ENVIRONMENT_SET: "false"
-  #     GITEA__security__INSTALL_LOCK: "true"
-  #     GITEA__server__SSH_DOMAIN: http://gitea
-  #     GITEA__service__DISABLE_REGISTRATION: "true"
-  #     GITEA__service__REQUIRE_SIGNIN_VIEW: "false"
-  #     GITEA__webhook__ALLOWED_HOST_LIST: "*"
-  #   volumeMounts:
-  #     - name: gitea-varlib
-  #       mountPath: /var/lib/gitea/
-  #     - name: gitea-data
-  #       mountPath: /data/
-  #     - name: gitea-etc
-  #       mountPath: /etc/gitea
-  #   volumes:
-  #     - name: gitea-data
-  #       emptyDir: {}
-  #     - name: gitea-etc
-  #       emptyDir: {}
-  #     - name: gitea-varlib
-  #       emptyDir: {}
-  #   commands:
-  #     - gitea admin user create --admin --username gitea --password ansible123!
-  #       --email gitea@giteadummy.com --must-change-password=false
-  #     - >
-  #       curl -X POST -H "accept: application/json" -H "Content-Type:
-  #       application/json" -u 'gitea:ansible123!'  -d '{"username": "laborg",
-  #       "full_name": "laborg", "description": "laborg"}'
-  #       http://localhost:3000/api/v1/orgs
-  #     - >
-  #       curl -X POST -H "accept: application/json" -H "Content-Type:
-  #       application/json" -u 'gitea:ansible123!' -d '{"clone_addr":
-  #       "https://github.com/ansible-tmm/aap-hashi-lab.git", "repo_name":
-  #       "aap-hashi-lab", "owner": "laborg", "uid": 2, "private": false}'
-  #       http://localhost:3000/api/v1/repos/migrate
-  #   memory: 2Gi
-  #   services:
-  #     - name: gitea
-  #       ports:
-  #         - port: 3000
-  #           protocol: TCP
-  #           targetPort: 3000
-  #           name: gitea
-  #   routes:
-  #     - name: gitea
-  #       host: gitea
-  #       service: gitea
-  #       targetPort: 3000
-  #       tls: true
-  #       tls_termination: Edge
+containers:
+  - name: gitea
+    image: gitea/gitea:1.16.8-rootless
+    ports:
+      - name: gitea
+        containerPort: 3000
+        protocol: TCP
+    environment:
+      GITEA__DEFAULT__RUN_MODE: dev
+      GITEA__database__DB_TYPE: sqlite3
+      GITEA__database__PATH: /data/gitea/gitea.db
+      GITEA__picture__DISABLE_GRAVATAR: "true"
+      GITEA__repository__DEFAULT_PRIVATE: "false"
+      GITEA__repository__DEFAULT_PUSH_CREATE_PRIVATE: "false"
+      GITEA__repository__ENABLE_PUSH_CREATE_ORG: "true"
+      GITEA__repository__ENABLE_PUSH_CREATE_USER: "true"
+      GITEA__repository__ONLY_ALLOW_PUSH_IF_GITEA_ENVIRONMENT_SET: "false"
+      GITEA__security__INSTALL_LOCK: "true"
+      GITEA__server__SSH_DOMAIN: http://gitea
+      GITEA__service__DISABLE_REGISTRATION: "true"
+      GITEA__service__REQUIRE_SIGNIN_VIEW: "false"
+      GITEA__webhook__ALLOWED_HOST_LIST: "*"
+    volumeMounts:
+      - name: gitea-varlib
+        mountPath: /var/lib/gitea/
+      - name: gitea-data
+        mountPath: /data/
+      - name: gitea-etc
+        mountPath: /etc/gitea
+    volumes:
+      - name: gitea-data
+        emptyDir: {}
+      - name: gitea-etc
+        emptyDir: {}
+      - name: gitea-varlib
+        emptyDir: {}
+    commands:
+      - gitea admin user create --admin --username gitea --password ansible123!
+        --email gitea@giteadummy.com --must-change-password=false
+      - >
+        curl -X POST -H "accept: application/json" -H "Content-Type:
+        application/json" -u 'gitea:ansible123!'  -d '{"username": "laborg",
+        "full_name": "laborg", "description": "laborg"}'
+        http://localhost:3000/api/v1/orgs
+      - >
+        curl -X POST -H "accept: application/json" -H "Content-Type:
+        application/json" -u 'gitea:ansible123!' -d '{"clone_addr":
+        "https://github.com/ansible-tmm/aap-hashi-lab.git", "repo_name":
+        "aap-hashi-lab", "owner": "laborg", "uid": 2, "private": false}'
+        http://localhost:3000/api/v1/repos/migrate
+    memory: 2Gi
+    services:
+      - name: gitea
+        ports:
+          - port: 3000
+            protocol: TCP
+            targetPort: 3000
+            name: gitea
+    routes:
+      - name: gitea
+        host: gitea
+        service: gitea
+        targetPort: 3000
+        tls: true
+        tls_termination: Edge
+        
 virtualmachines:
   - name: control
     image: aap-2.6-2-ceh-20251103
@@ -143,113 +144,7 @@ virtualmachines:
         targetPort: 8088
         tls: true
         tls_termination: Edge
-  - name: vscode
-    image: devtools-ansible
-    memory: 8G
-    cores: 2
-    image_size: 20Gi
-    disk_type: scsi
-    bootloader: efi
-    tags:
-      - key: AnsibleGroup
-        value: isolated
-    networks:
-      - default
-    services:
-      - name: vscode-8080
-        ports:
-          - port: 8080
-            protocol: TCP
-            targetPort: 8080
-            name: vscode
-    routes:
-      - name: vscode-8080
-        host: vscode
-        service: vscode-8080
-        targetPort: 8080
-        tls: true
-        tls_termination: Edge
-    userdata: >-
-      #cloud-config
 
-      user: rhel
-
-      password: ansible123!
-
-      chpasswd: { expire: False }
-
-      runcmd:
-        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
-        - systemctl reload sshd
-  - name: terraform
-    image: tfe-rhel-image-1
-    memory: 16G
-    cores: 4
-    image_size: 120Gi
-    tags:
-      - key: AnsibleGroup
-        value: isolated
-    networks:
-      - default
-    services:
-      - name: tfe-https
-        ports:
-          - port: 443
-            protocol: TCP
-            targetPort: 443
-            name: tfe-https
-    routes:
-      - name: tfe-https
-        host: tfe-https
-        service: tfe-https
-        targetPort: 443
-        tls: true
-        tls_termination: reencrypt
-        tls_destinationCACertificate: |
-          -----BEGIN CERTIFICATE-----
-          MIIFjTCCA3WgAwIBAgIUeExa35qysEOkLFsKO0rclw0yUYgwDQYJKoZIhvcNAQEL
-          BQAwVjELMAkGA1UEBhMCWFgxFTATBgNVBAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UE
-          CgwTRGVmYXVsdCBDb21wYW55IEx0ZDESMBAGA1UEAwwJdGVycmFmb3JtMB4XDTI1
-          MTEyNDEwMzE1NVoXDTM1MTEyMjEwMzE1NVowVjELMAkGA1UEBhMCWFgxFTATBgNV
-          BAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UECgwTRGVmYXVsdCBDb21wYW55IEx0ZDES
-          MBAGA1UEAwwJdGVycmFmb3JtMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKC
-          AgEAukg9TLvk5iiDs2xZ/Wltd0kNZRBxD/FmQePrj4iiwF1mzZIPu54Kc53Tq58X
-          VW/jQL7x5+gPfIaLlIMe55EWPqRya/1nvQW8LlVzvzy7LxSkpQKtyqxgdwAHA4NX
-          dC2xeCJOieSuBZZyGxUBYfvprkXUwYgwd1F0YbIiZGWXhhFoOgK0pEGruQjiUZGj
-          7Y2sr7QoV8XfGuqxE1axQI6UodVmmx7NsYYr7UQAN06EYSo5A/8QnBzHEdZN+fJl
-          lYDXRklZ14CRbwIXkFT43IpSEAJoMdrMLEfHkcluOgsA33kCEgaovatFIGdlc5NW
-          taRa5hFJrMCy3hGnU3UYlhWFVgJvSFGmp+tbELTWAE7R14G6zOlJf8GTZWvwzINX
-          103uME3LFu0CkMDpBC3Mc46Fn5HQMYV2OZIIuYdnL52Alq3n1BRsoJ8vOs4G6BFz
-          sZvivKbs//6mtDCBOlL/y2iGhmOvZDHhDUqGXDiNtU80+UPik9uH9uQ8RC46mMZh
-          wJ9/bhqI/ybhQFj7Pbk7Ll4j7BglnOtM9b/pEGuKGZb8gu63HxFc3rhNV1MCm8Mp
-          Gm9x2HcU813dFu6WFM/XTY8CMfcLDNaABl5qhQ8vrvD0Xudfj9BFsxDmKQdFVYG4
-          UitEpNW0vADkiE3uqdzEXSG/2EdmyCfxrolSCfaRlsHJeMsCAwEAAaNTMFEwHQYD
-          VR0OBBYEFFy36tyibXnp836ET+yCZsDUn/ijMB8GA1UdIwQYMBaAFFy36tyibXnp
-          836ET+yCZsDUn/ijMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggIB
-          AFRtMxAiQul4RNfTg9qOZPGIaofgPmJLOa49ptvj1VdzQTt2l1NpC/+UIcC171Xw
-          NeR/ZLt4nDnaUnB9GEtAGOvCPNjAhRZ+uoe/htZCFQDUNSKzPrXPluifCtH8GrAT
-          uTVmK65YYCjn2PebJA1KwBC9Ebuf/Qxxjmdo/lzvM+FWapSOnyP4l8BnoYnuge6G
-          dpfQy0iD6ZuPzBmbhsE/+mxZDNXpZ+dXbdi8MEH0Yjm7Mtqi45f3yI2Qevtaat4T
-          Du6CSrnaGeQDlJ0hRZWMvcGG8hHVqTb6vJo84qK5pNYpgK5idY72DsgG65gUdu37
-          v/rJncRfs8LV7cV0SdMkZCiWQIaioBlb+KUH16ZjbB7g4qWvarD3QUuhu3g6UZdM
-          ugd2jfU7xFR0X/9h351rgNCbWVNRYujY9p5lL/TE7VIqOzF+hAL0seBjUC8Bb6pe
-          zAVhhK6oy6Df98M0aN3oNc/Z3ID7ya4xCsBPiuBxOrrMVc9iBssv7/oqji6gN3E7
-          cVf21LuIYgC9uz9kr/EimnewVgwwWneDJHE5E2stpLR9oLji4gLbswnzY6qzSem+
-          pRw10XnOz29jX0ZfcoCStUsBo/G1sfyeOK8oDhvEMcp4lRJMYXtF2mcwj3q6PNDl
-          PsJyVroHfWRn/ZYsDDVcJnWbmV0UbAUGlqYlr28hZKdy
-          -----END CERTIFICATE-----
-    userdata: >-
-      #cloud-config
-
-      user: rhel
-
-      password: ansible123!
-
-      chpasswd: { expire: False }
-
-      runcmd:
-        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
-        - systemctl reload sshd
   - name: vault
     image: vault-rhel-image-1
     memory: 16G
@@ -283,6 +178,39 @@ virtualmachines:
 
       chpasswd: { expire: False }
 
+      runcmd:
+        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
+
+  - name: "node01"
+    image: "rhel-9.5"
+    memory: "2G"
+    cores: 2
+    image_size: "30Gi"
+    tags:
+      - key: "AnsibleGroup"
+        value: "isolated"
+    networks:
+      - default
+    services:
+      - name: node03-http
+        ports:
+          - port: 80
+            protocol: TCP
+            targetPort: 80
+            name: node03
+    routes:
+      - name: node03-web
+        host: node03
+        service: node03-http
+        targetPort: 80
+        tls: true
+        tls_termination: Edge
+    userdata: |-
+      #cloud-config
+      user: rhel
+      password: ansible123!
+      chpasswd: { expire: False }
       runcmd:
         - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
         - systemctl reload sshd
