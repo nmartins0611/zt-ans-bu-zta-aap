@@ -214,3 +214,71 @@ virtualmachines:
       runcmd:
         - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
         - systemctl reload sshd
+
+
+  - name: "node02"
+    image: "rhel-9.5"
+    memory: "2G"
+    cores: 2
+    image_size: "30Gi"
+    tags:
+      - key: "AnsibleGroup"
+        value: "isolated"
+    networks:
+      - default
+    services:
+      - name: node03-http
+        ports:
+          - port: 80
+            protocol: TCP
+            targetPort: 80
+            name: node03
+    routes:
+      - name: node03-web
+        host: node03
+        service: node03-http
+        targetPort: 80
+        tls: true
+        tls_termination: Edge
+    userdata: |-
+      #cloud-config
+      user: rhel
+      password: ansible123!
+      chpasswd: { expire: False }
+      runcmd:
+        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
+
+
+  - name: "wazuh"
+    image: "rhel-9.5"
+    memory: "2G"
+    cores: 2
+    image_size: "30Gi"
+    tags:
+      - key: "AnsibleGroup"
+        value: "isolated"
+    networks:
+      - default
+    services:
+      - name: node03-http
+        ports:
+          - port: 80
+            protocol: TCP
+            targetPort: 80
+            name: node03
+    routes:
+      - name: node03-web
+        host: node03
+        service: node03-http
+        targetPort: 80
+        tls: true
+        tls_termination: Edge
+    userdata: |-
+      #cloud-config
+      user: rhel
+      password: ansible123!
+      chpasswd: { expire: False }
+      runcmd:
+        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+        - systemctl reload sshd
