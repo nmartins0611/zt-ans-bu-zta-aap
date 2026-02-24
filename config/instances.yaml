@@ -216,9 +216,9 @@ virtualmachines:
         - systemctl reload sshd
 
 
-  - name: "node02"
+  - name: "central"
     image: "rhel-9.5"
-    memory: "2G"
+    memory: "16G"
     cores: 2
     image_size: "30Gi"
     tags:
@@ -252,9 +252,9 @@ virtualmachines:
 
   - name: "wazuh"
     image: "rhel-9.5"
-    memory: "2G"
+    memory: "16G"
     cores: 2
-    image_size: "30Gi"
+    image_size: "50Gi"
     tags:
       - key: "AnsibleGroup"
         value: "isolated"
