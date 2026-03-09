@@ -17,6 +17,8 @@
     loop:
      # - wazuh
      # - vault
+      - node01
+      - central
 
 - name: Demo Playbook for the ansible-runner API
   hosts: all:!localhost
