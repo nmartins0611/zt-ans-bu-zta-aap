@@ -4,19 +4,10 @@ tabs:
   - name: Ansible Automation Platform
     url: https://control-${guid}.${domain}/
     external: false
-  - name: Terraform Enterprise (TFE)
-    url: https://tfe-https-${guid}.${domain}/session
-    external: true
-  - name: HashiCorp Vault
-    url: https://vault-${guid}.${domain}/ui/vault/unseal
-    external: true
-  - name: VS Code
-    url: https://vscode-${guid}.${domain}
-    external: false
   - name: "Terminal"
     url: /wetty_vscode
-  - name: Cloud (AWS)
-    url: /cloud
-  - name: AAP-External
-    url: https://control-${guid}.${domain}/
+  - name: Wazuh
+    url: https://wazuh-${guid}.${domain}
+  - name: HashiCorp Vault
+    url: https://vault-${guid}.${domain}/ui/vault/unseal
     external: true
