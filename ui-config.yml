@@ -7,7 +7,7 @@ tabs:
   - name: "Terminal"
     url: /wetty_central
   - name: Wazuh
-    url: https://wazuh-${guid}.${domain}
+    url: https://wazuh-web-${guid}.${domain}
   - name: HashiCorp Vault
     url: https://vault-${guid}.${domain}/ui/vault/unseal
     external: true
