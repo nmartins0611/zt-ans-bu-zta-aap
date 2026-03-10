@@ -155,6 +155,7 @@ virtualmachines:
         value: isolated
     networks:
       - default
+      - secondary
     services:
       - name: vault-8200
         ports:
@@ -192,6 +193,7 @@ virtualmachines:
         value: "isolated"
     networks:
       - default
+      - secondary
     services:
       - name: node01-http
         ports:
@@ -226,6 +228,7 @@ virtualmachines:
         value: "isolated"
     networks:
       - default
+      - secondary
     services:
       - name: central-http
         ports:
@@ -260,6 +263,7 @@ virtualmachines:
         value: "isolated"
     networks:
       - default
+      - secondary
     services:
       - name: wazuh-http
         ports:
