@@ -15,8 +15,8 @@
       ansible_ssh_pass: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
       ansible_python_interpreter: /usr/libexec/platform-python
     loop:
-     # - wazuh
-     # - vault
+      - wazuh
+      - vault
       - node01
       - central
 
