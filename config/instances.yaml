@@ -297,11 +297,11 @@ virtualmachines:
       - default
       - secondary
     services:
-      - name: wazuh-http
+      - name: wazuh-https
         ports:
-          - port: 80
+          - port: 443
             protocol: TCP
-            targetPort: 80
+            targetPort: 443
             name: wazuh
       - name: wazuh-api
         ports:
@@ -324,8 +324,8 @@ virtualmachines:
     routes:
       - name: wazuh-web
         host: wazuh
-        service: wazuh-http
-        targetPort: 80
+        service: wazuh-https
+        targetPort: 443
         tls: true
         tls_termination: Edge
     userdata: |-
