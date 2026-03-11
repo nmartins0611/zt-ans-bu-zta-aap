@@ -16,6 +16,7 @@
       ansible_become_password: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
       ansible_python_interpreter: /usr/libexec/platform-python
     loop:
+      - control
       - wazuh
       - vault
       - node01
