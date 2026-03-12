@@ -9,8 +9,8 @@ echo "192.168.1.12 vault.zta.lab vault" >> /etc/hosts
 echo "192.168.1.13 wazuh.zta.lab wazuh" >> /etc/hosts
 echo "192.168.1.14 node01.zta.lab node01" >> /etc/hosts
 
-nmcli connection add type ethernet con-name eth1 ifname eth1 ipv4.addresses 192.168.1.13/24 ipv4.method manual connection.autoconnect yes
-nmcli connection up eth1
+nmcli connection add type ethernet con-name eth1 ifname enp2s0 ipv4.addresses 192.168.1.13/24 ipv4.method manual connection.autoconnect yes
+nmcli connection up enp2s0
 nmcli con mod eth1 ipv4.dns 192.168.1.11
 nmcli con mod eth1 ipv4.dns-search zta.lab
 nmcli con up eth1
