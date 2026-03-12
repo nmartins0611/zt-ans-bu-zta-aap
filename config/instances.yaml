@@ -229,6 +229,12 @@ virtualmachines:
       - default
       - secondary
     services:
+      - name: opa-http
+        ports:
+          - port: 80
+            protocol: TCP
+            targetPort: 80
+            name: opa-http
       # - name: idm-http
       #   ports:
       #     - port: 80
@@ -260,6 +266,12 @@ virtualmachines:
       #   targetPort: 80
       #   tls: true
       #   tls_termination: Edge
+      - name: opa-http
+        host: central
+        service: opa-http
+        targetPort: 80
+        tls: true
+        tls_termination: Edge      
       - name: idm-https
         host: central
         service: idm-https
@@ -311,18 +323,18 @@ virtualmachines:
             protocol: TCP
             targetPort: 55000
             name: wazuh-api      
-      - name: wazuh-index
-        ports:
-          - port: 9200
-            protocol: TCP
-            targetPort: 9200
-            name: wazuh-index     
-      - name: wazuh-grafana
-        ports:
-          - port: 3000
-            protocol: TCP
-            targetPort: 3000
-            name: wazuh-grafana            
+      # - name: wazuh-index
+      #   ports:
+      #     - port: 9200
+      #       protocol: TCP
+      #       targetPort: 9200
+      #       name: wazuh-index     
+      # - name: wazuh-grafana
+      #   ports:
+      #     - port: 3000
+      #       protocol: TCP
+      #       targetPort: 3000
+      #       name: wazuh-grafana            
     routes:
       - name: wazuh
         host: wazuh
