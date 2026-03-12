@@ -229,18 +229,18 @@ virtualmachines:
       - default
       - secondary
     services:
-      - name: idm-http
-        ports:
-          - port: 80
-            protocol: TCP
-            targetPort: 80
-            name: idm-http
-      - name: keycloak-http
-        ports:
-          - port: 8080
-            protocol: TCP
-            targetPort: 8080
-            name: keycloak-http
+      # - name: idm-http
+      #   ports:
+      #     - port: 80
+      #       protocol: TCP
+      #       targetPort: 80
+      #       name: idm-http
+      # - name: keycloak-http
+      #   ports:
+      #     - port: 8080
+      #       protocol: TCP
+      #       targetPort: 8080
+      #       name: keycloak-http
       - name: idm-https
         ports:
           - port: 443
@@ -249,33 +249,33 @@ virtualmachines:
             name: idm-https
       - name: keyclock-https
         ports:
-          - port: 8443
+          - port: 8543
             protocol: TCP
-            targetPort: 8443
+            targetPort: 8543
             name: keyclock-https            
     routes:
-      - name: idm-http
-        host: central
-        service: idm-http
-        targetPort: 80
-        tls: true
-        tls_termination: Edge
+      # - name: idm-http
+      #   host: central
+      #   service: idm-http
+      #   targetPort: 80
+      #   tls: true
+      #   tls_termination: Edge
       - name: idm-https
         host: central
         service: idm-https
         targetPort: 443
         tls: true
         tls_termination: Edge
-      - name: keycloak-http
-        host: central
-        service: keycloak-http
-        targetPort: 8080
-        tls: true
-        tls_termination: Edge        
+      # - name: keycloak-http
+      #   host: central
+      #   service: keycloak-http
+      #   targetPort: 8080
+      #   tls: true
+      #   tls_termination: Edge        
       - name: keycloak-https
         host: central
         service: keycloak-https
-        targetPort: 8443
+        targetPort: 8543
         tls: true
         tls_termination: Edge         
     userdata: |-
