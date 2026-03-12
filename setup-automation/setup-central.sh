@@ -38,6 +38,10 @@ tee /tmp/zta-setup.yml << EOF
 
   tasks:
 
+    - name: Start IdM services
+      ansible.builtin.command:
+        cmd: ipactl start
+
     - name: Check hostname
       ansible.builtin.command:
         cmd: hostname -f
@@ -157,5 +161,5 @@ tee /tmp/zta-setup.yml << EOF
           - "============================================="
 EOF
 
-#ansible-playbook -i /tmp/inventory /tmp/zta-setup.yml
+ansible-playbook -i /tmp/inventory /tmp/zta-setup.yml
 
