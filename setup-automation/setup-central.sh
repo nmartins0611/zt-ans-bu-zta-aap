@@ -3,15 +3,6 @@
 systemctl stop systemd-tmpfiles-setup.service
 systemctl disable systemd-tmpfiles-setup.service
 
-echo "192.168.1.10 control.zta.lab control" >> /etc/hosts
-echo "192.168.1.11  central.zta.lab  keycloak.zta.lab  opa.zta.lab" >> /etc/hosts
-echo "192.168.1.12 vault.zta.lab vault" >> /etc/hosts
-echo "192.168.1.13 wazuh.zta.lab wazuh" >> /etc/hosts
-echo "192.168.1.14 node01.zta.lab node01" >> /etc/hosts
-
-nmcli connection add type ethernet con-name enp2s0 ifname enp2s0 ipv4.addresses 192.168.1.11/24 ipv4.method manual connection.autoconnect yes
-nmcli connection up enp2s0
-
 rm -rf /etc/yum.repos.d/*
 yum clean all
 subcription-manager clean
@@ -24,7 +15,16 @@ subscription-manager register --org=${SATELLITE_ORG} --activationkey=${SATELLITE
 ##
 ########
 ## install python3 libraries needed for the Cloud Report
-dnf install -y python3-pip python3-libsemanage git ansible-core
+dnf install -y python3-pip python3-libsemanage git ansible-core python-requests
+
+echo "192.168.1.10 control.zta.lab control" >> /etc/hosts
+echo "192.168.1.11  central.zta.lab  keycloak.zta.lab  opa.zta.lab" >> /etc/hosts
+echo "192.168.1.12 vault.zta.lab vault" >> /etc/hosts
+echo "192.168.1.13 wazuh.zta.lab wazuh" >> /etc/hosts
+echo "192.168.1.14 node01.zta.lab node01" >> /etc/hosts
+
+nmcli connection add type ethernet con-name enp2s0 ifname enp2s0 ipv4.addresses 192.168.1.11/24 ipv4.method manual connection.autoconnect yes
+nmcli connection up enp2s0
 
 
 # Create a playbook for the user to execute
