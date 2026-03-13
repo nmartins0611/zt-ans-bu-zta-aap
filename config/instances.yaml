@@ -231,9 +231,9 @@ virtualmachines:
     services:
       - name: opa-http
         ports:
-          - port: 80
+          - port: 8181
             protocol: TCP
-            targetPort: 80
+            targetPort: 8181
             name: opa-http
       # - name: idm-http
       #   ports:
@@ -247,49 +247,63 @@ virtualmachines:
       #       protocol: TCP
       #       targetPort: 8080
       #       name: keycloak-http
-      - name: idm-https
+      - name: idm-http
         ports:
-          - port: 443
+          - port: 80
             protocol: TCP
-            targetPort: 443
-            name: idm-https
-      - name: keyclock-https
+            targetPort: 80
+            name: idm-http
+      - name: keycloak-https
         ports:
           - port: 8543
             protocol: TCP
             targetPort: 8543
-            name: keyclock-https            
+            name: keycloak-https            
     routes:
-      # - name: idm-http
-      #   host: central
-      #   service: idm-http
-      #   targetPort: 80
-      #   tls: true
-      #   tls_termination: Edge
-      - name: opa-http
+      - name: idm-http
         host: central
-        service: opa-http
+        service: idm-http
         targetPort: 80
         tls: true
-        tls_termination: Edge      
-      - name: idm-https
-        host: central
-        service: idm-https
-        targetPort: 443
+        tls_termination: Edge
+      - name: opa-http
+        host: opa-http
+        service: opa-http
+        targetPort: 8181
         tls: true
         tls_termination: Edge
-      # - name: keycloak-http
-      #   host: central
-      #   service: keycloak-http
-      #   targetPort: 8080
-      #   tls: true
-      #   tls_termination: Edge        
       - name: keycloak-https
-        host: central
+        host: keycloak-https
         service: keycloak-https
         targetPort: 8543
         tls: true
-        tls_termination: Edge         
+        tls_termination: reencrypt
+        tls_destinationCACertificate: |
+          -----BEGIN CERTIFICATE-----
+          MIIEQjCCAqqgAwIBAgIBATANBgkqhkiG9w0BAQsFADAyMRAwDgYDVQQKDAdaVEEu
+          TEFCMR4wHAYDVQQDDBVDZXJ0aWZpY2F0ZSBBdXRob3JpdHkwHhcNMjYwMzEyMDcz
+          NjAzWhcNNDYwMzEyMDczNjAzWjAyMRAwDgYDVQQKDAdaVEEuTEFCMR4wHAYDVQQD
+          DBVDZXJ0aWZpY2F0ZSBBdXRob3JpdHkwggGiMA0GCSqGSIb3DQEBAQUAA4IBjwAw
+          ggGKAoIBgQCeHGNhl2NGYFJk+6yodOGdAYfASfNatAMYnaKAC+ZRz+vrT0gldyCC
+          cQ0yzfqqT+vAhPyqIMx0O837skvKMsJZ2YmunTxC815OkAuWmLi12Q8lEmtdx6lz
+          1mgZp8Jlz/xSNDiK8Fz0skp2z6s0XRrOS9nIxxMpNNffwfusVdyvvjTlqgZnUEaX
+          8FqXqXdB5ngRakr+T2H105B5DHZTadmc9HZ6K4jH41Ar+hp0eAbFZ1XhnkBRD1qi
+          pcbKoQ0Y70VaqeepP87emrE53eq9vt008/hBHope1BcS6gGhlkCUFvC184LIV22W
+          V5rl3Ddgc1zXXAIAqSdrQmpfVINKYNyZQ+69dg6ilVn2bgMAcLVHghfwON1mVVEz
+          jFrdbmtL1O3YFdagSVtX0BLWJsu7IjqH/u+AZ3B9bIKzziL0Se+h7tF9sKUQfy4d
+          W4H00CBkLJLu6bCK4Fk1X7S/zZPaYCoIGsFsED2xBlpYwElExJyO/w+sZPgCN95k
+          GlXMhj7KGxkCAwEAAaNjMGEwHQYDVR0OBBYEFBKUwQ4Z7Wnwc/NXea49g7FPKCD1
+          MB8GA1UdIwQYMBaAFBKUwQ4Z7Wnwc/NXea49g7FPKCD1MA8GA1UdEwEB/wQFMAMB
+          Af8wDgYDVR0PAQH/BAQDAgHGMA0GCSqGSIb3DQEBCwUAA4IBgQA+clpFTddbimZs
+          hTCcQ5HWneEj65YnQ0i++1lnWuBjoAVuqIeF2I9GfasdRVsCJJd8CzqCmiBaHEOE
+          W0bgOXlhfmFWBg4L3AoedeJAbfjLgxqeCFY1maHxeZMJWkM0JE+8cMUYaxIVxyrQ
+          RgCD//YJyy6FLrF5qy/dKrbsB8awvEXLpGiwOX+nwgqv3UL3vL6cB4SKZ80SnDNO
+          v0YyZX9Hf5f0E9RYxjCHZIQQYYCIAjgH5j5M+bmvbpVMOU1/XLLU9T2E+nct4U7C
+          fRujPdoVeGT1/8i+MJZbDWOTHBQzkSCjZ9bSsy5jJOygQ3c6wdl7xVxLYtxLJ6/b
+          nYKuM07MBj7JAdCLMAKD9FcVLHdFIi+b8Hv6bf5ZOKCeSPHUcLtZNN2SbCbW/9yR
+          loSlpe87MLAm1r7uBTQDOUdFGmqPlIcOZXhkUmQaRnkzcDJpEORaMxlY2+GSqeXJ
+          Pm4Vd8eju+GNtoXIHO+mcpG7GlbbTnYCK2k4NeU3tvTO/CcAMdQ=
+          -----END CERTIFICATE-----
     userdata: |-
       #cloud-config
       user: rhel
@@ -341,12 +355,33 @@ virtualmachines:
         service: wazuh-https
         targetPort: 443
         tls: true
-        tls_termination: Edge
-    userdata: |-
-      #cloud-config
-      user: rhel
-      password: ansible123!
-      chpasswd: { expire: False }
-      runcmd:
-        - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
-        - systemctl reload sshd
+        tls_termination: reencrypt
+        tls_destinationCACertificate: |
+          -----BEGIN CERTIFICATE-----
+          MIIDSzCCAjOgAwIBAgIUNsWEOlO7H7VI8jd252nCTrNYxucwDQYJKoZIhvcNAQEL
+          BQAwNTEOMAwGA1UECwwFV2F6dWgxDjAMBgNVBAoMBVdhenVoMRMwEQYDVQQHDApD
+          YWxpZm9ybmlhMB4XDTI2MDIyNDExMDExMloXDTM2MDIyMjExMDExMlowNTEOMAwG
+          A1UECwwFV2F6dWgxDjAMBgNVBAoMBVdhenVoMRMwEQYDVQQHDApDYWxpZm9ybmlh
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuGHenvy22BKIr/6KxXi2
+          PmIkSbHPfMclllAxvxxrETnvLmdE52suAf/Fv7ylAp1IIzqKRLb/mJEQQaCSS5FX
+          84gmFf3HeUJ25Gvq+gVwVAQ2K4wcY5rjHvz2QUX1vIWNfCp6UUogqiIJE1hMo4kg
+          ABIKToltu2QNVt1vjo8m8+NSuR926vPxCLNucDK7wXWRRxRxsiR3A8dEXnX+71fp
+          ke/hjZW7Gz0QGssKY/B/pjuQYNcm/kj8J1TDn4D1oCaBEB9r3Eb/pz3XO3U/VLYA
+          jjn3JgfIZTsE7jaurAvMvTQV4R+v0A7LgZ9gGW0AF4TDR8mK5JhAtYcRkvX6yecf
+          kQIDAQABo1MwUTAdBgNVHQ4EFgQUHhJwcs6zAvJiZNpdbiftmYB4HlEwHwYDVR0j
+          BBgwFoAUHhJwcs6zAvJiZNpdbiftmYB4HlEwDwYDVR0TAQH/BAUwAwEB/zANBgkq
+          hkiG9w0BAQsFAAOCAQEATSdtsz9PFfxINU4pi3J7xYd8Osj1897UopQ0jfNwcGdX
+          odQASMx5klFlf7UU0RfhjHInBaErgaie2OsopumGWwgFpK1IrHvM3CdlYFXA+FQ4
+          NGDAi1b5zjqIMoXeNYR/6AluTBIC/WsTqirTv3wmANnLyBv9bAI12obs4DHak5sH
+          a5kDugKtsxT/sc9CLiDk+mtDXIAyXTOOhjEZ0ukq7U8w14VRSmfRfyACUDrMOVCL
+          0EEtFn39Xbm38MEqlX6IOk3ttW9fG9x5eCccQUqldEHrBsC33GHU2jvwLXWK4cPQ
+          4WpD1cjQTK9ZjDIjPmNtmdjK4V5+tXmNRiD0R6gsmQ==
+          -----END CERTIFICATE-----
+        userdata: |-
+          #cloud-config
+          user: rhel
+          password: ansible123!
+          chpasswd: { expire: False }
+          runcmd:
+            - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+            - systemctl reload sshd

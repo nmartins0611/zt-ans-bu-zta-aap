@@ -163,3 +163,18 @@ EOF
 
 ansible-playbook -i /tmp/inventory /tmp/zta-setup.yml
 
+tee /etc/httpd/conf.d/ipa-rewrite.conf << IPA
+# VERSION 7 - DO NOT REMOVE THIS LINE
+
+RequestHeader set Host central.zta.lab 
+RequestHeader set Referer https://central.zta.lab/ipa/ui/
+RewriteEngine on
+
+# Rewrite for plugin index, make it like it's a static file
+RewriteRule ^/ipa/ui/js/freeipa/plugins.js$    /ipa/wsgi/plugins.py [PT]
+
+RewriteCond %{HTTP_HOST}    ^ipa-ca.example.local$ [NC]
+RewriteCond %{REQUEST_URI}  !^/ipa/crl
+RewriteCond %{REQUEST_URI}  !^/(ca|kra|pki|acme)
+IPA
+systemctl reload httpd
