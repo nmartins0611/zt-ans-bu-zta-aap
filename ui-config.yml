@@ -7,8 +7,7 @@ tabs:
   - name: "Terminal"
     url: /wetty_central
   - name: IDM
-    url: https://idm-https-${guid}.${domain}
-    external: true
+    url: https://idm-https-${guid}.${domain}/ipa/ui/
   - name: Keycloak
     url: https://keycloak-https-${guid}.${domain}
     external: true
