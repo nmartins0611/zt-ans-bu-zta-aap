@@ -166,8 +166,8 @@ ansible-playbook -i /tmp/inventory /tmp/zta-setup.yml
 tee /etc/httpd/conf.d/ipa-rewrite.conf << IPA
 # VERSION 7 - DO NOT REMOVE THIS LINE
 
-RequestHeader set Host idmprimary.example.local
-RequestHeader set Referer https://idmprimary.example.local/ipa/ui/
+RequestHeader set Host central.zta.lab 
+RequestHeader set Referer https://central.zta.lab/ipa/ui/
 RewriteEngine on
 
 # Rewrite for plugin index, make it like it's a static file
