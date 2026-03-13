@@ -275,10 +275,10 @@ virtualmachines:
       - name: keycloak-https
         host: keycloak-https
         service: keycloak-https
-        targetPort: 43
+        targetPort: 8543
         tls: true
         tls_termination: reencrypt
-        tls_destinationCACertificate:
+        tls_destinationCACertificate: |
           -----BEGIN CERTIFICATE-----
           MIIEQjCCAqqgAwIBAgIBATANBgkqhkiG9w0BAQsFADAyMRAwDgYDVQQKDAdaVEEu
           TEFCMR4wHAYDVQQDDBVDZXJ0aWZpY2F0ZSBBdXRob3JpdHkwHhcNMjYwMzEyMDcz
