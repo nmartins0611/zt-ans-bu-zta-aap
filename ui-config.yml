@@ -13,9 +13,8 @@ tabs:
     external: true
   - name: OPA
     url: https://opa-http-${guid}.${domain}
-    external: true    
   - name: HashiCorp Vault
     url: https://vault-${guid}.${domain}/ui/vault/unseal
     external: true
   - name: Wazuh
-    url: https://wazuh-https-${guid}.${domain} 
+    url: https://wazuh-${guid}.${domain} 

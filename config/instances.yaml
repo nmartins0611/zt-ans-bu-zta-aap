@@ -260,8 +260,8 @@ virtualmachines:
             targetPort: 8543
             name: keycloak-https            
     routes:
-      - name: idm-http
-        host: central
+      - name: idm-https
+        host: idm-https
         service: idm-http
         targetPort: 80
         tls: true
