@@ -50,6 +50,8 @@ ingress:
     port: 5000
   - protocol: TCP
     port: 8543
+  - protocol: TCP
+    port: 8000    
     
 egress:
 - ports:
@@ -99,3 +101,5 @@ egress:
     port: 3000
   - protocol: TCP
     port: 5000
+  - protocol: TCP
+    port: 8000        
