@@ -166,7 +166,6 @@ ansible-playbook -i /tmp/inventory /tmp/zta-setup.yml
 
 tee /etc/httpd/conf.d/ipa-rewrite.conf << IPA
 # VERSION 7 - DO NOT REMOVE THIS LINE
-https://github.com/nmartins0611/zta-aap-workshop.git
 RequestHeader set Host central.zta.lab 
 RequestHeader set Referer https://central.zta.lab/ipa/ui/
 RewriteEngine on
@@ -179,3 +178,5 @@ RewriteCond %{REQUEST_URI}  !^/ipa/crl
 RewriteCond %{REQUEST_URI}  !^/(ca|kra|pki|acme)
 IPA
 systemctl reload httpd
+
+git clone https://github.com/nmartins0611/zta-aap-workshop.git
