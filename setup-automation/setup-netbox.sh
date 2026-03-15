@@ -21,11 +21,15 @@ retry "dnf config-manager --add-repo https://download.docker.com/linux/centos/do
 retry "dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y"
 setenforce 0
 
-nmcli connection add type ethernet con-name eth1 ifname eth1 ipv4.addresses 192.168.1.11/24 ipv4.method manual connection.autoconnect yes
+nmcli connection add type ethernet con-name eth1 ifname eth1 ipv4.addresses 192.168.1.15/24 ipv4.method manual connection.autoconnect yes
 nmcli connection up eth1
-echo "192.168.1.10 control.lab control" >> /etc/hosts
-echo "192.168.1.11 netbox.lab netbox" >> /etc/hosts
-echo "192.168.1.12 devtools.lab devtools" >> /etc/hosts
+
+echo "192.168.1.10 control.zta.lab control" >> /etc/hosts
+echo "192.168.1.11 central.zta.lab  keycloak.zta.lab  opa.zta.lab" >> /etc/hosts
+echo "192.168.1.12 vault.zta.lab vault" >> /etc/hosts
+echo "192.168.1.13 wazuh.zta.lab wazuh" >> /etc/hosts
+echo "192.168.1.14 node01.zta.lab node01" >> /etc/hosts
+echo "192.168.1.15 netbox.zta.lab netbox" >> /etc/hosts
 
 
 # Retry function
