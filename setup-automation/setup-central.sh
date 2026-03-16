@@ -317,40 +317,40 @@ EOF
 
 ansible-galaxy collection install -r collections/requirements.yml
 
-echo "192.168.1.10 control.zta.lab control" >> /etc/hosts
-echo "192.168.1.11 central.zta.lab  keycloak.zta.lab  opa.zta.lab" >> /etc/hosts
-echo "192.168.1.12 vault.zta.lab vault" >> /etc/hosts
-echo "192.168.1.13 wazuh.zta.lab wazuh" >> /etc/hosts
-echo "192.168.1.14 node01.zta.lab node01" >> /etc/hosts
-echo "192.168.1.15 netbox.zta.lab netbox" >> /etc/hosts
+# echo "192.168.1.10 control.zta.lab control" >> /etc/hosts
+# echo "192.168.1.11 central.zta.lab  keycloak.zta.lab  opa.zta.lab" >> /etc/hosts
+# echo "192.168.1.12 vault.zta.lab vault" >> /etc/hosts
+# echo "192.168.1.13 wazuh.zta.lab wazuh" >> /etc/hosts
+# echo "192.168.1.14 node01.zta.lab node01" >> /etc/hosts
+# echo "192.168.1.15 netbox.zta.lab netbox" >> /etc/hosts
 
 nmcli connection add type ethernet con-name enp2s0 ifname enp2s0 ipv4.addresses 192.168.1.11/24 ipv4.method manual connection.autoconnect yes
 nmcli connection up enp2s0
 
-## Correct Keycloak
-podman stop keycloak
-podman rm keycloak
+# ## Correct Keycloak
+# podman stop keycloak
+# podman rm keycloak
 
-podman run -d \
-  --name keycloak \
-  --restart=always \
-  -p 8180:8080 \
-  -p 8543:8443 \
-  -e KEYCLOAK_ADMIN=admin \
-  -e KEYCLOAK_ADMIN_PASSWORD=ansible123! \
-  -e KC_HTTP_ENABLED=true \
-  -e KC_HOSTNAME_STRICT=false \
-  -e KC_PROXY=edge \
-  -e KC_HTTPS_CERTIFICATE_FILE=/opt/certs/server.crt \
-  -e KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/certs/server.key \
-  -v /opt/keycloak/certs:/opt/certs:Z \
-  registry.redhat.io/rhbk/keycloak-rhel9:latest \
-  start \
-  --hostname-strict=false \
-  --proxy=edge \
-  --https-port=8443 \
-  --http-enabled=true
-##
+# podman run -d \
+#   --name keycloak \
+#   --restart=always \
+#   -p 8180:8080 \
+#   -p 8543:8443 \
+#   -e KEYCLOAK_ADMIN=admin \
+#   -e KEYCLOAK_ADMIN_PASSWORD=ansible123! \
+#   -e KC_HTTP_ENABLED=true \
+#   -e KC_HOSTNAME_STRICT=false \
+#   -e KC_PROXY=edge \
+#   -e KC_HTTPS_CERTIFICATE_FILE=/opt/certs/server.crt \
+#   -e KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/certs/server.key \
+#   -v /opt/keycloak/certs:/opt/certs:Z \
+#   registry.redhat.io/rhbk/keycloak-rhel9:latest \
+#   start \
+#   --hostname-strict=false \
+#   --proxy=edge \
+#   --https-port=8443 \
+#   --http-enabled=true
+# ##
 
 
 
