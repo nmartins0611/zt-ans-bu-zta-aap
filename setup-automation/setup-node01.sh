@@ -22,7 +22,7 @@ retry() {
 retry "curl -k -L https://${SATELLITE_URL}/pub/katello-server-ca.crt -o /etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
 retry "update-ca-trust"
 retry "rpm -Uhv --force https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm"
-retry "subscription-manager register --org=${SATELLITE_ORG} --activationkey=${SATELLITE_ACTIVATIONKEY} --auto-attach --force"
+retry "subscription-manager register --org=${SATELLITE_ORG} --activationkey=${SATELLITE_ACTIVATIONKEY}  --force"
 retry "dnf install -y dnf-utils git nano"
 retry "dnf install -y python3-pip python3-libsemanage git ansible-core python-requests ipa-client sssd oddjob-mkhomedir postgresql-server postgresql python3-psycopg2 python3-flask"
 setenforce 0
