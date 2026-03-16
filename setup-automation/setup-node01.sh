@@ -29,5 +29,5 @@ subscription-manager register --org=${SATELLITE_ORG} --activationkey=${SATELLITE
 ##
 ########
 ## install python3 libraries needed for the Cloud Report
-dnf install -y python3-pip python3-libsemanage
+dnf install -y python3-pip python3-libsemanage retry "dnf install -y python3-pip python3-libsemanage git ansible-core python-requests ipa-client sssd oddjob-mkhomedir postgresql-server postgresql python3-psycopg2 python3-flask	wazuh-agent"
 
