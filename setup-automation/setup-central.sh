@@ -100,7 +100,7 @@ wazuh_api_password: "{{ lookup('env', 'WAZUH_API_PASSWORD') | default('wazuh', t
 wazuh_manager_host: wazuh.zta.lab
 
 # ── AAP Controller (own VM) ─────────────────────────────────────────
-aap_controller_url: "https://aap.zta.lab"
+aap_controller_url: "https://control.zta.lab"
 aap_validate_certs: false
 
 # ── Cisco Catalyst 8000v (own VM) ───────────────────────────────────
