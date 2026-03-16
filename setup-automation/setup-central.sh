@@ -31,27 +31,27 @@ git clone https://github.com/nmartins0611/zta-workshop-aap.git /tmp/zta-workshop
 
 mkdir /tmp/group_vars
 
-podman stop keycloak
-podman rm keycloak
+# podman stop keycloak
+# podman rm keycloak
 
-# Then re-run with the new -e flags added to your existing podman run command:
-podman run -d \
-  --name keycloak \
-  --restart=always \
-  -p 8080:8080 \
-  -p 8443:8443 \
-  -e KEYCLOAK_ADMIN=admin \
-  -e KEYCLOAK_ADMIN_PASSWORD=ansible123! \
-  -e KC_HOSTNAME_STRICT=false \
-  -e KC_PROXY_HEADERS=xforwarded \
-  -e KC_HTTPS_CERTIFICATE_FILE=/opt/certs/server.crt \
-  -e KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/certs/server.key \
-  -e KC_HTTP_ENABLED=true \
-  -v /opt/keycloak/certs:/opt/certs:Z \
-  b89b0ff472ca \
-  start \
-  --https-port=8443 \
-  --http-enabled=true
+# # Then re-run with the new -e flags added to your existing podman run command:
+# podman run -d \
+#   --name keycloak \
+#   --restart=always \
+#   -p 8080:8080 \
+#   -p 8443:8443 \
+#   -e KEYCLOAK_ADMIN=admin \
+#   -e KEYCLOAK_ADMIN_PASSWORD=ansible123! \
+#   -e KC_HOSTNAME_STRICT=false \
+#   -e KC_PROXY_HEADERS=xforwarded \
+#   -e KC_HTTPS_CERTIFICATE_FILE=/opt/certs/server.crt \
+#   -e KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/certs/server.key \
+#   -e KC_HTTP_ENABLED=true \
+#   -v /opt/keycloak/certs:/opt/certs:Z \
+#   b89b0ff472ca \
+#   start \
+#   --https-port=8443 \
+#   --http-enabled=true
 
 
 echo "192.168.1.10 control.zta.lab control" >> /etc/hosts
