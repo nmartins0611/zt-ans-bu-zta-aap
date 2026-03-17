@@ -15,7 +15,7 @@ retry() {
 }
 
 retry "curl -k -L https://${SATELLITE_URL}/pub/katello-server-ca.crt -o /etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt" "Download Katello CA cert"
-retry "update-ca-trust" "Update CA trust"
+retry "update-ca-trust extract" "Update CA trust"
 retry "rpm -Uhv --force https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm" "Install Katello consumer RPM"
 retry "subscription-manager register --org=${SATELLITE_ORG} --activationkey=${SATELLITE_ACTIVATIONKEY} --force" "Register with Satellite"
 retry "dnf install -y dnf-utils git nano" "Install base packages"
