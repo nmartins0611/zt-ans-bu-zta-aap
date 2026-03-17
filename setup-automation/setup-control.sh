@@ -1,5 +1,8 @@
 #!/bin/bash
 
+rm -f /etc/yum.repos.d/redhat-rhui*.repo
+dnf clean all
+
 retry() {
     local cmd="$1"
     local desc="${2:-$1}"
