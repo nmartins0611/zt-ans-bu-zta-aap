@@ -36,11 +36,9 @@ for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
 done
 
 ###############################################################################
-# Clean up repos and subscriptions
+# Clean up subscriptions
 ###############################################################################
-rm -f /etc/yum.repos.d/redhat-rhui*.repo
-dnf clean all
-
+dnf clean all || true
 subscription-manager unregister 2>/dev/null || true
 subscription-manager remove --all 2>/dev/null || true
 subscription-manager clean
