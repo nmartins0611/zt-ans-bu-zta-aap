@@ -1,4 +1,9 @@
 #!/bin/bash
+set -euo pipefail
+
+# ─────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────
 
 retry() {
     local cmd="$1"
@@ -10,11 +15,25 @@ retry() {
         fi
         [ $i -lt 3 ] && sleep 5
     done
-    echo "Failed after 3 attempts: $desc"
+    echo "ERROR: Failed after 3 attempts: $desc"
     exit 1
 }
 
-# Validate required variables
+run_if_needed() {
+    local check="$1"
+    local cmd="$2"
+    local desc="$3"
+    if eval "$check" &>/dev/null; then
+        echo "SKIP (already done): $desc"
+    else
+        retry "$cmd" "$desc"
+    fi
+}
+
+# ─────────────────────────────────────────────
+# 1. Validate required variables
+# ─────────────────────────────────────────────
+
 for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
     if [ -z "${!var}" ]; then
         echo "ERROR: $var is not set"
@@ -22,30 +41,96 @@ for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
     fi
 done
 
-# Clean up existing repos, subscriptions, and registration
-rm -rf /etc/yum.repos.d/*
-yum clean all
-subscription-manager unregister 2>/dev/null || true
-subscription-manager remove --all 2>/dev/null || true
-subscription-manager clean
+# ─────────────────────────────────────────────
+# 2. Clean repos & subscriptions
+#    Only wipe if NOT already registered — avoids
+#    destroying a valid subscription on re-run
+# ─────────────────────────────────────────────
 
-# Remove old Katello consumer RPM if present
-rpm -e $(rpm -qa | grep katello-ca-consumer) 2>/dev/null || true
+if subscription-manager status &>/dev/null; then
+    echo "SKIP: Already registered with Satellite – skipping clean/unregister"
+else
+    echo "Cleaning existing repos and subscriptions..."
+    rm -rf /etc/yum.repos.d/*
+    yum clean all
+    subscription-manager unregister 2>/dev/null || true
+    subscription-manager remove --all 2>/dev/null || true
+    subscription-manager clean
 
-# Register with Satellite
-retry "curl -sS -k -L https://${SATELLITE_URL}/pub/katello-server-ca.crt -o /etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt" "Download Katello CA cert"
+    # Remove old Katello consumer RPM only when re-registering
+    OLD_KATELLO=$(rpm -qa | grep katello-ca-consumer || true)
+    [ -n "$OLD_KATELLO" ] && rpm -e "$OLD_KATELLO" 2>/dev/null || true
+fi
+
+# ─────────────────────────────────────────────
+# 3. Register with Satellite
+# ─────────────────────────────────────────────
+
+CA_CERT="/etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
+
+run_if_needed \
+    "test -f ${CA_CERT}" \
+    "curl -fsSk -L https://${SATELLITE_URL}/pub/katello-server-ca.crt -o ${CA_CERT}" \
+    "Download Katello CA cert"
+
 retry "update-ca-trust" "Update CA trust"
-retry "rpm -Uhv --force https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm" "Install Katello consumer RPM"
-retry "subscription-manager register --org=${SATELLITE_ORG} --activationkey=${SATELLITE_ACTIVATIONKEY}" "Register with Satellite"
 
-# Refresh subscription data
+run_if_needed \
+    "rpm -q katello-ca-consumer" \
+    "rpm -Uhv --force https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm" \
+    "Install Katello consumer RPM"
+
+run_if_needed \
+    "subscription-manager status" \
+    "subscription-manager register --org=${SATELLITE_ORG} --activationkey=${SATELLITE_ACTIVATIONKEY}" \
+    "Register with Satellite"
+
 retry "subscription-manager refresh" "Refresh subscription"
 
-# Install packages and Docker
-retry "dnf install -y dnf-utils git nano" "Install base packages"
-retry "dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo" "Add Docker repo"
-retry "dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin python3-pip python3-libsemanage git ansible-core python-requests ipa-client sssd oddjob-mkhomedir postgresql-server postgresql python3-psycopg2" "Install Docker and system packages"
+# ─────────────────────────────────────────────
+# 4. Install packages
+# ─────────────────────────────────────────────
 
+BASE_PKGS="dnf-utils git nano"
+
+run_if_needed \
+    "rpm -q ${BASE_PKGS}" \
+    "dnf install -y ${BASE_PKGS}" \
+    "Install base packages"
+
+DOCKER_REPO_FILE="/etc/yum.repos.d/docker-ce.repo"
+
+run_if_needed \
+    "test -f ${DOCKER_REPO_FILE}" \
+    "dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo" \
+    "Add Docker repo"
+
+SYSTEM_PKGS="docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+             python3-pip python3-libsemanage git ansible-core python-requests
+             ipa-client sssd oddjob-mkhomedir postgresql-server postgresql python3-psycopg2"
+
+run_if_needed \
+    "rpm -q ${SYSTEM_PKGS}" \
+    "dnf install -y ${SYSTEM_PKGS}" \
+    "Install Docker and system packages"
+
+# ─────────────────────────────────────────────
+# 5. Enable & start Docker
+# ─────────────────────────────────────────────
+
+if ! systemctl is-enabled --quiet docker 2>/dev/null; then
+    systemctl enable docker
+else
+    echo "SKIP: Docker already enabled"
+fi
+
+if ! systemctl is-active --quiet docker; then
+    systemctl start docker
+else
+    echo "SKIP: Docker already running"
+fi
+
+echo "✓ Setup complete"
 setenforce 0
 
 echo "192.168.1.10 control.zta.lab control" >> /etc/hosts
