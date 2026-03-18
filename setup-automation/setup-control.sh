@@ -190,15 +190,15 @@ run_if_needed "Install Python3 libraries" \
     -- \
     dnf install -y python3-libsemanage
 
-###############################################################################
-# 9. Clone workshop repo (idempotent)
-###############################################################################
+# ###############################################################################
+# # 9. Clone workshop repo (idempotent)
+# ###############################################################################
 
-if [ -d /tmp/zta-aap-workshop ]; then
-    echo "SKIP: /tmp/zta-aap-workshop already exists"
-else
-    retry "Clone ZTA AAP workshop repo" \
-        git clone https://github.com/nmartins0611/zta-aap-workshop.git /tmp/zta-aap-workshop
-fi
+# if [ -d /tmp/zta-aap-workshop ]; then
+#     echo "SKIP: /tmp/zta-aap-workshop already exists"
+# else
+#     retry "Clone ZTA AAP workshop repo" \
+#         git clone https://github.com/nmartins0611/zta-aap-workshop.git /tmp/zta-aap-workshop
+# fi
 
 echo "✓ control setup complete"
