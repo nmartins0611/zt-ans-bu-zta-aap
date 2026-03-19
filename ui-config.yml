@@ -7,11 +7,10 @@ tabs:
   - name: "Terminal"
     url: /wetty_central
   - name: IDM
-    url: https://idm-https-${guid}.${domain}/ipa/ui/
-    external: true
+    url: https://idm-https-${guid}.${domain}/ipa/ui/    
   - name: Netbox
     url: https://netbox-${guid}.${domain}
-    external: false
+    external: false    
   - name: Keycloak
     url: https://keycloak-https-${guid}.${domain}
     external: true
@@ -21,4 +20,4 @@ tabs:
     url: https://vault-${guid}.${domain}/ui/vault/unseal
     external: true
   - name: Wazuh
-    url: https://wazuh-${guid}.${domain}
+    url: https://wazuh-${guid}.${domain} 
