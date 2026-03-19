@@ -614,6 +614,6 @@ fi
 # 13. Run integration playbook
 ###############################################################################
 
-#ansible-playbook -i /tmp/inventory /tmp/zta-workshop-aap/integrate.yml
+ansible-playbook -i /tmp/inventory /tmp/zta-workshop-aap/integrate.yml
 
 echo "✓ central setup complete"
