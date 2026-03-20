@@ -8,7 +8,7 @@ tabs:
     url: /wetty_central
   - name: IDM
     url: https://idm-https-${guid}.${domain}/ipa/ui/
-    external: true    
+    external: false
   - name: Netbox
     url: https://netbox-${guid}.${domain}
     external: false  

@@ -247,12 +247,12 @@ virtualmachines:
       #       protocol: TCP
       #       targetPort: 8080
       #       name: keycloak-http
-      - name: idm-http
+      - name: idm-https
         ports:
-          - port: 80
+          - port: 443
             protocol: TCP
-            targetPort: 80
-            name: idm-http
+            targetPort: 443
+            name: idm-https
       - name: keycloak-https
         ports:
           - port: 8543
@@ -262,10 +262,36 @@ virtualmachines:
     routes:
       - name: idm-https
         host: idm-https
-        service: idm-http
-        targetPort: 80
+        service: idm-https
+        targetPort: 443
         tls: true
-        tls_termination: Edge
+        tls_termination: reencrypt
+        tls_destinationCACertificate: |
+          -----BEGIN CERTIFICATE-----
+          MIIEQjCCAqqgAwIBAgIBATANBgkqhkiG9w0BAQsFADAyMRAwDgYDVQQKDAdaVEEu
+          TEFCMR4wHAYDVQQDDBVDZXJ0aWZpY2F0ZSBBdXRob3JpdHkwHhcNMjYwMzEyMDcz
+          NjAzWhcNNDYwMzEyMDczNjAzWjAyMRAwDgYDVQQKDAdaVEEuTEFCMR4wHAYDVQQD
+          DBVDZXJ0aWZpY2F0ZSBBdXRob3JpdHkwggGiMA0GCSqGSIb3DQEBAQUAA4IBjwAw
+          ggGKAoIBgQCeHGNhl2NGYFJk+6yodOGdAYfASfNatAMYnaKAC+ZRz+vrT0gldyCC
+          cQ0yzfqqT+vAhPyqIMx0O837skvKMsJZ2YmunTxC815OkAuWmLi12Q8lEmtdx6lz
+          1mgZp8Jlz/xSNDiK8Fz0skp2z6s0XRrOS9nIxxMpNNffwfusVdyvvjTlqgZnUEaX
+          8FqXqXdB5ngRakr+T2H105B5DHZTadmc9HZ6K4jH41Ar+hp0eAbFZ1XhnkBRD1qi
+          pcbKoQ0Y70VaqeepP87emrE53eq9vt008/hBHope1BcS6gGhlkCUFvC184LIV22W
+          V5rl3Ddgc1zXXAIAqSdrQmpfVINKYNyZQ+69dg6ilVn2bgMAcLVHghfwON1mVVEz
+          jFrdbmtL1O3YFdagSVtX0BLWJsu7IjqH/u+AZ3B9bIKzziL0Se+h7tF9sKUQfy4d
+          W4H00CBkLJLu6bCK4Fk1X7S/zZPaYCoIGsFsED2xBlpYwElExJyO/w+sZPgCN95k
+          GlXMhj7KGxkCAwEAAaNjMGEwHQYDVR0OBBYEFBKUwQ4Z7Wnwc/NXea49g7FPKCD1
+          MB8GA1UdIwQYMBaAFBKUwQ4Z7Wnwc/NXea49g7FPKCD1MA8GA1UdEwEB/wQFMAMB
+          Af8wDgYDVR0PAQH/BAQDAgHGMA0GCSqGSIb3DQEBCwUAA4IBgQA+clpFTddbimZs
+          hTCcQ5HWneEj65YnQ0i++1lnWuBjoAVuqIeF2I9GfasdRVsCJJd8CzqCmiBaHEOE
+          W0bgOXlhfmFWBg4L3AoedeJAbfjLgxqeCFY1maHxeZMJWkM0JE+8cMUYaxIVxyrQ
+          RgCD//YJyy6FLrF5qy/dKrbsB8awvEXLpGiwOX+nwgqv3UL3vL6cB4SKZ80SnDNO
+          v0YyZX9Hf5f0E9RYxjCHZIQQYYCIAjgH5j5M+bmvbpVMOU1/XLLU9T2E+nct4U7C
+          fRujPdoVeGT1/8i+MJZbDWOTHBQzkSCjZ9bSsy5jJOygQ3c6wdl7xVxLYtxLJ6/b
+          nYKuM07MBj7JAdCLMAKD9FcVLHdFIi+b8Hv6bf5ZOKCeSPHUcLtZNN2SbCbW/9yR
+          loSlpe87MLAm1r7uBTQDOUdFGmqPlIcOZXhkUmQaRnkzcDJpEORaMxlY2+GSqeXJ
+          Pm4Vd8eju+GNtoXIHO+mcpG7GlbbTnYCK2k4NeU3tvTO/CcAMdQ=
+          -----END CERTIFICATE-----
       - name: opa-http
         host: opa-http
         service: opa-http
