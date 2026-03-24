@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 systemctl stop firewalld
+setenforce 0
 
 echo "Setup the AH Token for ansible"
 ###############################################################################
