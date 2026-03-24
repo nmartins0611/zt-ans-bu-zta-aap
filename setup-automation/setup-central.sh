@@ -73,7 +73,7 @@ run_if_needed() {
         echo "SKIP (already done): $desc"
     else
         retry "$desc" "$@"
-    fi
+    fiNetwork loadbalance
 }
 
 ensure_hosts_entry() {
@@ -662,7 +662,7 @@ fi
 
 rm -rf ~/.ansible.cfg
 
-tee zta-splunk_vars.yml << 'EOF'
+tee /tmp/zta-splunk_vars.yml << 'EOF'
 ---
 # Splunk container configuration
 splunk_container_name: splunk
