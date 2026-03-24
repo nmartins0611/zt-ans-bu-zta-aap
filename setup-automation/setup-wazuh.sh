@@ -694,8 +694,64 @@ tee /tmp/zta-splunk.yml << 'EOF'
 
 EOF
 
+tee /tmp/requirements.yml << 'EOF'
+---
+collections:
+  - name: cisco.ios
+  - name: ansible.netcommon
+  - name: community.postgresql
+  - name: community.general
+  - name: redhat.rhel_idm
+  - name: containers.podman
+EOF
+
+tee /tmp/inventory << 'EOF'
+[zta_services]
+central ansible_host=central.zta.lab
+
+[vault_servers]
+vault ansible_host=vault.zta.lab
+
+[netbox_servers]
+netbox ansible_host=netbox.zta.lab
+
+[wazuh_servers]
+wazuh ansible_host=wazuh.zta.lab
+
+[automation]
+control ansible_host=control.zta.lab
+
+[app_servers]
+app ansible_host=node01.zta.lab
+
+[db_servers]
+db ansible_host=node01.zta.lab
+
+[idm_clients:children]
+vault_servers
+netbox_servers
+wazuh_servers
+app_servers
+db_servers
+
+[all:vars]
+ansible_user=rhel
+ansible_password=ansible123!
+ansible_become_password=ansible123!
+ansible_python_interpreter=/usr/bin/python3
+EOF
+
+###############################################################################
+# 10. Install Ansible collections
+###############################################################################
+echo "Install Collections for Ansible Setup"
+
+retry "Install Ansible collections" \
+    ansible-galaxy collection install -r /tmp/requirements.yml
 
 export ANSIBLE_LOCALHOST_WARNING=False
 export ANSIBLE_INVENTORY_UNPARSED_WARNING=False
+
+rm -rf ~/.ansible.cfg
 
 echo "✓ wazuh setup complete"
