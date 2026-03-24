@@ -230,12 +230,12 @@ virtualmachines:
             protocol: TCP
             targetPort: 8181
             name: opa-http
-      # - name: idm-http
-      #   ports:
-      #     - port: 80
-      #       protocol: TCP
-      #       targetPort: 80
-      #       name: idm-http
+      - name: splunk-http
+        ports:
+          - port: 8000
+            protocol: TCP
+            targetPort: 8000
+            name: splunk-http
       # - name: keycloak-http
       #   ports:
       #     - port: 8080
@@ -261,6 +261,12 @@ virtualmachines:
         targetPort: 80
         tls: true
         tls_termination: Edge
+      - name: splunk
+        host: splunk-http
+        service: splunk-http
+        targetPort: 8000
+        tls: true
+        tls_termination: Edge        
       - name: opa-http
         host: opa-http
         service: opa-http
