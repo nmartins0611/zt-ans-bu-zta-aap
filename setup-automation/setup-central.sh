@@ -216,11 +216,18 @@ nmcli connection up enp2s0 || true
 # 8. Clone workshop repo (idempotent)
 ###############################################################################
 
+# if [ -d /tmp/zta-workshop-aap ]; then
+#     echo "SKIP: /tmp/zta-workshop-aap already exists"
+# else
+#     retry "Clone ZTA workshop repo" \
+#         git clone https://github.com/nmartins0611/zta-workshop-aap.git /tmp/zta-workshop-aap
+        
+# fi
 if [ -d /tmp/zta-workshop-aap ]; then
     echo "SKIP: /tmp/zta-workshop-aap already exists"
 else
-    retry "Clone ZTA workshop repo" \
-        git clone https://github.com/nmartins0611/zta-workshop-aap.git /tmp/zta-workshop-aap
+    retry "Clone ZTA workshop repo (idm_dev branch)" \
+        git clone -b idm_dev https://github.com/nmartins0611/zta-workshop-aap.git /tmp/zta-workshop-aap
 fi
 
 ###############################################################################
@@ -626,6 +633,7 @@ tee /tmp/zta-setup.yml << 'PLAYBOOK'
 PLAYBOOK
 
 ansible-playbook -i /tmp/inventory /tmp/zta-setup.yml
+
 
 ###############################################################################
 # 12. Run integration playbook
