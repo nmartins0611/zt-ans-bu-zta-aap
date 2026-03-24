@@ -51,7 +51,13 @@ ingress:
   - protocol: TCP
     port: 8543
   - protocol: TCP
-    port: 8000    
+    port: 8000
+  - protocol: TCP
+    port: 5514
+  - protocol: TCP
+    port: 8088
+  - protocol: TCP
+    port: 1514
     
 egress:
 - ports:
@@ -102,4 +108,10 @@ egress:
   - protocol: TCP
     port: 5000
   - protocol: TCP
-    port: 8000        
+    port: 8000
+  - protocol: TCP
+    port: 5514
+  - protocol: TCP
+    port: 8088
+  - protocol: TCP
+    port: 1514    
