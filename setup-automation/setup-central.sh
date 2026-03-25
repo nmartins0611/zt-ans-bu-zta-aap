@@ -225,9 +225,11 @@ nmcli connection up enp2s0 || true
 #         git clone https://github.com/nmartins0611/zta-workshop-aap.git /tmp/zta-workshop-aap
         
 # fi
+
 if [ -d /tmp/zta-workshop-aap ]; then
     echo "SKIP: /tmp/zta-workshop-aap already exists"
-elseansible-playbook setup/configure-vault-ssh.yml
+else
+    # Corrected the line below
     retry "Clone ZTA workshop repo (idm_dev branch)" \
         git clone -b idm_dev https://github.com/nmartins0611/zta-workshop-aap.git /tmp/zta-workshop-aap
 fi
