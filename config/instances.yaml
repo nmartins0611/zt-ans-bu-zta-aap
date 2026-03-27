@@ -213,10 +213,10 @@ virtualmachines:
         - systemctl reload sshd
         
   - name: "central"
-    image: "rhel-idm-opa-kc"
+    image: "idm-kc-wz-zerotrust"
     memory: "64G"
-    cores: 4
-    image_size: "50Gi"
+    cores: 6
+    image_size: "60Gi"
     tags:
       - key: "AnsibleGroup"
         value: "isolated"
