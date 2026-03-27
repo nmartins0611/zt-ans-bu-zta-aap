@@ -63,7 +63,13 @@ ingress:
     port: 8000     # Splunk web UI
   - protocol: TCP
     port: 8088     # Splunk HEC (event collector)
+  - protocol: TCP
+    port: 8089     # Splunk management API
+  - protocol: TCP
+    port: 9997     # Splunk forwarder receiver
   # ── Wazuh ──
+  - protocol: UDP
+    port: 514      # Wazuh syslog collection (Arista, hosts)
   - protocol: TCP
     port: 1514     # Wazuh agent communication
   - protocol: TCP
@@ -88,6 +94,9 @@ ingress:
   # ── AAP ──
   - protocol: TCP
     port: 5000     # EDA Controller (webhook)
+  # ── ZTA Dashboard ──
+  - protocol: TCP
+    port: 5050     # Live Topology Dashboard
 
 egress:
 - ports:
@@ -147,7 +156,13 @@ egress:
     port: 8000     # Splunk web UI
   - protocol: TCP
     port: 8088     # Splunk HEC (event collector)
+  - protocol: TCP
+    port: 8089     # Splunk management API
+  - protocol: TCP
+    port: 9997     # Splunk forwarder receiver
   # ── Wazuh ──
+  - protocol: UDP
+    port: 514      # Wazuh syslog collection (Arista, hosts)
   - protocol: TCP
     port: 1514     # Wazuh agent communication
   - protocol: TCP
@@ -172,3 +187,6 @@ egress:
   # ── AAP ──
   - protocol: TCP
     port: 5000     # EDA Controller (webhook)
+  # ── ZTA Dashboard ──
+  - protocol: TCP
+    port: 5050     # Live Topology Dashboard
