@@ -65,3 +65,6 @@ tabs:
   - name: Global Telemetry Platform
     url: https://app-http-${guid}.${domain}
     external: false
+  - name: Lab Topology
+    url: https://dashboard-http-${guid}.${domain}
+    external: false
