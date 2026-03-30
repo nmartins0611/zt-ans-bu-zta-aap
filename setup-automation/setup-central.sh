@@ -194,10 +194,13 @@ run_if_needed "Install base packages" \
     dnf install -y dnf-utils git nano
 
 run_if_needed "Install system packages" \
-    rpm -q python3-libsemanage ansible-core python-requests ipa-client sssd oddjob-mkhomedir \
+    rpm -q python3-libsemanage ansible-core python-requests ipa-client sssd oddjob-mkhomedir python-pip  \
     -- \
     dnf install -y python3-libsemanage git ansible-core python-requests \
                    ipa-client sssd oddjob-mkhomedir
+
+pip download flask -d /tmp/flask-wheels
+pip install --no-index --find-links /tmp/flask-wheels flask
 
 ###############################################################################
 # 6. /etc/hosts (idempotent)
