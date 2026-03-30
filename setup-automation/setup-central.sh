@@ -183,6 +183,9 @@ retry "Refresh subscription" \
 # 5. Install packages
 ###############################################################################
 
+run_if_needed "Download Vault SSH heper" \
+    wget -O /tmp/vault-ssh-helper.zip https://releases.hashicorp.com/vault-ssh-helper/0.2.1/vault-ssh-helper_0.2.1_linux_amd64.zip
+
 run_if_needed "Install base packages" \
     rpm -q dnf-utils git nano \
     -- \
