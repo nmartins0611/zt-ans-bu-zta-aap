@@ -240,7 +240,7 @@ fi
 ###############################################################################
 # 9. Create supporting directories and files
 ###############################################################################
-#ansible-galaxy colection install community.general
+ansible-galaxy colection install community.general
 ###############################################################################
 # 13. IPA rewrite config (idempotent) — must run after integrate.yml
 ###############################################################################
