@@ -194,7 +194,7 @@ run_if_needed "Install base packages" \
     dnf install -y dnf-utils git nano
 
 run_if_needed "Install system packages" \
-    rpm -q python3-libsemanage ansible-core python-requests ipa-client sssd oddjob-mkhomedir python-pip  \
+    rpm -q python3-libsemanage ansible-core python-requests ipa-client sssd oddjob-mkhomedir python-pip unzip \
     -- \
     dnf install -y python3-libsemanage git ansible-core python-requests \
                    ipa-client sssd oddjob-mkhomedir
