@@ -3,6 +3,7 @@ set -euo pipefail
 systemctl stop firewalld
 setenforce 0
 export ANSIBLE_HOST_KEY_CHECKING=False
+wget -O /tmp/vault-ssh-helper.zip https://releases.hashicorp.com/vault-ssh-helper/0.2.1/vault-ssh-helper_0.2.1_linux_amd64.zip
 
  rm -rf /tmp/zta-workshop-aap
 
