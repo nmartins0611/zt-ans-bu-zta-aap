@@ -200,7 +200,8 @@ run_if_needed "Install system packages" \
                    ipa-client sssd oddjob-mkhomedir
 
 pip download flask -d /tmp/flask-wheels
-pip install --no-index --find-links /tmp/flask-wheels flask
+pip install --no-index --find-links /tmp/flask-wheels flask --user
+pip install pynetbox
 
 ###############################################################################
 # 6. /etc/hosts (idempotent)
