@@ -6,8 +6,8 @@ set -euo pipefail
 ###############################################################################
 
 retry() {
-    local max_attempts=2
-    local delay=2
+    local max_attempts=3
+    local delay=5
     local desc="$1"
     shift
     for ((i = 1; i <= max_attempts; i++)); do
