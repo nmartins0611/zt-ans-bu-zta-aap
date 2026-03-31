@@ -111,12 +111,11 @@ done
 # 3. /etc/hosts (idempotent)
 ###############################################################################
 
-ensure_hosts_entry "192.168.1.10" "control.zta.lab control"
-ensure_hosts_entry "192.168.1.11" "central.zta.lab keycloak.zta.lab opa.zta.lab"
+ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
+ensure_hosts_entry "192.168.1.11" "central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab gitea.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab"
 ensure_hosts_entry "192.168.1.12" "vault.zta.lab vault"
-ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
-ensure_hosts_entry "192.168.1.14" "node01.zta.lab node01"
 ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
+ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 
 ###############################################################################
 # 4. Network configuration (idempotent)
