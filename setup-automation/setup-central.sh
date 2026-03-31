@@ -302,10 +302,10 @@ systemctl start container-keycloak
 
 rm -rf ~/.ansible.cfg
 
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/ata-workshop-aap/setup/configure-dns.yml
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/ata-workshop-aap/setup/configure-vault.yml
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/ata-workshop-aap/setup/configure-vault-ssh.yml
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/ata-workshop-aap/setup/enroll-idm-clients.yml
+ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/configure-dns.yml
+ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/configure-vault.yml
+ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/configure-vault-ssh.yml
+ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/enroll-idm-clients.yml
 
 
 echo "✓ central setup complete"
