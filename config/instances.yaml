@@ -388,7 +388,7 @@ virtualmachines:
             - systemctl reload sshd        
 
  - name: "central"
-    image: "idm-kc-wz-zerotrustvs1"
+    image: "idm-kc-wz-zerotrust-vs1"
     memory: "64G"
     cores: 6
     image_size: "60Gi"
