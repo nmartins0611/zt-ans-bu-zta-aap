@@ -204,6 +204,20 @@ pip download flask -d /tmp/flask-wheels
 pip install --no-index --find-links /tmp/flask-wheels flask --user
 pip install pynetbox
 
+if [ ! -d /tmp/ipa-rpms ]; then
+    mkdir -p /tmp/ipa-rpms
+    dnf download --resolve --destdir /tmp/ipa-rpms ipa-client
+fi
+
+for c in app db; do
+    if podman exec "$c" rpm -q ipa-client &>/dev/null; then
+        echo "SKIP: ipa-client already installed in container '$c'"
+    else
+        podman cp /tmp/ipa-rpms "$c":/tmp/ipa-rpms
+        podman exec "$c" bash -c 'dnf install -y /tmp/ipa-rpms/*.rpm && rm -rf /tmp/ipa-rpms'
+    fi
+done
+
 ###############################################################################
 # 6. /etc/hosts (idempotent)
 ###############################################################################
