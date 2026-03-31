@@ -184,7 +184,25 @@ python3 -c "import flask" 2>/dev/null || {
 python3 -c "import pynetbox" 2>/dev/null || pip install pynetbox --user
 
 ###############################################################################
-# 7. /etc/hosts (idempotent)
+# 7. Install IPA client into app/db containers
+###############################################################################
+
+if [ ! -d /tmp/ipa-rpms ]; then
+    mkdir -p /tmp/ipa-rpms
+    dnf download --resolve --destdir /tmp/ipa-rpms ipa-client
+fi
+
+for c in app db; do
+    if podman exec "$c" rpm -q ipa-client &>/dev/null; then
+        echo "SKIP: ipa-client already installed in container '$c'"
+    else
+        podman cp /tmp/ipa-rpms "$c":/tmp/ipa-rpms
+        podman exec "$c" bash -c 'dnf install -y /tmp/ipa-rpms/*.rpm && rm -rf /tmp/ipa-rpms'
+    fi
+done
+
+###############################################################################
+# 8. /etc/hosts (idempotent)
 ###############################################################################
 
 ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
@@ -194,7 +212,7 @@ ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
 ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 
 ###############################################################################
-# 8. Network configuration (idempotent)
+# 9. Network configuration (idempotent)
 ###############################################################################
 
 ensure_nmcli_connection "enp2s0" \
@@ -206,7 +224,7 @@ ensure_nmcli_connection "enp2s0" \
 nmcli connection up enp2s0 || true
 
 ###############################################################################
-# 9. Clone workshop repo (idempotent)
+# 10. Clone workshop repo (idempotent)
 ###############################################################################
 
 if [ -d /tmp/zta-workshop-aap ]; then
@@ -217,13 +235,13 @@ else
 fi
 
 ###############################################################################
-# 10. Install Ansible collections
+# 11. Install Ansible collections
 ###############################################################################
 
 ansible-galaxy collection install community.general netbox.netbox ansible.controller
 
 ###############################################################################
-# 11. IPA rewrite config (idempotent)
+# 12. IPA rewrite config (idempotent)
 ###############################################################################
 
 IPA_REWRITE="/etc/httpd/conf.d/ipa-rewrite.conf"
@@ -244,7 +262,7 @@ IPA
 fi
 
 ###############################################################################
-# 12. Keycloak container (idempotent)
+# 13. Keycloak container (idempotent)
 ###############################################################################
 
 KEYCLOAK_IMAGE="registry.redhat.io/rhbk/keycloak-rhel9:24"
@@ -273,5 +291,30 @@ else
 fi
 
 systemctl start container-keycloak || true
+
+###############################################################################
+# 14. Run post-setup playbooks
+###############################################################################
+
+PLAYBOOK_DIR="/tmp/zta-workshop-aap/setup"
+
+# Add playbooks to this list in the order they should run:
+REPO_DIR="/tmp/zta-workshop-aap"
+INVENTORY="${REPO_DIR}/inventory/hosts.ini"
+PLAYBOOK_DIR="${REPO_DIR}/setup"
+
+# Add playbooks to this list in the order they should run:
+PLAYBOOKS=(
+    "${PLAYBOOK_DIR}/configure-dns.yml"
+)
+
+for pb in "${PLAYBOOKS[@]}"; do
+    if [ ! -f "$pb" ]; then
+        echo "ERROR: Playbook not found: $pb"
+        exit 1
+    fi
+    echo "Running playbook: $pb"
+    ansible-playbook -i "$INVENTORY" "$pb"
+done
 
 echo "central setup complete"
