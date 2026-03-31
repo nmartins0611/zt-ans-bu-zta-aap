@@ -296,17 +296,15 @@ systemctl start container-keycloak || true
 # 14. Run post-setup playbooks
 ###############################################################################
 
-PLAYBOOK_DIR="/tmp/zta-workshop-aap/setup"
-
-# Add playbooks to this list in the order they should run:
 REPO_DIR="/tmp/zta-workshop-aap"
 INVENTORY="${REPO_DIR}/inventory/hosts.ini"
 PLAYBOOK_DIR="${REPO_DIR}/setup"
-
-# Add playbooks to this list in the order they should run:
 PLAYBOOKS=(
     "${PLAYBOOK_DIR}/configure-dns.yml"
-)
+    "${PLAYBOOK_DIR}/configure-vault.yml"
+    "${PLAYBOOK_DIR}/configure-vault-ssh.yml"
+    "${PLAYBOOK_DIR}/enroll-idm-clients.yml"
+)   
 
 for pb in "${PLAYBOOKS[@]}"; do
     if [ ! -f "$pb" ]; then
