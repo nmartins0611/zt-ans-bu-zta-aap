@@ -314,7 +314,7 @@ virtualmachines:
         - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
         - systemctl reload sshd                               
 
- - name: "wazuh"
+  - name: "wazuh"
     image: "project-zero-wazuh-base-all"
     memory: "16G"
     cores: 2
@@ -387,7 +387,7 @@ virtualmachines:
             - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
             - systemctl reload sshd        
 
- - name: "central"
+  - name: "central"
     image: "idm-kc-wz-zerotrust-vs1"
     memory: "64G"
     cores: 6
