@@ -74,29 +74,17 @@ done
 # 2. Enable subscription-manager repo management (idempotent)
 ###############################################################################
 
-CURRENT_MANAGE_REPOS=$(subscription-manager config --list | grep -oP 'manage_repos\s*=\s*\[\K[^\]]+' || echo "unknown")
-if [ "$CURRENT_MANAGE_REPOS" = "1" ]; then
-    echo "SKIP: manage_repos already enabled"
-else
-    subscription-manager config --rhsm.manage_repos=1
-    subscription-manager refresh
-fi
+subscription-manager config --rhsm.manage_repos=1 2>/dev/null || true
+subscription-manager refresh 2>/dev/null || true
 
 ###############################################################################
 # 3. SELinux — set permissive (idempotent)
 ###############################################################################
 
-CURRENT_MODE=$(getenforce)
-if [ "${CURRENT_MODE}" = "Permissive" ] || [ "${CURRENT_MODE}" = "Disabled" ]; then
-    echo "SKIP: SELinux already in ${CURRENT_MODE} mode"
-else
-    setenforce 0
-    echo "SELinux set to Permissive"
-fi
-
+getenforce 2>/dev/null | grep -qi enforcing && setenforce 0 || true
 
 ###############################################################################
-# 6. /etc/hosts (idempotent)
+# 4. /etc/hosts (idempotent)
 ###############################################################################
 
 ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
@@ -104,10 +92,6 @@ ensure_hosts_entry "192.168.1.11" "central.zta.lab central keycloak.zta.lab opa.
 ensure_hosts_entry "192.168.1.12" "vault.zta.lab vault"
 ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
 ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
-
-###############################################################################
-# 7. Network configuration (idempotent)
-###############################################################################
 
 ###############################################################################
 # 5. Network configuration (idempotent)
@@ -194,15 +178,4 @@ run_if_needed "Install Python3 libraries" \
     -- \
     dnf install -y python3-libsemanage
 
-# ###############################################################################
-# # 9. Clone workshop repo (idempotent)
-# ###############################################################################
-
-# if [ -d /tmp/zta-aap-workshop ]; then
-#     echo "SKIP: /tmp/zta-aap-workshop already exists"
-# else
-#     retry "Clone ZTA AAP workshop repo" \
-#         git clone https://github.com/nmartins0611/zta-aap-workshop.git /tmp/zta-aap-workshop
-# fi
-
-echo "✓ control setup complete"
+echo "control setup complete"

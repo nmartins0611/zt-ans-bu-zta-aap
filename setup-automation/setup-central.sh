@@ -1,52 +1,5 @@
 #!/bin/bash
 set -euo pipefail
-systemctl stop firewalld
-setenforce 0
-export ANSIBLE_HOST_KEY_CHECKING=False
-export NETBOX_TOKEN=0123456789abcdef0123456789abcdef01234567
-# wget -O /tmp/vault-ssh-helper.zip https://releases.hashicorp.com/vault-ssh-helper/0.2.1/vault-ssh-helper_0.2.1_linux_amd64.zip
-# mkdir -p /tmp/wazuh
-# curl -o /tmp/wazuh/GPG-KEY-WAZUH https://packages.wazuh.com/key/GPG-KEY-WAZUH
-# curl -o /tmp/wazuh/wazuh-agent-4.9.2-1.x86_64.rpm https://packages.wazuh.com/4.9/yum/wazuh-agent-4.9.2-1.x86_64.rpm
-# curl -Lo /tmp/spire-1.12.0-linux-amd64-musl.tar.gz https://github.com/spiffe/spire/releases/download/v1.12.0/spire-1.12.0-linux-amd64-musl.tar.gz
-
-
- rm -rf /tmp/zta-workshop-aap
-
-echo "Setup the AH Token for ansible"
-###############################################################################
-# Setup AH
-###############################################################################
-
-if [ -z "$AH_TOKEN" ]; then
-    echo "Error: AH_TOKEN environment variable is not set"
-    echo "Usage: AH_TOKEN='your-token-here' $0"
-    exit 1
-fi
-
-# Create ~/.ansible.cfg with AH_TOKEN substituted
-tee ~/.ansible.cfg > /dev/null <<EOF
-[defaults]
-[galaxy]
-server_list = automation_hub, validated, galaxy
-[galaxy_server.automation_hub]
-url = https://console.redhat.com/api/automation-hub/content/published/
-auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-token=$AH_TOKEN
-[galaxy_server.validated]
-url = https://console.redhat.com/api/automation-hub/content/validated/
-auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-token=$AH_TOKEN
-[galaxy_server.galaxy]
-url=https://galaxy.ansible.com/
-#token=""
-[ssh_connection]
-ssh_args = -o ControlMaster=auto -o ControlPersist=60s
-pipelining = True
-EOF
-
-
-echo "Setup the Satellite links"
 
 ###############################################################################
 # Helpers
@@ -110,7 +63,7 @@ ensure_nmcli_connection() {
 # 1. Validate required variables
 ###############################################################################
 
-for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
+for var in AH_TOKEN SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY GUID DOMAIN; do
     if [ -z "${!var:-}" ]; then
         echo "ERROR: $var is not set"
         exit 1
@@ -118,23 +71,46 @@ for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
 done
 
 ###############################################################################
-# 2. Disable tmpfiles service
+# 2. Early system hardening
 ###############################################################################
 
-# if systemctl is-active --quiet systemd-tmpfiles-setup.service; then
-#     systemctl stop systemd-tmpfiles-setup.service
-# else
-#     echo "SKIP: systemd-tmpfiles-setup already stopped"
-# fi
+export ANSIBLE_HOST_KEY_CHECKING=False
+export NETBOX_TOKEN="${NETBOX_TOKEN:-0123456789abcdef0123456789abcdef01234567}"
 
-# if systemctl is-enabled --quiet systemd-tmpfiles-setup.service 2>/dev/null; then
-#     systemctl disable systemd-tmpfiles-setup.service
-# else
-#     echo "SKIP: systemd-tmpfiles-setup already disabled"
-# fi
+systemctl is-active --quiet firewalld && systemctl stop firewalld || true
+getenforce 2>/dev/null | grep -qi enforcing && setenforce 0 || true
+
+rm -rf /tmp/zta-workshop-aap
 
 ###############################################################################
-# 3. Clean repos & subscriptions (only if not already registered)
+# 3. Temporary ansible.cfg for galaxy installs (auto-cleaned on exit)
+###############################################################################
+
+ANSIBLE_TMP_CFG="$(mktemp /tmp/ansible-cfg.XXXXXX)"
+trap 'rm -f "$ANSIBLE_TMP_CFG"' EXIT
+export ANSIBLE_CONFIG="$ANSIBLE_TMP_CFG"
+
+tee "$ANSIBLE_TMP_CFG" > /dev/null <<EOF
+[defaults]
+[galaxy]
+server_list = automation_hub, validated, galaxy
+[galaxy_server.automation_hub]
+url = https://console.redhat.com/api/automation-hub/content/published/
+auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+token=$AH_TOKEN
+[galaxy_server.validated]
+url = https://console.redhat.com/api/automation-hub/content/validated/
+auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+token=$AH_TOKEN
+[galaxy_server.galaxy]
+url=https://galaxy.ansible.com/
+[ssh_connection]
+ssh_args = -o ControlMaster=auto -o ControlPersist=60s
+pipelining = True
+EOF
+
+###############################################################################
+# 4. Clean repos & subscriptions (only if not already registered)
 ###############################################################################
 
 if subscription-manager identity &>/dev/null; then
@@ -155,7 +131,7 @@ else
 fi
 
 ###############################################################################
-# 4. Register with Satellite
+# 5. Register with Satellite
 ###############################################################################
 
 CA_CERT="/etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
@@ -186,7 +162,7 @@ retry "Refresh subscription" \
     subscription-manager refresh
 
 ###############################################################################
-# 5. Install packages
+# 6. Install packages
 ###############################################################################
 
 run_if_needed "Install base packages" \
@@ -198,14 +174,17 @@ run_if_needed "Install system packages" \
     rpm -q python3-libsemanage ansible-core python-requests ipa-client sssd oddjob-mkhomedir python-pip unzip \
     -- \
     dnf install -y python3-libsemanage git ansible-core python-requests \
-                   ipa-client sssd oddjob-mkhomedir
+                   ipa-client sssd oddjob-mkhomedir python-pip unzip
 
-pip download flask -d /tmp/flask-wheels
-pip install --no-index --find-links /tmp/flask-wheels flask --user
-pip install pynetbox
+python3 -c "import flask" 2>/dev/null || {
+    pip download flask -d /tmp/flask-wheels
+    pip install --no-index --find-links /tmp/flask-wheels flask --user
+}
+
+python3 -c "import pynetbox" 2>/dev/null || pip install pynetbox --user
 
 ###############################################################################
-# 6. /etc/hosts (idempotent)
+# 7. /etc/hosts (idempotent)
 ###############################################################################
 
 ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
@@ -214,12 +193,8 @@ ensure_hosts_entry "192.168.1.12" "vault.zta.lab vault"
 ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
 ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 
-
 ###############################################################################
-# 7. Network configuration (idempotent)
-###############################################################################
-###############################################################################
-# 7. Network configuration (idempotent)
+# 8. Network configuration (idempotent)
 ###############################################################################
 
 ensure_nmcli_connection "enp2s0" \
@@ -231,33 +206,24 @@ ensure_nmcli_connection "enp2s0" \
 nmcli connection up enp2s0 || true
 
 ###############################################################################
-# 8. Clone workshop repo (idempotent)
+# 9. Clone workshop repo (idempotent)
 ###############################################################################
-
-# if [ -d /tmp/zta-workshop-aap ]; then
-#     echo "SKIP: /tmp/zta-workshop-aap already exists"
-# else
-#     retry "Clone ZTA workshop repo" \
-#         git clone https://github.com/nmartins0611/zta-workshop-aap.git /tmp/zta-workshop-aap
-        
-# fi
 
 if [ -d /tmp/zta-workshop-aap ]; then
     echo "SKIP: /tmp/zta-workshop-aap already exists"
 else
-    # Corrected the line below
-    retry "Clone ZTA workshop repo (idm_dev branch)" \
+    retry "Clone ZTA workshop repo (zta-container branch)" \
         git clone -b zta-container https://github.com/nmartins0611/zta-workshop-aap.git /tmp/zta-workshop-aap
 fi
 
 ###############################################################################
-# 9. Create supporting directories and files
+# 10. Install Ansible collections
 ###############################################################################
-ansible-galaxy collection install community.general
-ansible-galaxy collection install netbox.netbox
-ansible-galaxy collection install ansible.controller
+
+ansible-galaxy collection install community.general netbox.netbox ansible.controller
+
 ###############################################################################
-# 13. IPA rewrite config (idempotent) — must run after integrate.yml
+# 11. IPA rewrite config (idempotent)
 ###############################################################################
 
 IPA_REWRITE="/etc/httpd/conf.d/ipa-rewrite.conf"
@@ -277,15 +243,35 @@ IPA
     systemctl reload httpd
 fi
 
-podman stop keycloak
-systemctl stop container-keycloak
-systemctl kill container-keycloak
-podman rm --force keycloak
-podman create --name keycloak --restart=always -p 8180:8080 -p 8543:8443 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=ansible123! -e KC_HOSTNAME=keycloak-https-${GUID}.${DOMAIN} -e KC_HTTPS_CERTIFICATE_FILE=/opt/certs/server.crt -e KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/certs/server.key -e KC_HTTP_ENABLED=true -v /opt/keycloak/certs:/opt/certs:Z registry.redhat.io/rhbk/keycloak-rhel9:24 start --hostname=keycloak-https-${GUID}.${DOMAIN} --https-port=8443 --http-enabled=true --proxy-headers forwarded
-sed -i "s/^PIDFile/d/" /etc/systemd/system/container-keycloak.service
-systemctl daemon-reload
-systemctl start container-keycloak
+###############################################################################
+# 12. Keycloak container (idempotent)
+###############################################################################
 
-rm -rf ~/.ansible.cfg
+KEYCLOAK_IMAGE="registry.redhat.io/rhbk/keycloak-rhel9:24"
+KC_HOSTNAME="keycloak-https-${GUID}.${DOMAIN}"
 
-echo "✓ central setup complete"
+if podman inspect keycloak &>/dev/null; then
+    echo "SKIP: keycloak container already exists"
+else
+    podman create --name keycloak --restart=always \
+        -p 8180:8080 -p 8543:8443 \
+        -e KEYCLOAK_ADMIN=admin \
+        -e KEYCLOAK_ADMIN_PASSWORD=ansible123! \
+        -e KC_HOSTNAME="${KC_HOSTNAME}" \
+        -e KC_HTTPS_CERTIFICATE_FILE=/opt/certs/server.crt \
+        -e KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/certs/server.key \
+        -e KC_HTTP_ENABLED=true \
+        -v /opt/keycloak/certs:/opt/certs:Z \
+        "${KEYCLOAK_IMAGE}" start \
+        --hostname="${KC_HOSTNAME}" \
+        --https-port=8443 \
+        --http-enabled=true \
+        --proxy-headers forwarded
+
+    sed -i "/^PIDFile/d" /etc/systemd/system/container-keycloak.service
+    systemctl daemon-reload
+fi
+
+systemctl start container-keycloak || true
+
+echo "central setup complete"

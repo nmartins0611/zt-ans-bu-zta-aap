@@ -74,13 +74,7 @@ done
 # 2. SELinux — set permissive (idempotent)
 ###############################################################################
 
-CURRENT_MODE=$(getenforce)
-if [ "${CURRENT_MODE}" = "Permissive" ] || [ "${CURRENT_MODE}" = "Disabled" ]; then
-    echo "SKIP: SELinux already in ${CURRENT_MODE} mode"
-else
-    setenforce 0
-    echo "SELinux set to Permissive"
-fi
+getenforce 2>/dev/null | grep -qi enforcing && setenforce 0 || true
 
 ###############################################################################
 # 3. Clean repos & subscriptions (only if not registered)
@@ -174,7 +168,7 @@ else
 fi
 
 ###############################################################################
-# 6. /etc/hosts (idempotent)
+# 7. /etc/hosts (idempotent)
 ###############################################################################
 
 ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
@@ -183,9 +177,6 @@ ensure_hosts_entry "192.168.1.12" "vault.zta.lab vault"
 ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
 ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 
-###############################################################################
-# 7. Network configuration (idempotent)
-###############################################################################
 ###############################################################################
 # 8. Network configuration (idempotent)
 ###############################################################################
@@ -248,6 +239,6 @@ retry "Pull NetBox images" \
     docker compose --project-directory=/tmp/netbox-docker pull
 
 retry "Start NetBox containers" \
-    docker compose --project-directory=/tmp/netbox-docker up -d netbox netbox-worker
+    docker compose --project-directory=/tmp/netbox-docker up -d --wait netbox netbox-worker
 
-echo "✓ netbox setup complete"
+echo "netbox setup complete"

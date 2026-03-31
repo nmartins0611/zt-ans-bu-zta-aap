@@ -5,27 +5,6 @@ set -euo pipefail
 # Helpers
 ###############################################################################
 
-# # Create ~/.ansible.cfg with AH_TOKEN substituted
-# tee ~/.ansible.cfg > /dev/null <<EOF
-# [defaults]
-# [galaxy]
-# server_list = automation_hub, validated, galaxy
-# [galaxy_server.automation_hub]
-# url = https://console.redhat.com/api/automation-hub/content/published/
-# auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-# token=$AH_TOKEN
-# [galaxy_server.validated]
-# url = https://console.redhat.com/api/automation-hub/content/validated/
-# auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-# token=$AH_TOKEN
-# [galaxy_server.galaxy]
-# url=https://galaxy.ansible.com/
-# #token=""
-# [ssh_connection]
-# ssh_args = -o ControlMaster=auto -o ControlPersist=60s
-# pipelining = True
-# EOF
-
 retry() {
     local max_attempts=2
     local delay=2
@@ -92,23 +71,7 @@ for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
 done
 
 ###############################################################################
-# 2. Disable tmpfiles service (idempotent)
-###############################################################################
-
-# if systemctl is-active --quiet systemd-tmpfiles-setup.service; then
-#     systemctl stop systemd-tmpfiles-setup.service
-# else
-#     echo "SKIP: systemd-tmpfiles-setup already stopped"
-# fi
-
-# if systemctl is-enabled --quiet systemd-tmpfiles-setup.service 2>/dev/null; then
-#     systemctl disable systemd-tmpfiles-setup.service
-# else
-#     echo "SKIP: systemd-tmpfiles-setup already disabled"
-# fi
-
-###############################################################################
-# 3. /etc/hosts (idempotent)
+# 2. /etc/hosts (idempotent)
 ###############################################################################
 
 ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
@@ -118,21 +81,21 @@ ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
 ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 
 ###############################################################################
-# 4. Network configuration (idempotent)
+# 3. Network configuration (idempotent)
 ###############################################################################
 
 ensure_nmcli_connection "enp2s0" \
     type ethernet con-name enp2s0 ifname enp2s0 \
     ipv4.addresses 192.168.1.13/24 \
     ipv4.method manual \
+    ipv4.dns 192.168.1.11 \
+    ipv4.dns-search zta.lab \
     connection.autoconnect yes
 
-nmcli con mod enp2s0 ipv4.dns 192.168.1.11
-nmcli con mod enp2s0 ipv4.dns-search zta.lab
 nmcli connection up enp2s0 || true
 
 ###############################################################################
-# 5. Clean repos & subscriptions (only if not registered)
+# 4. Clean repos & subscriptions (only if not registered)
 ###############################################################################
 
 if subscription-manager identity &>/dev/null; then
@@ -153,7 +116,7 @@ else
 fi
 
 ###############################################################################
-# 6. Register with Satellite
+# 5. Register with Satellite
 ###############################################################################
 
 CA_CERT="/etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
@@ -184,22 +147,25 @@ retry "Refresh subscription" \
     subscription-manager refresh
 
 ###############################################################################
-# 7. Install packages
+# 6. Install packages
 ###############################################################################
 
-run_if_needed "Install Python3 libraries" \
-    rpm -q python3-libsemanage \
+run_if_needed "Install required packages" \
+    rpm -q python3-libsemanage ansible-core git podman \
     -- \
     dnf install -y python3-libsemanage ansible-core git podman
 
 ###############################################################################
-# 8. Wazuh deployment playbook
+# 7. Write Wazuh deployment playbook
 ###############################################################################
 
-tee /tmp/waz-setup.yml << 'EOF'
+WAZ_PLAYBOOK="/tmp/waz-setup.yml"
+
+tee "$WAZ_PLAYBOOK" > /dev/null << 'EOF'
 ---
 - name: Wazuh All-in-One Deployment with SOC Analyst User
-  hosts: wazuh
+  hosts: localhost
+  connection: local
   become: true
   gather_facts: true
 
@@ -469,12 +435,6 @@ tee /tmp/waz-setup.yml << 'EOF'
           API Role: readonly
           Dashboard Roles: readall, kibana_user
 
-    - name: Fetch credentials file to controller
-      ansible.builtin.fetch:
-        src: "{{ credentials_output_file }}"
-        dest: "./credentials/{{ inventory_hostname }}-wazuh-credentials.txt"
-        flat: true
-
     - name: Print final summary
       ansible.builtin.debug:
         msg:
@@ -494,15 +454,17 @@ tee /tmp/waz-setup.yml << 'EOF'
           - ""
           - "  All passwords saved to:"
           - "    Remote: {{ credentials_output_file }}"
-          - "    Local:  ./credentials/{{ inventory_hostname }}-wazuh-credentials.txt"
           - ""
           - "============================================================"
 EOF
 
+###############################################################################
+# 8. Run Wazuh deployment playbook
+###############################################################################
 
 export ANSIBLE_LOCALHOST_WARNING=False
 export ANSIBLE_INVENTORY_UNPARSED_WARNING=False
 
-rm -rf ~/.ansible.cfg
+ansible-playbook "$WAZ_PLAYBOOK"
 
-echo "✓ wazuh setup complete"
+echo "wazuh setup complete"
