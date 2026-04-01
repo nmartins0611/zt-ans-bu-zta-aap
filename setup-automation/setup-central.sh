@@ -3,6 +3,12 @@ set -euo pipefail
 
 echo "Starting Central node setup..."
 
+cleanup() {
+    echo "Cleaning up temporary ansible configuration..."
+    rm -rf ~/.ansible.cfg
+}
+trap cleanup EXIT
+
 ###############################################################################
 # Helpers
 ###############################################################################
@@ -310,18 +316,25 @@ nmcli connection up enp2s0 || true
 # 15. Run Ansible playbooks
 ###############################################################################
 
-echo "Running Ansible playbooks..."
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/configure-dns.yml
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/configure-vault.yml
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/configure-vault-ssh.yml
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/enroll-idm-clients.yml
+PLAYBOOK_DIR="/tmp/zta-workshop-aap/setup"
+INVENTORY="/tmp/zta-workshop-aap/inventory/hosts.ini"
+FAILED=()
 
-###############################################################################
-# 16. Cleanup
-###############################################################################
+for playbook in deploy-dashboard.yml configure-dns.yml configure-vault.yml configure-vault-ssh.yml enroll-idm-clients.yml; do
+    echo "Running ${playbook}..."
+    if ansible-playbook -i "$INVENTORY" "${PLAYBOOK_DIR}/${playbook}"; then
+        echo "✓ ${playbook} completed"
+    else
+        echo "✗ ${playbook} FAILED"
+        FAILED+=("$playbook")
+    fi
+done
 
-echo "Cleaning up temporary ansible configuration..."
-rm -rf ~/.ansible.cfg
+if [ ${#FAILED[@]} -gt 0 ]; then
+    echo ""
+    echo "ERROR: The following playbooks failed: ${FAILED[*]}"
+    exit 1
+fi
 
 echo ""
 echo "✓ central setup complete"
