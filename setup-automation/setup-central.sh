@@ -190,10 +190,8 @@ EOF
 echo "Cleaning existing subscription data..."
 subscription-manager clean
 
-## 2. Register System
 # Using --force to ensure any existing stale registrations are overwritten
-echo "Registering system with Org ID: $ORG_ID..."
-subscription-manager register --org="$ORG_ID" --activationkey="$ACTIVATION_KEY" --force
+subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force
 
 if [ $? -eq 0 ]; then
     echo "System registered successfully!"
