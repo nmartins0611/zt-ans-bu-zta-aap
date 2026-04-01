@@ -63,27 +63,16 @@ ensure_nmcli_connection() {
 # 1. Validate required variables
 ###############################################################################
 
-for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
+# Validating the new Org and Key variables instead of Satellite ones
+for var in TMM_ORG TMM_ID; do
     if [ -z "${!var:-}" ]; then
-        echo "ERROR: $var is not set"
+        echo "ERROR: $var is not set. Please export it before running."
         exit 1
     fi
 done
 
 ###############################################################################
-# 2. Enable subscription-manager repo management (idempotent)
-###############################################################################
-
-CURRENT_MANAGE_REPOS=$(subscription-manager config --list | grep -oP 'manage_repos\s*=\s*\[\K[^\]]+' || echo "unknown")
-if [ "$CURRENT_MANAGE_REPOS" = "1" ]; then
-    echo "SKIP: manage_repos already enabled"
-else
-    subscription-manager config --rhsm.manage_repos=1
-    subscription-manager refresh
-fi
-
-###############################################################################
-# 3. SELinux — set permissive (idempotent)
+# 2. SELinux — set permissive (idempotent)
 ###############################################################################
 
 CURRENT_MODE=$(getenforce)
@@ -94,9 +83,26 @@ else
     echo "SELinux set to Permissive"
 fi
 
+###############################################################################
+# 3. Subscription Management (Direct Registration)
+###############################################################################
+
+if subscription-manager identity &>/dev/null; then
+    echo "SKIP: System already registered."
+else
+    echo "Cleaning existing subscription data..."
+    subscription-manager clean
+
+    echo "Registering system with Org ID: ${TMM_ORG}..."
+    subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force
+    
+    echo "Enabling repo management..."
+    subscription-manager config --rhsm.manage_repos=1
+    subscription-manager refresh
+fi
 
 ###############################################################################
-# 6. /etc/hosts (idempotent)
+# 4. /etc/hosts (idempotent)
 ###############################################################################
 
 ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
@@ -104,10 +110,6 @@ ensure_hosts_entry "192.168.1.11" "central.zta.lab central keycloak.zta.lab opa.
 ensure_hosts_entry "192.168.1.12" "vault.zta.lab vault"
 ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
 ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
-
-###############################################################################
-# 7. Network configuration (idempotent)
-###############################################################################
 
 ###############################################################################
 # 5. Network configuration (idempotent)
@@ -124,59 +126,7 @@ ensure_nmcli_connection "eth1" \
 nmcli connection up eth1 || true
 
 ###############################################################################
-# 6. Clean repos & subscriptions (only if not registered)
-###############################################################################
-
-if subscription-manager identity &>/dev/null; then
-    echo "SKIP: Already registered with Satellite – skipping clean/unregister"
-else
-    echo "Cleaning existing repos and subscriptions..."
-    dnf clean all || true
-    rm -f /etc/yum.repos.d/redhat-rhui*.repo
-    sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
-    subscription-manager unregister 2>/dev/null || true
-    subscription-manager remove --all 2>/dev/null || true
-    subscription-manager clean
-
-    OLD_KATELLO=$(rpm -qa | grep katello-ca-consumer || true)
-    if [ -n "$OLD_KATELLO" ]; then
-        rpm -e "$OLD_KATELLO" 2>/dev/null || true
-    fi
-fi
-
-###############################################################################
-# 7. Register with Satellite
-###############################################################################
-
-CA_CERT="/etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
-
-run_if_needed "Download Katello CA cert" \
-    test -f "${CA_CERT}" \
-    -- \
-    curl -fsSkL \
-        "https://${SATELLITE_URL}/pub/katello-server-ca.crt" \
-        -o "${CA_CERT}"
-
-retry "Update CA trust" \
-    update-ca-trust extract
-
-run_if_needed "Install Katello consumer RPM" \
-    rpm -q katello-ca-consumer \
-    -- \
-    rpm -Uhv --force "https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm"
-
-run_if_needed "Register with Satellite" \
-    subscription-manager identity \
-    -- \
-    subscription-manager register \
-        --org="${SATELLITE_ORG}" \
-        --activationkey="${SATELLITE_ACTIVATIONKEY}"
-
-retry "Refresh subscription" \
-    subscription-manager refresh
-
-###############################################################################
-# 8. Install packages
+# 6. Install packages
 ###############################################################################
 
 run_if_needed "Install base packages" \
@@ -193,16 +143,5 @@ run_if_needed "Install Python3 libraries" \
     rpm -q python3-libsemanage \
     -- \
     dnf install -y python3-libsemanage
-
-# ###############################################################################
-# # 9. Clone workshop repo (idempotent)
-# ###############################################################################
-
-# if [ -d /tmp/zta-aap-workshop ]; then
-#     echo "SKIP: /tmp/zta-aap-workshop already exists"
-# else
-#     retry "Clone ZTA AAP workshop repo" \
-#         git clone https://github.com/nmartins0611/zta-aap-workshop.git /tmp/zta-aap-workshop
-# fi
 
 echo "✓ control setup complete"
