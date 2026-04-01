@@ -63,9 +63,9 @@ ensure_nmcli_connection() {
 # 1. Validate required variables
 ###############################################################################
 
-for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
+for var in TMM_ORG TMM_ID; do
     if [ -z "${!var:-}" ]; then
-        echo "ERROR: $var is not set"
+        echo "ERROR: $var is not set. Please export it before running."
         exit 1
     fi
 done
@@ -83,59 +83,25 @@ else
 fi
 
 ###############################################################################
-# 3. Clean repos & subscriptions (only if not registered)
+# 3. Subscription Management (Direct Registration)
 ###############################################################################
 
 if subscription-manager identity &>/dev/null; then
-    echo "SKIP: Already registered with Satellite – skipping clean/unregister"
+    echo "SKIP: System already registered."
 else
-    echo "Cleaning existing repos and subscriptions..."
-    dnf clean all || true
-    rm -f /etc/yum.repos.d/redhat-rhui*.repo
-    sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
-    subscription-manager unregister 2>/dev/null || true
-    subscription-manager remove --all 2>/dev/null || true
+    echo "Cleaning existing subscription data..."
     subscription-manager clean
 
-    OLD_KATELLO=$(rpm -qa | grep katello-ca-consumer || true)
-    if [ -n "$OLD_KATELLO" ]; then
-        rpm -e "$OLD_KATELLO" 2>/dev/null || true
-    fi
+    echo "Registering system with Org ID: ${TMM_ORG}..."
+    subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force
+    
+    echo "Enabling repo management..."
+    subscription-manager config --rhsm.manage_repos=1
+    subscription-manager refresh
 fi
 
 ###############################################################################
-# 4. Register with Satellite
-###############################################################################
-
-CA_CERT="/etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
-
-run_if_needed "Download Katello CA cert" \
-    test -f "${CA_CERT}" \
-    -- \
-    curl -fsSkL \
-        "https://${SATELLITE_URL}/pub/katello-server-ca.crt" \
-        -o "${CA_CERT}"
-
-retry "Update CA trust" \
-    update-ca-trust extract
-
-run_if_needed "Install Katello consumer RPM" \
-    rpm -q katello-ca-consumer \
-    -- \
-    rpm -Uhv --force "https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm"
-
-run_if_needed "Register with Satellite" \
-    subscription-manager identity \
-    -- \
-    subscription-manager register \
-        --org="${SATELLITE_ORG}" \
-        --activationkey="${SATELLITE_ACTIVATIONKEY}"
-
-retry "Refresh subscription" \
-    subscription-manager refresh
-
-###############################################################################
-# 5. Install packages and Docker
+# 4. Install packages and Docker
 ###############################################################################
 
 run_if_needed "Install base packages" \
@@ -150,6 +116,8 @@ run_if_needed "Add Docker repo" \
     -- \
     dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
+# Note: On RHEL, Docker sometimes requires the 'container-tools' module to be disabled 
+# if there are conflicts with podman/buildah, but usually dnf handles this now.
 run_if_needed "Install Docker" \
     rpm -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
     -- \
@@ -158,7 +126,7 @@ run_if_needed "Install Docker" \
         docker-buildx-plugin docker-compose-plugin
 
 ###############################################################################
-# 6. Enable & start Docker (idempotent)
+# 5. Enable & start Docker (idempotent)
 ###############################################################################
 
 if ! systemctl is-enabled --quiet docker 2>/dev/null; then
@@ -186,9 +154,6 @@ ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 ###############################################################################
 # 7. Network configuration (idempotent)
 ###############################################################################
-###############################################################################
-# 8. Network configuration (idempotent)
-###############################################################################
 
 ensure_nmcli_connection "eth1" \
     type ethernet con-name eth1 ifname eth1 \
@@ -199,7 +164,7 @@ ensure_nmcli_connection "eth1" \
 nmcli connection up eth1 || true
 
 ###############################################################################
-# 9. Clone NetBox Docker repo (idempotent)
+# 8. Clone NetBox Docker repo (idempotent)
 ###############################################################################
 
 if [ -d /tmp/netbox-docker ]; then
@@ -211,9 +176,10 @@ else
 fi
 
 ###############################################################################
-# 10. Docker Compose override (always write — config may have changed)
+# 9. Docker Compose override
 ###############################################################################
 
+# Writing the override file
 cat > /tmp/netbox-docker/docker-compose.override.yml <<'EOF'
 services:
   netbox:
@@ -235,19 +201,8 @@ services:
 EOF
 
 ###############################################################################
-# 11. Wait for Docker daemon and deploy NetBox
+# 10. Wait for Docker daemon and deploy NetBox
 ###############################################################################
 
 for i in {1..10}; do
-    docker info &>/dev/null && break
-    echo "Waiting for Docker daemon... ($i)"
-    sleep 2
-done
-
-retry "Pull NetBox images" \
-    docker compose --project-directory=/tmp/netbox-docker pull
-
-retry "Start NetBox containers" \
-    docker compose --project-directory=/tmp/netbox-docker up -d netbox netbox-worker
-
-echo "✓ netbox setup complete"
+    if
