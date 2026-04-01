@@ -148,9 +148,6 @@
     rhsm_repository:
       name: "*"
       state: enabled
-    when:
-    - use_content_view
-    - set_repositories_satellite_activationkey != ''
 
   - name: Create a directory if it does not exist
     ansible.builtin.file:
