@@ -60,17 +60,6 @@ ensure_nmcli_connection() {
 }
 
 ###############################################################################
-# 1. Validate required variables
-###############################################################################
-
-for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
-    if [ -z "${!var:-}" ]; then
-        echo "ERROR: $var is not set"
-        exit 1
-    fi
-done
-
-###############################################################################
 # 2. SELinux — set permissive (idempotent)
 ###############################################################################
 
@@ -81,58 +70,6 @@ else
     setenforce 0
     echo "SELinux set to Permissive"
 fi
-
-###############################################################################
-# 3. Clean repos & subscriptions (only if not registered)
-###############################################################################
-
-if subscription-manager identity &>/dev/null; then
-    echo "SKIP: Already registered with Satellite – skipping clean/unregister"
-else
-    echo "Cleaning existing repos and subscriptions..."
-    dnf clean all || true
-    rm -f /etc/yum.repos.d/redhat-rhui*.repo
-    sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
-    subscription-manager unregister 2>/dev/null || true
-    subscription-manager remove --all 2>/dev/null || true
-    subscription-manager clean
-
-    OLD_KATELLO=$(rpm -qa | grep katello-ca-consumer || true)
-    if [ -n "$OLD_KATELLO" ]; then
-        rpm -e "$OLD_KATELLO" 2>/dev/null || true
-    fi
-fi
-
-###############################################################################
-# 4. Register with Satellite
-###############################################################################
-
-CA_CERT="/etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
-
-run_if_needed "Download Katello CA cert" \
-    test -f "${CA_CERT}" \
-    -- \
-    curl -fsSkL \
-        "https://${SATELLITE_URL}/pub/katello-server-ca.crt" \
-        -o "${CA_CERT}"
-
-retry "Update CA trust" \
-    update-ca-trust extract
-
-run_if_needed "Install Katello consumer RPM" \
-    rpm -q katello-ca-consumer \
-    -- \
-    rpm -Uhv --force "https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm"
-
-run_if_needed "Register with Satellite" \
-    subscription-manager identity \
-    -- \
-    subscription-manager register \
-        --org="${SATELLITE_ORG}" \
-        --activationkey="${SATELLITE_ACTIVATIONKEY}"
-
-retry "Refresh subscription" \
-    subscription-manager refresh
 
 ###############################################################################
 # 5. Install packages and Docker
