@@ -165,6 +165,35 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
       when: sub_check.rc != 0
       changed_when: false
 
+    - name: Install base packages
+      ansible.builtin.dnf:
+        name:
+          - dnf-utils
+          - git
+          - nano
+        state: present
+      tags:
+        - packages
+
+    - name: Install IPA client packages
+      ansible.builtin.dnf:
+        name:
+          - ipa-client
+          - sssd
+          - oddjob-mkhomedir
+        state: present
+      tags:
+        - packages
+        - ipa
+
+    - name: Install Python3 libraries
+      ansible.builtin.dnf:
+        name:
+          - python3-libsemanage
+        state: present
+      tags:
+        - packages
+
     - name: Add hosts entries
       ansible.builtin.lineinfile:
         path: /etc/hosts
@@ -201,35 +230,6 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
       changed_when: nmcli_up.rc == 0
       tags:
         - network
-
-    - name: Install base packages
-      ansible.builtin.dnf:
-        name:
-          - dnf-utils
-          - git
-          - nano
-        state: present
-      tags:
-        - packages
-
-    - name: Install IPA client packages
-      ansible.builtin.dnf:
-        name:
-          - ipa-client
-          - sssd
-          - oddjob-mkhomedir
-        state: present
-      tags:
-        - packages
-        - ipa
-
-    - name: Install Python3 libraries
-      ansible.builtin.dnf:
-        name:
-          - python3-libsemanage
-        state: present
-      tags:
-        - packages
 
     - name: Control node setup complete
       ansible.builtin.debug:
@@ -309,25 +309,6 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
       tags:
         - subscription
 
-    - name: Configure network connection
-      community.general.nmcli:
-        conn_name: "{{ interface_name }}"
-        ifname: "{{ interface_name }}"
-        type: ethernet
-        ip4: "{{ ip_address }}"
-        autoconnect: true
-        state: present
-      tags:
-        - network
-
-    - name: Activate network connection
-      ansible.builtin.command: nmcli connection up {{ interface_name }}
-      register: nmcli_up
-      failed_when: false
-      changed_when: nmcli_up.rc == 0
-      tags:
-        - network
-
     - name: Create Vault license file
       ansible.builtin.copy:
         content: "{{ vault_lic }}"
@@ -366,6 +347,41 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
       delay: 5
       tags:
         - vault-config
+
+    - name: Add hosts entries
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ item.ip }} {{ item.names }}"
+        regexp: "^{{ item.ip }} "
+        state: present
+      loop:
+        - { ip: "192.168.1.10", names: "control.zta.lab control aap.zta.lab" }
+        - { ip: "192.168.1.11", names: "central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab" }
+        - { ip: "192.168.1.12", names: "vault.zta.lab vault" }
+        - { ip: "192.168.1.15", names: "netbox.zta.lab netbox" }
+        - { ip: "192.168.1.13", names: "wazuh.zta.lab wazuh" }
+      tags:
+        - network
+        - hosts
+
+    - name: Configure network connection
+      community.general.nmcli:
+        conn_name: "{{ interface_name }}"
+        ifname: "{{ interface_name }}"
+        type: ethernet
+        ip4: "{{ ip_address }}"
+        autoconnect: true
+        state: present
+      tags:
+        - network
+
+    - name: Activate network connection
+      ansible.builtin.command: nmcli connection up {{ interface_name }}
+      register: nmcli_up
+      failed_when: false
+      changed_when: nmcli_up.rc == 0
+      tags:
+        - network
 
     - name: Vault node setup complete
       ansible.builtin.debug:
@@ -434,25 +450,6 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
       changed_when: false
       tags:
         - subscription
-
-    - name: Configure network connection
-      community.general.nmcli:
-        conn_name: "{{ interface_name }}"
-        ifname: "{{ interface_name }}"
-        type: ethernet
-        ip4: "{{ ip_address }}"
-        autoconnect: true
-        state: present
-      tags:
-        - network
-
-    - name: Activate network connection
-      ansible.builtin.command: nmcli connection up {{ interface_name }}
-      register: nmcli_up
-      failed_when: false
-      changed_when: nmcli_up.rc == 0
-      tags:
-        - network
 
     - name: Install base packages
       ansible.builtin.dnf:
@@ -534,6 +531,41 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         - docker
         - netbox-config
 
+    - name: Add hosts entries
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ item.ip }} {{ item.names }}"
+        regexp: "^{{ item.ip }} "
+        state: present
+      loop:
+        - { ip: "192.168.1.10", names: "control.zta.lab control aap.zta.lab" }
+        - { ip: "192.168.1.11", names: "central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab" }
+        - { ip: "192.168.1.12", names: "vault.zta.lab vault" }
+        - { ip: "192.168.1.15", names: "netbox.zta.lab netbox" }
+        - { ip: "192.168.1.13", names: "wazuh.zta.lab wazuh" }
+      tags:
+        - network
+        - hosts
+
+    - name: Configure network connection
+      community.general.nmcli:
+        conn_name: "{{ interface_name }}"
+        ifname: "{{ interface_name }}"
+        type: ethernet
+        ip4: "{{ ip_address }}"
+        autoconnect: true
+        state: present
+      tags:
+        - network
+
+    - name: Activate network connection
+      ansible.builtin.command: nmcli connection up {{ interface_name }}
+      register: nmcli_up
+      failed_when: false
+      changed_when: nmcli_up.rc == 0
+      tags:
+        - network
+
     - name: NetBox node setup complete
       ansible.builtin.debug:
         msg: "✓ NetBox node ({{ ansible_hostname }}) setup complete"
@@ -601,6 +633,32 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
       tags:
         - subscription
 
+    - name: Install base packages
+      ansible.builtin.dnf:
+        name:
+          - ansible-core
+          - git
+          - podman
+        state: present
+      tags:
+        - packages
+
+    - name: Add hosts entries
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ item.ip }} {{ item.names }}"
+        regexp: "^{{ item.ip }} "
+        state: present
+      loop:
+        - { ip: "192.168.1.10", names: "control.zta.lab control aap.zta.lab" }
+        - { ip: "192.168.1.11", names: "central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab" }
+        - { ip: "192.168.1.12", names: "vault.zta.lab vault" }
+        - { ip: "192.168.1.15", names: "netbox.zta.lab netbox" }
+        - { ip: "192.168.1.13", names: "wazuh.zta.lab wazuh" }
+      tags:
+        - network
+        - hosts
+
     - name: Configure network connection
       community.general.nmcli:
         conn_name: "{{ interface_name }}"
@@ -619,16 +677,6 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
       changed_when: nmcli_up.rc == 0
       tags:
         - network
-
-    - name: Install base packages
-      ansible.builtin.dnf:
-        name:
-          - ansible-core
-          - git
-          - podman
-        state: present
-      tags:
-        - packages
 
     - name: Wazuh node setup complete
       ansible.builtin.debug:
@@ -833,41 +881,6 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
               when: db_ipa_check.rc != 0
           when: db_exists.rc == 0
 
-    - name: Add hosts entries
-      ansible.builtin.lineinfile:
-        path: /etc/hosts
-        line: "{{ item.ip }} {{ item.names }}"
-        regexp: "^{{ item.ip }} "
-        state: present
-      loop:
-        - { ip: "192.168.1.10", names: "control.zta.lab control aap.zta.lab" }
-        - { ip: "192.168.1.11", names: "central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab" }
-        - { ip: "192.168.1.12", names: "vault.zta.lab vault" }
-        - { ip: "192.168.1.15", names: "netbox.zta.lab netbox" }
-        - { ip: "192.168.1.13", names: "wazuh.zta.lab wazuh" }
-      tags:
-        - network
-        - hosts
-
-    - name: Configure network connection
-      community.general.nmcli:
-        conn_name: "{{ interface_name }}"
-        ifname: "{{ interface_name }}"
-        type: ethernet
-        ip4: "{{ ip_address }}"
-        autoconnect: true
-        state: present
-      tags:
-        - network
-
-    - name: Activate network connection
-      ansible.builtin.command: nmcli connection up {{ interface_name }}
-      register: nmcli_up
-      failed_when: false
-      changed_when: nmcli_up.rc == 0
-      tags:
-        - network
-
     - name: Clone ZTA workshop repository
       ansible.builtin.git:
         repo: https://github.com/nmartins0611/zta-workshop-aap.git
@@ -1020,6 +1033,41 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         - workshop
         - ipa
 
+    - name: Add hosts entries
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ item.ip }} {{ item.names }}"
+        regexp: "^{{ item.ip }} "
+        state: present
+      loop:
+        - { ip: "192.168.1.10", names: "control.zta.lab control aap.zta.lab" }
+        - { ip: "192.168.1.11", names: "central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab" }
+        - { ip: "192.168.1.12", names: "vault.zta.lab vault" }
+        - { ip: "192.168.1.15", names: "netbox.zta.lab netbox" }
+        - { ip: "192.168.1.13", names: "wazuh.zta.lab wazuh" }
+      tags:
+        - network
+        - hosts
+
+    - name: Configure network connection
+      community.general.nmcli:
+        conn_name: "{{ interface_name }}"
+        ifname: "{{ interface_name }}"
+        type: ethernet
+        ip4: "{{ ip_address }}"
+        autoconnect: true
+        state: present
+      tags:
+        - network
+
+    - name: Activate network connection
+      ansible.builtin.command: nmcli connection up {{ interface_name }}
+      register: nmcli_up
+      failed_when: false
+      changed_when: nmcli_up.rc == 0
+      tags:
+        - network
+
     - name: Central node setup complete
       ansible.builtin.debug:
         msg: "✓ Central node ({{ ansible_hostname }}) setup complete"
@@ -1064,6 +1112,7 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
           - Vault: http://vault.zta.lab:8200
           - Wazuh: https://wazuh.zta.lab
           ============================================
+
 
 EOF
 
