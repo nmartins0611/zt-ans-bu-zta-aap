@@ -30,7 +30,7 @@ run_if_needed() {
     local desc="$1"
     shift
     local check=()
-    while [[ "$1" != "--" ]]; do
+    while [[ $# -gt 0 && "${1}" != "--" ]]; do
         check+=("$1"); shift
     done
     shift
@@ -135,16 +135,7 @@ else
 fi
 
 ###############################################################################
-# 6. Install packages (idempotent)
-###############################################################################
-
-run_if_needed "Install base packages" \
-    rpm -q vault \
-    -- \
-    dnf install -y vault
-
-###############################################################################
-# 7. Apply Vault license (idempotent)
+# 6. Apply Vault license (idempotent)
 ###############################################################################
 
 VAULT_LIC_FILE="/etc/vault.d/vault.hclic"
