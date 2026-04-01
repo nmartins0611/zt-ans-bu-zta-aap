@@ -205,4 +205,15 @@ EOF
 ###############################################################################
 
 for i in {1..10}; do
-    if
+    docker info &>/dev/null && break
+    echo "Waiting for Docker daemon... ($i)"
+    sleep 2
+done
+
+retry "Pull NetBox images" \
+    docker compose --project-directory=/tmp/netbox-docker pull
+
+retry "Start NetBox containers" \
+    docker compose --project-directory=/tmp/netbox-docker up -d netbox netbox-worker
+
+echo "✓ netbox setup complete"

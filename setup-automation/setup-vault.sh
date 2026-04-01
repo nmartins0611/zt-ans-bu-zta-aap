@@ -29,7 +29,7 @@ ensure_nmcli_connection() {
 # 1. Validate Environment Variables
 ###############################################################################
 
-for var in TMM_ORG TMM_ID VAULT_LIC; do
+for var in TMM_ORG TMM_ID VAULT_LIC VAULT_UNSEAL_KEY; do
     if [ -z "${!var:-}" ]; then
         echo "ERROR: $var is not set. Please export it before running."
         exit 1
@@ -114,6 +114,6 @@ fi
 echo "Attempting to unseal Vault..."
 vault operator unseal \
     -address=http://127.0.0.1:8200 \
-    1c6a637e70172e3c249f77b653fb64a820749864cad7f5aa7ab6d5aca5197ec5 || echo "Vault unseal step finished (it may already be unsealed)."
+    "$VAULT_UNSEAL_KEY" || echo "Vault unseal step finished (it may already be unsealed)."
 
 echo "✓ vault setup complete"

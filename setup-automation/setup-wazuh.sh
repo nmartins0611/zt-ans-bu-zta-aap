@@ -117,7 +117,7 @@ ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 ###############################################################################
 
 run_if_needed "Install required system packages" \
-    rpm -q python3-libsemanage \
+    rpm -q python3-libsemanage ansible-core git podman \
     -- \
     dnf install -y python3-libsemanage ansible-core git podman
 
@@ -157,9 +157,4 @@ run_if_needed "Install required system packages" \
 # 7. Cleanup
 ###############################################################################
 
-export ANSIBLE_LOCALHOST_WARNING=False
-export ANSIBLE_INVENTORY_UNPARSED_WARNING=False
-
-rm -f ~/.ansible.cfg
-
-echo "✓ infrastructure setup complete (Wazuh playbook skipped)"
+echo "✓ wazuh setup complete"

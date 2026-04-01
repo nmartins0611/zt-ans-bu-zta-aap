@@ -99,18 +99,18 @@ EOF
 # Subscription Management (Direct Registration)
 ###############################################################################
 
-echo "Cleaning existing subscription data..."
-subscription-manager clean
-
-echo "Registering system with Org ID: ${TMM_ORG}..."
-# Note: Ensure TMM_ORG and TMM_ID are set in your environment
-subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force
-
-if [ $? -eq 0 ]; then
-    echo "System registered successfully!"
+if subscription-manager identity &>/dev/null; then
+    echo "SKIP: System already registered."
 else
-    echo "Registration failed!"
-    exit 1
+    echo "Cleaning existing subscription data..."
+    subscription-manager clean
+
+    echo "Registering system with Org ID: ${TMM_ORG}..."
+    subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force
+
+    echo "Enabling repo management..."
+    subscription-manager config --rhsm.manage_repos=1
+    subscription-manager refresh
 fi
 
 ###############################################################################
@@ -123,10 +123,10 @@ run_if_needed "Install base packages" \
     dnf install -y dnf-utils git nano
 
 run_if_needed "Install system packages" \
-    rpm -q python3-libsemanage ansible-core python-requests ipa-client sssd oddjob-mkhomedir python-pip unzip \
+    rpm -q python3-libsemanage ansible-core python-requests ipa-client sssd oddjob-mkhomedir python3-pip unzip \
     -- \
     dnf install -y python3-libsemanage git ansible-core python-requests \
-                    ipa-client sssd oddjob-mkhomedir unzip
+                    ipa-client sssd oddjob-mkhomedir python3-pip unzip
 
 # Flask and Netbox setup
 pip download flask -d /tmp/flask-wheels
@@ -140,6 +140,10 @@ fi
 
 # Container package injection
 for c in app db; do
+    if ! podman container exists "$c" 2>/dev/null; then
+        echo "SKIP: container '$c' does not exist yet"
+        continue
+    fi
     if podman exec "$c" rpm -q ipa-client &>/dev/null; then
         echo "SKIP: ipa-client already installed in container '$c'"
     else
@@ -221,7 +225,7 @@ podman create --name keycloak --restart=always -p 8180:8080 -p 8543:8443 \
   --https-port=8443 --http-enabled=true --proxy-headers forwarded
 
 if [ -f /etc/systemd/system/container-keycloak.service ]; then
-    sed -i "s/^PIDFile/d/" /etc/systemd/system/container-keycloak.service
+    sed -i "/^PIDFile/d" /etc/systemd/system/container-keycloak.service
     systemctl daemon-reload
     systemctl start container-keycloak || true
 fi

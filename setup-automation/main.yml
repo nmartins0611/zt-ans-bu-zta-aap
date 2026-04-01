@@ -63,7 +63,7 @@
 
   - name: Execute setup-node.sh if it exists
     when: r_script_test.stat.exists
-    ansible.builtin.shell: "sh -x /tmp/setup-scripts/setup-{{ ansible_host }}.sh > /tmp/setup-scripts/setup-{{ ansible_host }}.log 2>&1"
+    ansible.builtin.shell: "bash -x /tmp/setup-scripts/setup-{{ ansible_host }}.sh > /tmp/setup-scripts/setup-{{ ansible_host }}.log 2>&1"
     become: true
     register: r_result
     environment:
@@ -79,6 +79,7 @@
       AH_TOKEN: "{{ ahtoken }}"
       TMM_ID: "{{ tmm_activation }}"
       TMM_ORG: "{{ tmm_orgid }}"
+      VAULT_UNSEAL_KEY: "{{ vault_unseal_key | default('1c6a637e70172e3c249f77b653fb64a820749864cad7f5aa7ab6d5aca5197ec5') }}"
 
   - name: Output script result
     ansible.builtin.debug:
