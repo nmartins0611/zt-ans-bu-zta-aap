@@ -77,6 +77,8 @@
       SSH_KEY: "{{ ssh_key }}"
       VAULT_LIC: "{{ vaultlic }}"
       AH_TOKEN: "{{ ahtoken }}"
+      TMM_ID: "{{ tmm_activation }}"
+      TMM_ORG: "{{ tmm_ordid }}"
 
   - name: Output script result
     ansible.builtin.debug:
