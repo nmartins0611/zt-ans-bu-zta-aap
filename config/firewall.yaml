@@ -6,6 +6,27 @@
 # Netbox:  netbox.zta.lab (CMDB)
 
 ingress:
+- from:
+  - ipBlock:
+      cidr: "0.0.0.0/0"
+      except: []
+  ports:
+  - protocol: TCP
+    port: 80
+  - protocol: TCP
+    port: 443
+  - protocol: TCP
+    port: 8080
+  - protocol: TCP
+    port: 7171
+  - protocol: TCP
+    port: 8081
+  - protocol: TCP
+    port: 9000
+  - protocol: TCP 
+    port: 8543 # (Keycloak)
+  - protocol: TCP 
+    port: 8443 # (Keycloak)
 - ports:
   # ── General ──
   - protocol: TCP

@@ -25,6 +25,7 @@
 - name: Demo Playbook for the ansible-runner API
   hosts: all:!localhost
   gather_facts: false
+  become: true
   vars:
     satellite_url: "{{ lookup('ansible.builtin.env', 'SATELLITE_URL') }}"
     satellite_org: "{{ lookup('ansible.builtin.env', 'SATELLITE_ORG') }}"
@@ -38,6 +39,119 @@
   - name: Set config_host variable with ansible_host value
     ansible.builtin.set_fact:
       config_host: "{{ ansible_host }}"
+
+  - name: unreg | Unregister From Subscription Manager
+    ansible.builtin.command: subscription-manager unregister
+    register: r_unregister
+    failed_when: >-
+      r_unregister is failed and
+      r_unregister.stderr | default('') != 'This system is currently not registered.'
+    ignore_errors: true
+
+  - name: sat | Install CA certificate from satellite server
+    ansible.builtin.get_url:
+      url: "https://{{ satellite_url }}/pub/katello-server-ca.crt"
+      dest: /etc/pki/ca-trust/source/anchors/{{ satellite_url }}.ca.crt
+      mode: u=rw,go=r
+      validate_certs: false
+    retries: 10
+    delay: 10
+  
+  - name: sat | Update CA Trust Bundle
+    command: update-ca-trust
+  
+  - name: sat | Remove satellite Cert
+    tags: packer
+    package:
+      name: katello-ca-consumer-*.noarch
+      state: absent
+      disablerepo: "*"
+    ignore_errors: true
+  
+  - name: sat | Find current repository files
+    find:
+      paths: /etc/yum.repos.d
+      recurse: no
+      patterns:
+      - '*.repo'
+    register: r_find_repos
+    tags:
+      - configure_repos
+      - remove_existing_repos
+  
+  - name: sat | Remove current repository files
+    file:
+      path: "{{ file.path }}"
+      state: absent
+    loop: "{{ r_find_repos.files }}"
+    loop_control:
+      loop_var: file
+      label: "{{ file.path }}"
+    ignore_errors: true
+    tags:
+      - configure_repos
+      - remove_existing_repos
+
+  - name: sat | Install Satellite CA certificate package
+    yum:
+      name: "https://{{ satellite_url }}/pub/katello-ca-consumer-latest.noarch.rpm"
+      state: present
+      disablerepo: "*"
+      disable_gpg_check: true
+    register: r_install_satellite_ca_rpm
+    until: not r_install_satellite_ca_rpm.failed
+    retries: 10
+    delay: 10
+  
+  - name: sat | Disable Reporting Of Package Profile to Satellite
+    ini_file:
+      path: /etc/rhsm/rhsm.conf
+      section: rhsm
+      option: report_package_profile
+      value: "0"
+      
+  - name: sat | Run setup if gather_facts hasn't been run
+    setup:
+      gather_subset: min
+    when: ansible_date_time is not defined
+  
+  - name: sat | Set set_repositories_subscription_hostname with randomization
+    when: set_repositories_subscription_hostname is not defined
+    set_fact:
+      set_repositories_subscription_hostname: "{{ inventory_hostname }}-{{ guid }}-{{ ansible_date_time.iso8601_basic | lower }}"
+  
+  - name: sat | Set network.fqdn in /etc/rhsm/facts/katello.facts
+    copy:
+      dest: /etc/rhsm/facts/katello.facts
+      content: "{{ __content | to_json }}"
+    vars:
+      __content: >-
+        {{
+          {"network.fqdn": set_repositories_subscription_hostname}
+        }}
+  
+  - name: sat | Register with activation-key with HA
+    community.general.redhat_subscription:
+      state: present
+      consumer_name: "{{ set_repositories_subscription_hostname }}"
+      server_hostname: "{{ satellite_url }}"
+      server_port: "443"
+      server_prefix: /rhsm
+      rhsm_baseurl: "https://{{ satellite_url }}/pulp/repos"
+      activationkey: "{{ satellite_activationkey }}"
+      org_id: "{{ satellite_org }}"
+      force_register: "true"
+  
+  - name: sat | Enable RHSM to manage repositories
+    command: subscription-manager config --rhsm.manage_repos=1
+  
+  - name: sat | Enable repos
+    rhsm_repository:
+      name: "*"
+      state: enabled
+    when:
+    - use_content_view
+    - set_repositories_satellite_activationkey != ''
 
   - name: Create a directory if it does not exist
     ansible.builtin.file:
@@ -64,7 +178,7 @@
   - name: Execute setup-node.sh if it exists
     when: r_script_test.stat.exists
     ansible.builtin.shell: "sh -x /tmp/setup-scripts/setup-{{ ansible_host }}.sh > /tmp/setup-scripts/setup-{{ ansible_host }}.log 2>&1"
-    become: true
+    
     register: r_result
     environment:
       SATELLITE_URL: "{{ satellite_url }}"
