@@ -1,52 +1,13 @@
 #!/bin/bash
 set -euo pipefail
-systemctl stop firewalld
-setenforce 0
-export ANSIBLE_HOST_KEY_CHECKING=False
-export NETBOX_TOKEN=0123456789abcdef0123456789abcdef01234567
-# wget -O /tmp/vault-ssh-helper.zip https://releases.hashicorp.com/vault-ssh-helper/0.2.1/vault-ssh-helper_0.2.1_linux_amd64.zip
-# mkdir -p /tmp/wazuh
-# curl -o /tmp/wazuh/GPG-KEY-WAZUH https://packages.wazuh.com/key/GPG-KEY-WAZUH
-# curl -o /tmp/wazuh/wazuh-agent-4.9.2-1.x86_64.rpm https://packages.wazuh.com/4.9/yum/wazuh-agent-4.9.2-1.x86_64.rpm
-# curl -Lo /tmp/spire-1.12.0-linux-amd64-musl.tar.gz https://github.com/spiffe/spire/releases/download/v1.12.0/spire-1.12.0-linux-amd64-musl.tar.gz
 
+echo "Starting Central node setup..."
 
-rm -rf /tmp/zta-workshop-aap
-
-echo "Setup the AH Token for ansible"
-###############################################################################
-# Setup AH
-###############################################################################
-
-if [ -z "$AH_TOKEN" ]; then
-    echo "Error: AH_TOKEN environment variable is not set"
-    echo "Usage: AH_TOKEN='your-token-here' $0"
-    exit 1
-fi
-
-# Create ~/.ansible.cfg with AH_TOKEN substituted
-tee ~/.ansible.cfg > /dev/null <<EOF
-[defaults]
-[galaxy]
-server_list = automation_hub, validated, galaxy
-[galaxy_server.automation_hub]
-url = https://console.redhat.com/api/automation-hub/content/published/
-auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-token=$AH_TOKEN
-[galaxy_server.validated]
-url = https://console.redhat.com/api/automation-hub/content/validated/
-auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-token=$AH_TOKEN
-[galaxy_server.galaxy]
-url=https://galaxy.ansible.com/
-#token=""
-[ssh_connection]
-ssh_args = -o ControlMaster=auto -o ControlPersist=60s
-pipelining = True
-EOF
-
-
-# echo "Setup the Satellite links"
+cleanup() {
+    echo "Cleaning up temporary ansible configuration..."
+    rm -rf ~/.ansible.cfg
+}
+trap cleanup EXIT
 
 ###############################################################################
 # Helpers
@@ -75,7 +36,7 @@ run_if_needed() {
     local desc="$1"
     shift
     local check=()
-    while [[ "$1" != "--" ]]; do
+    while [[ $# -gt 0 && "${1}" != "--" ]]; do
         check+=("$1"); shift
     done
     shift
@@ -106,137 +67,100 @@ ensure_nmcli_connection() {
     fi
 }
 
-# ###############################################################################
-# # 1. Validate required variables
-# ###############################################################################
-
-# for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
-#     if [ -z "${!var:-}" ]; then
-#         echo "ERROR: $var is not set"
-#         exit 1
-#     fi
-# done
-
 ###############################################################################
-# 2. Disable tmpfiles service
+# 1. Validate required environment variables
 ###############################################################################
 
-# if systemctl is-active --quiet systemd-tmpfiles-setup.service; then
-#     systemctl stop systemd-tmpfiles-setup.service
-# else
-#     echo "SKIP: systemd-tmpfiles-setup already stopped"
-# fi
-
-# if systemctl is-enabled --quiet systemd-tmpfiles-setup.service 2>/dev/null; then
-#     systemctl disable systemd-tmpfiles-setup.service
-# else
-#     echo "SKIP: systemd-tmpfiles-setup already disabled"
-# fi
-
-###############################################################################
-# 3. Clean repos & subscriptions (only if not already registered)
-###############################################################################
-
-# if subscription-manager identity &>/dev/null; then
-#     echo "SKIP: Already registered with Satellite – skipping clean/unregister"
-# else
-#     echo "Cleaning existing repos and subscriptions..."
-#     dnf clean all || true
-#     rm -f /etc/yum.repos.d/redhat-rhui*.repo
-#     sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
-#     subscription-manager unregister 2>/dev/null || true
-#     subscription-manager remove --all 2>/dev/null || true
-#     subscription-manager clean
-
-#     OLD_KATELLO=$(rpm -qa | grep katello-ca-consumer || true)
-#     if [ -n "$OLD_KATELLO" ]; then
-#         rpm -e "$OLD_KATELLO" 2>/dev/null || true
-#     fi
-# fi
-
-###############################################################################
-# 4. Register with Satellite
-###############################################################################
-
-# CA_CERT="/etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
-
-# run_if_needed "Download Katello CA cert" \
-#     test -f "${CA_CERT}" \
-#     -- \
-#     curl -fsSkL \
-#         "https://${SATELLITE_URL}/pub/katello-server-ca.crt" \
-#         -o "${CA_CERT}"
-
-# retry "Update CA trust" \
-#     update-ca-trust extract
-
-# run_if_needed "Install Katello consumer RPM" \
-#     rpm -q katello-ca-consumer \
-#     -- \
-#     rpm -Uhv --force "https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm"
-
-# run_if_needed "Register with Satellite" \
-#     subscription-manager identity \
-#     -- \
-#     subscription-manager register \
-#         --org="${SATELLITE_ORG}" \
-#         --activationkey="${SATELLITE_ACTIVATIONKEY}"
-
-# retry "Refresh subscription" \
-#     subscription-manager refresh
-
-
-## 1. Clean Existing Subscription Data
-echo "Cleaning existing subscription data..."
-subscription-manager clean
-
-# Using --force to ensure any existing stale registrations are overwritten
-subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force
-
-if [ $? -eq 0 ]; then
-    echo "System registered successfully!"
-else
-    echo "Registration failed. Please check your credentials and network connection."
-    exit 1
-fi
-
-
-
-###############################################################################
-# 5. Install packages
-###############################################################################
-
-run_if_needed "Install base packages" \
-    rpm -q dnf-utils git nano \
-    -- \
-    dnf install -y dnf-utils git nano
-
-run_if_needed "Install system packages" \
-    rpm -q python3-libsemanage ansible-core python-requests ipa-client sssd oddjob-mkhomedir python-pip unzip \
-    -- \
-    dnf install -y python3-libsemanage git ansible-core python-requests \
-                   ipa-client sssd oddjob-mkhomedir
-
-pip download flask -d /tmp/flask-wheels
-pip install --no-index --find-links /tmp/flask-wheels flask --user
-pip install pynetbox
-
-if [ ! -d /tmp/ipa-rpms ]; then
-    mkdir -p /tmp/ipa-rpms
-    dnf download --resolve --destdir /tmp/ipa-rpms ipa-client
-fi
-
-for c in app db; do
-    if podman exec "$c" rpm -q ipa-client &>/dev/null; then
-        echo "SKIP: ipa-client already installed in container '$c'"
-    else
-        podman cp /tmp/ipa-rpms "$c":/tmp/ipa-rpms
-        podman exec "$c" bash -c 'dnf install -y /tmp/ipa-rpms/*.rpm && rm -rf /tmp/ipa-rpms'
+for var in AH_TOKEN TMM_ORG TMM_ID GUID DOMAIN; do
+    if [ -z "${!var:-}" ]; then
+        echo "ERROR: $var environment variable is not set"
+        echo "Usage: AH_TOKEN='...' TMM_ORG='...' TMM_ID='...' GUID='...' DOMAIN='...' $0"
+        exit 1
     fi
 done
 
 ###############################################################################
-# 6. /etc/hosts (idempotent)
+# 2. SELinux and Firewall configuration
+###############################################################################
+
+CURRENT_MODE=$(getenforce)
+if [ "${CURRENT_MODE}" = "Permissive" ] || [ "${CURRENT_MODE}" = "Disabled" ]; then
+    echo "SKIP: SELinux already in ${CURRENT_MODE} mode"
+else
+    setenforce 0
+    echo "SELinux set to Permissive"
+fi
+
+if systemctl is-active --quiet firewalld; then
+    systemctl stop firewalld
+    echo "Firewalld stopped"
+else
+    echo "SKIP: Firewalld already stopped"
+fi
+
+###############################################################################
+# 3. Environment variables
+###############################################################################
+
+export ANSIBLE_HOST_KEY_CHECKING=False
+export NETBOX_TOKEN=0123456789abcdef0123456789abcdef01234567
+
+###############################################################################
+# 4. Clean temp directory
+###############################################################################
+
+rm -rf /tmp/zta-workshop-aap
+
+###############################################################################
+# 5. Setup Ansible configuration with AH Token
+###############################################################################
+
+tee ~/.ansible.cfg > /dev/null <<EOF
+[defaults]
+[galaxy]
+server_list = automation_hub, validated, galaxy
+[galaxy_server.automation_hub]
+url = https://console.redhat.com/api/automation-hub/content/published/
+auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+token=$AH_TOKEN
+[galaxy_server.validated]
+url = https://console.redhat.com/api/automation-hub/content/validated/
+auth_url = https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+token=$AH_TOKEN
+[galaxy_server.galaxy]
+url=https://galaxy.ansible.com/
+#token=""
+[ssh_connection]
+ssh_args = -o ControlMaster=auto -o ControlPersist=60s
+pipelining = True
+EOF
+
+###############################################################################
+# 6. Register with subscription manager (idempotent)
+###############################################################################
+
+if subscription-manager identity &>/dev/null; then
+    echo "SKIP: Already registered – skipping registration"
+else
+    echo "Cleaning existing subscription data..."
+    dnf clean all || true
+    rm -f /etc/yum.repos.d/redhat-rhui*.repo
+    sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
+    subscription-manager unregister 2>/dev/null || true
+    subscription-manager remove --all 2>/dev/null || true
+    subscription-manager clean
+
+    echo "Registering with subscription manager..."
+    if subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force; then
+        echo "System registered successfully!"
+    else
+        echo "Registration failed. Please check your credentials and network connection."
+        exit 1
+    fi
+fi
+
+###############################################################################
+# 7. /etc/hosts (idempotent)
 ###############################################################################
 
 ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
@@ -245,21 +169,50 @@ ensure_hosts_entry "192.168.1.12" "vault.zta.lab vault"
 ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
 ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 
+###############################################################################
+# 8. Install packages
+###############################################################################
+
+run_if_needed "Install base packages" \
+    rpm -q dnf-utils \
+    -- \
+    dnf install -y dnf-utils git nano
+
+run_if_needed "Install system packages" \
+    rpm -q python3-libsemanage \
+    -- \
+    dnf install -y python3-libsemanage ansible-core python3-requests \
+                   ipa-client sssd oddjob-mkhomedir python3-pip
+
+run_if_needed "Install pynetbox" \
+    python3 -c "import pynetbox" \
+    -- \
+    pip3 install pynetbox
 
 ###############################################################################
-# 7. Network configuration (idempotent)
+# 9. Download IPA RPMs for containers
 ###############################################################################
 
-ensure_nmcli_connection "enp2s0" \
-    type ethernet con-name enp2s0 ifname enp2s0 \
-    ipv4.addresses 192.168.1.11/24 \
-    ipv4.method manual \
-    connection.autoconnect yes
+if [ ! -d /tmp/ipa-rpms ]; then
+    mkdir -p /tmp/ipa-rpms
+    dnf download --resolve --destdir /tmp/ipa-rpms ipa-client
+fi
 
-nmcli connection up enp2s0 || true
+for c in app db; do
+    if podman container exists "$c" 2>/dev/null; then
+        if podman exec "$c" rpm -q ipa-client &>/dev/null; then
+            echo "SKIP: ipa-client already installed in container '$c'"
+        else
+            podman cp /tmp/ipa-rpms "$c":/tmp/ipa-rpms
+            podman exec "$c" bash -c 'dnf install -y /tmp/ipa-rpms/*.rpm && rm -rf /tmp/ipa-rpms'
+        fi
+    else
+        echo "SKIP: Container '$c' does not exist"
+    fi
+done
 
 ###############################################################################
-# 8. Clone workshop repo (idempotent)
+# 10. Clone workshop repo (idempotent)
 ###############################################################################
 
 if [ -d /tmp/zta-workshop-aap ]; then
@@ -270,13 +223,26 @@ else
 fi
 
 ###############################################################################
-# 9. Create supporting directories and files
+# 11. Install Ansible collections
 ###############################################################################
-ansible-galaxy collection install community.general
-ansible-galaxy collection install netbox.netbox
-ansible-galaxy collection install ansible.controller
+
+run_if_needed "Install community.general collection" \
+    bash -c 'ansible-galaxy collection list | grep -q "community.general"' \
+    -- \
+    ansible-galaxy collection install community.general
+
+run_if_needed "Install netbox.netbox collection" \
+    bash -c 'ansible-galaxy collection list | grep -q "netbox.netbox"' \
+    -- \
+    ansible-galaxy collection install netbox.netbox
+
+run_if_needed "Install ansible.controller collection" \
+    bash -c 'ansible-galaxy collection list | grep -q "ansible.controller"' \
+    -- \
+    ansible-galaxy collection install ansible.controller
+
 ###############################################################################
-# 13. IPA rewrite config (idempotent) — must run after integrate.yml
+# 12. IPA rewrite config (idempotent)
 ###############################################################################
 
 IPA_REWRITE="/etc/httpd/conf.d/ipa-rewrite.conf"
@@ -293,24 +259,82 @@ RewriteCond %{HTTP_HOST}    ^ipa-ca.example.local$ [NC]
 RewriteCond %{REQUEST_URI}  !^/ipa/crl
 RewriteCond %{REQUEST_URI}  !^/(ca|kra|pki|acme)
 IPA
-    systemctl reload httpd
+
+    if systemctl is-active --quiet httpd; then
+        systemctl reload httpd
+        echo "Apache httpd reloaded"
+    else
+        echo "NOTE: httpd not running, config will apply when started"
+    fi
 fi
 
-podman stop keycloak
-systemctl stop container-keycloak
-systemctl kill container-keycloak
-podman rm --force keycloak
-podman create --name keycloak --restart=always -p 8180:8080 -p 8543:8443 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=ansible123! -e KC_HOSTNAME=keycloak-https-${GUID}.${DOMAIN} -e KC_HTTPS_CERTIFICATE_FILE=/opt/certs/server.crt -e KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/certs/server.key -e KC_HTTP_ENABLED=true -v /opt/keycloak/certs:/opt/certs:Z registry.redhat.io/rhbk/keycloak-rhel9:24 start --hostname=keycloak-https-${GUID}.${DOMAIN} --https-port=8443 --http-enabled=true --proxy-headers forwarded
-sed -i "/^PIDFile/d" /etc/systemd/system/container-keycloak.service
-systemctl daemon-reload
+###############################################################################
+# 13. Reconfigure Keycloak container
+###############################################################################
+
+echo "Reconfiguring Keycloak container..."
+podman stop keycloak 2>/dev/null || true
+systemctl stop container-keycloak 2>/dev/null || true
+systemctl kill container-keycloak 2>/dev/null || true
+podman rm --force keycloak 2>/dev/null || true
+
+podman create --name keycloak --restart=always \
+    -p 8180:8080 -p 8543:8443 \
+    -e KEYCLOAK_ADMIN=admin \
+    -e KEYCLOAK_ADMIN_PASSWORD=ansible123! \
+    -e KC_HOSTNAME=keycloak-https-${GUID}.${DOMAIN} \
+    -e KC_HTTPS_CERTIFICATE_FILE=/opt/certs/server.crt \
+    -e KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/certs/server.key \
+    -e KC_HTTP_ENABLED=true \
+    -v /opt/keycloak/certs:/opt/certs:Z \
+    registry.redhat.io/rhbk/keycloak-rhel9:24 start \
+    --hostname=keycloak-https-${GUID}.${DOMAIN} \
+    --https-port=8443 \
+    --http-enabled=true \
+    --proxy-headers forwarded
+
+if [ -f /etc/systemd/system/container-keycloak.service ]; then
+    sed -i "/^PIDFile/d" /etc/systemd/system/container-keycloak.service
+    systemctl daemon-reload
+fi
 systemctl start container-keycloak
 
-rm -rf ~/.ansible.cfg
+###############################################################################
+# 14. Network configuration (idempotent)
+###############################################################################
 
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/configure-dns.yml
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/configure-vault.yml
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/configure-vault-ssh.yml
-ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/enroll-idm-clients.yml
+echo "Configuring network interface..."
+ensure_nmcli_connection "enp2s0" \
+    type ethernet con-name enp2s0 ifname enp2s0 \
+    ipv4.addresses 192.168.1.11/24 \
+    ipv4.method manual \
+    connection.autoconnect yes
 
+nmcli connection up enp2s0 || true
 
+###############################################################################
+# 15. Run Ansible playbooks
+###############################################################################
+
+PLAYBOOK_DIR="/tmp/zta-workshop-aap/setup"
+INVENTORY="/tmp/zta-workshop-aap/inventory/hosts.ini"
+FAILED=()
+
+for playbook in deploy-dashboard.yml configure-dns.yml configure-vault.yml configure-vault-ssh.yml enroll-idm-clients.yml; do
+    echo "Running ${playbook}..."
+    if ansible-playbook -i "$INVENTORY" "${PLAYBOOK_DIR}/${playbook}"; then
+        echo "✓ ${playbook} completed"
+    else
+        echo "✗ ${playbook} FAILED"
+        FAILED+=("$playbook")
+    fi
+done
+
+if [ ${#FAILED[@]} -gt 0 ]; then
+    echo ""
+    echo "ERROR: The following playbooks failed: ${FAILED[*]}"
+    exit 1
+fi
+
+echo ""
 echo "✓ central setup complete"

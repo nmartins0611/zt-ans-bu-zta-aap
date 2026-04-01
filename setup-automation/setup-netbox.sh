@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+echo "Starting NetBox node setup..."
+
 ###############################################################################
 # Helpers
 ###############################################################################
@@ -28,7 +30,7 @@ run_if_needed() {
     local desc="$1"
     shift
     local check=()
-    while [[ "$1" != "--" ]]; do
+    while [[ $# -gt 0 && "${1}" != "--" ]]; do
         check+=("$1"); shift
     done
     shift
@@ -60,12 +62,13 @@ ensure_nmcli_connection() {
 }
 
 ###############################################################################
-# 1. Validate required variables
+# 1. Validate required environment variables
 ###############################################################################
 
-for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
+for var in TMM_ORG TMM_ID; do
     if [ -z "${!var:-}" ]; then
-        echo "ERROR: $var is not set"
+        echo "ERROR: $var environment variable is not set"
+        echo "Usage: TMM_ORG='...' TMM_ID='...' $0"
         exit 1
     fi
 done
@@ -83,13 +86,36 @@ else
 fi
 
 ###############################################################################
-# 3. Clean repos & subscriptions (only if not registered)
+# 3. /etc/hosts (idempotent)
+###############################################################################
+
+ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
+ensure_hosts_entry "192.168.1.11" "central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab"
+ensure_hosts_entry "192.168.1.12" "vault.zta.lab vault"
+ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
+ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
+
+###############################################################################
+# 4. Network configuration (idempotent)
+###############################################################################
+
+echo "Configuring network interface..."
+ensure_nmcli_connection "eth1" \
+    type ethernet con-name eth1 ifname eth1 \
+    ipv4.addresses 192.168.1.15/24 \
+    ipv4.method manual \
+    connection.autoconnect yes
+
+nmcli connection up eth1 || true
+
+###############################################################################
+# 5. Register with subscription manager (idempotent)
 ###############################################################################
 
 if subscription-manager identity &>/dev/null; then
-    echo "SKIP: Already registered with Satellite – skipping clean/unregister"
+    echo "SKIP: Already registered – skipping registration"
 else
-    echo "Cleaning existing repos and subscriptions..."
+    echo "Cleaning existing subscription data..."
     dnf clean all || true
     rm -f /etc/yum.repos.d/redhat-rhui*.repo
     sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
@@ -97,49 +123,21 @@ else
     subscription-manager remove --all 2>/dev/null || true
     subscription-manager clean
 
-    OLD_KATELLO=$(rpm -qa | grep katello-ca-consumer || true)
-    if [ -n "$OLD_KATELLO" ]; then
-        rpm -e "$OLD_KATELLO" 2>/dev/null || true
+    echo "Registering with subscription manager..."
+    if subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force; then
+        echo "System registered successfully!"
+    else
+        echo "Registration failed. Please check your credentials and network connection."
+        exit 1
     fi
 fi
 
 ###############################################################################
-# 4. Register with Satellite
-###############################################################################
-
-CA_CERT="/etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
-
-run_if_needed "Download Katello CA cert" \
-    test -f "${CA_CERT}" \
-    -- \
-    curl -fsSkL \
-        "https://${SATELLITE_URL}/pub/katello-server-ca.crt" \
-        -o "${CA_CERT}"
-
-retry "Update CA trust" \
-    update-ca-trust extract
-
-run_if_needed "Install Katello consumer RPM" \
-    rpm -q katello-ca-consumer \
-    -- \
-    rpm -Uhv --force "https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm"
-
-run_if_needed "Register with Satellite" \
-    subscription-manager identity \
-    -- \
-    subscription-manager register \
-        --org="${SATELLITE_ORG}" \
-        --activationkey="${SATELLITE_ACTIVATIONKEY}"
-
-retry "Refresh subscription" \
-    subscription-manager refresh
-
-###############################################################################
-# 5. Install packages and Docker
+# 6. Install packages and Docker
 ###############################################################################
 
 run_if_needed "Install base packages" \
-    rpm -q dnf-utils git nano \
+    rpm -q dnf-utils \
     -- \
     dnf install -y dnf-utils git nano
 
@@ -151,52 +149,48 @@ run_if_needed "Add Docker repo" \
     dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
 run_if_needed "Install Docker" \
-    rpm -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
+    rpm -q docker-ce \
     -- \
     dnf install -y \
         docker-ce docker-ce-cli containerd.io \
         docker-buildx-plugin docker-compose-plugin
 
 ###############################################################################
-# 6. Enable & start Docker (idempotent)
+# 7. Enable & start Docker (idempotent)
 ###############################################################################
 
 if ! systemctl is-enabled --quiet docker 2>/dev/null; then
     systemctl enable docker
+    echo "Docker enabled"
 else
     echo "SKIP: Docker already enabled"
 fi
 
 if ! systemctl is-active --quiet docker; then
     systemctl start docker
+    echo "Docker started"
 else
     echo "SKIP: Docker already running"
 fi
 
 ###############################################################################
-# 6. /etc/hosts (idempotent)
+# 8. Wait for Docker daemon to be ready
 ###############################################################################
 
-ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
-ensure_hosts_entry "192.168.1.11" "central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab"
-ensure_hosts_entry "192.168.1.12" "vault.zta.lab vault"
-ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
-ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
+echo "Waiting for Docker daemon to be ready..."
+for i in {1..10}; do
+    if docker info &>/dev/null; then
+        echo "Docker daemon is ready"
+        break
+    fi
+    echo "Waiting for Docker daemon... (attempt $i/10)"
+    sleep 2
+done
 
-###############################################################################
-# 7. Network configuration (idempotent)
-###############################################################################
-###############################################################################
-# 8. Network configuration (idempotent)
-###############################################################################
-
-ensure_nmcli_connection "eth1" \
-    type ethernet con-name eth1 ifname eth1 \
-    ipv4.addresses 192.168.1.15/24 \
-    ipv4.method manual \
-    connection.autoconnect yes
-
-nmcli connection up eth1 || true
+if ! docker info &>/dev/null; then
+    echo "ERROR: Docker daemon is not responding after 20 seconds"
+    exit 1
+fi
 
 ###############################################################################
 # 9. Clone NetBox Docker repo (idempotent)
@@ -211,9 +205,10 @@ else
 fi
 
 ###############################################################################
-# 10. Docker Compose override (always write — config may have changed)
+# 10. Docker Compose override configuration
 ###############################################################################
 
+echo "Creating Docker Compose override configuration..."
 cat > /tmp/netbox-docker/docker-compose.override.yml <<'EOF'
 services:
   netbox:
@@ -235,19 +230,50 @@ services:
 EOF
 
 ###############################################################################
-# 11. Wait for Docker daemon and deploy NetBox
+# 11. Deploy NetBox containers
 ###############################################################################
 
-for i in {1..10}; do
-    docker info &>/dev/null && break
-    echo "Waiting for Docker daemon... ($i)"
-    sleep 2
+cd /tmp/netbox-docker
+
+# Check if containers are already running
+if docker compose ps | grep -q "netbox.*Up"; then
+    echo "SKIP: NetBox containers already running"
+else
+    retry "Pull NetBox images" \
+        docker compose pull
+
+    retry "Start NetBox containers" \
+        docker compose up -d netbox netbox-worker
+fi
+
+###############################################################################
+# 12. Wait for NetBox to be ready
+###############################################################################
+
+echo "Waiting for NetBox to be ready..."
+for i in {1..30}; do
+    if curl -f -s http://localhost:8000 &>/dev/null; then
+        echo "✓ NetBox is up and responding"
+        break
+    fi
+    echo "Waiting for NetBox to start... (attempt $i/30)"
+    sleep 5
 done
 
-retry "Pull NetBox images" \
-    docker compose --project-directory=/tmp/netbox-docker pull
+if curl -f -s http://localhost:8000 &>/dev/null; then
+    echo ""
+    echo "============================================================"
+    echo "  NetBox Setup Complete"
+    echo "============================================================"
+    echo "  URL: http://192.168.1.15:8000"
+    echo "  Username: admin"
+    echo "  Password: netbox"
+    echo "============================================================"
+else
+    echo ""
+    echo "WARNING: NetBox may not be fully ready yet"
+    echo "Check status with: docker compose -f /tmp/netbox-docker/docker-compose.yml ps"
+fi
 
-retry "Start NetBox containers" \
-    docker compose --project-directory=/tmp/netbox-docker up -d netbox netbox-worker
-
+echo ""
 echo "✓ netbox setup complete"
