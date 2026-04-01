@@ -119,6 +119,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
   hosts: control
   become: true
   gather_facts: true
+  tags:
+    - control
+    - setup
 
   vars:
     tmm_org: "{{ lookup('env', 'TMM_ORG') }}"
@@ -174,6 +177,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         - { ip: "192.168.1.12", names: "vault.zta.lab vault" }
         - { ip: "192.168.1.15", names: "netbox.zta.lab netbox" }
         - { ip: "192.168.1.13", names: "wazuh.zta.lab wazuh" }
+      tags:
+        - network
+        - hosts
 
     - name: Configure network connection
       community.general.nmcli:
@@ -185,12 +191,16 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         dns4_search: "{{ dns_search }}"
         autoconnect: true
         state: present
+      tags:
+        - network
 
     - name: Activate network connection
       ansible.builtin.command: nmcli connection up {{ interface_name }}
       register: nmcli_up
       failed_when: false
       changed_when: nmcli_up.rc == 0
+      tags:
+        - network
 
     - name: Install base packages
       ansible.builtin.dnf:
@@ -199,6 +209,8 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
           - git
           - nano
         state: present
+      tags:
+        - packages
 
     - name: Install IPA client packages
       ansible.builtin.dnf:
@@ -207,12 +219,17 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
           - sssd
           - oddjob-mkhomedir
         state: present
+      tags:
+        - packages
+        - ipa
 
     - name: Install Python3 libraries
       ansible.builtin.dnf:
         name:
           - python3-libsemanage
         state: present
+      tags:
+        - packages
 
     - name: Control node setup complete
       ansible.builtin.debug:
@@ -225,6 +242,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
   hosts: vault
   become: true
   gather_facts: true
+  tags:
+    - vault
+    - setup
 
   vars:
     tmm_org: "{{ lookup('env', 'TMM_ORG') }}"
@@ -241,22 +261,30 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
           - vault_lic | length > 0
           - vault_unseal_key | length > 0
         fail_msg: "Required environment variables VAULT_LIC and VAULT_UNSEAL_KEY must be set"
+      tags:
+        - always
 
     - name: Set SELinux to permissive mode
       ansible.posix.selinux:
         policy: targeted
         state: permissive
       when: ansible_selinux.status == "enabled"
+      tags:
+        - selinux
 
     - name: Check if system is already registered
       ansible.builtin.command: subscription-manager identity
       register: sub_check
       failed_when: false
       changed_when: false
+      tags:
+        - subscription
 
     - name: Clean subscription data if not registered
       ansible.builtin.command: subscription-manager clean
       when: sub_check.rc != 0
+      tags:
+        - subscription
 
     - name: Register system with subscription-manager
       community.general.redhat_subscription:
@@ -264,16 +292,22 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         activationkey: "{{ tmm_id }}"
         force_register: true
       when: sub_check.rc != 0
+      tags:
+        - subscription
 
     - name: Enable repository management
       ansible.builtin.command: subscription-manager config --rhsm.manage_repos=1
       when: sub_check.rc != 0
       changed_when: false
+      tags:
+        - subscription
 
     - name: Refresh subscription
       ansible.builtin.command: subscription-manager refresh
       when: sub_check.rc != 0
       changed_when: false
+      tags:
+        - subscription
 
     - name: Configure network connection
       community.general.nmcli:
@@ -283,30 +317,40 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         ip4: "{{ ip_address }}"
         autoconnect: true
         state: present
+      tags:
+        - network
 
     - name: Activate network connection
       ansible.builtin.command: nmcli connection up {{ interface_name }}
       register: nmcli_up
       failed_when: false
       changed_when: nmcli_up.rc == 0
+      tags:
+        - network
 
     - name: Create Vault license file
       ansible.builtin.copy:
         content: "{{ vault_lic }}"
         dest: /opt/vault/vault.hclic
         mode: '0600'
+      tags:
+        - vault-config
 
     - name: Restart Vault service
       ansible.builtin.systemd:
         name: vault
         state: restarted
       failed_when: false
+      tags:
+        - vault-config
 
     - name: Wait for Vault service to start
       ansible.builtin.wait_for:
         port: 8200
         delay: 5
         timeout: 60
+      tags:
+        - vault-config
 
     - name: Unseal Vault
       ansible.builtin.uri:
@@ -320,6 +364,8 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
       until: unseal_result.status == 200
       retries: 3
       delay: 5
+      tags:
+        - vault-config
 
     - name: Vault node setup complete
       ansible.builtin.debug:
@@ -332,6 +378,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
   hosts: netbox
   become: true
   gather_facts: true
+  tags:
+    - netbox
+    - setup
 
   vars:
     tmm_org: "{{ lookup('env', 'TMM_ORG') }}"
@@ -346,16 +395,22 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         policy: targeted
         state: permissive
       when: ansible_selinux.status == "enabled"
+      tags:
+        - selinux
 
     - name: Check if system is already registered
       ansible.builtin.command: subscription-manager identity
       register: sub_check
       failed_when: false
       changed_when: false
+      tags:
+        - subscription
 
     - name: Clean subscription data if not registered
       ansible.builtin.command: subscription-manager clean
       when: sub_check.rc != 0
+      tags:
+        - subscription
 
     - name: Register system with subscription-manager
       community.general.redhat_subscription:
@@ -363,16 +418,22 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         activationkey: "{{ tmm_id }}"
         force_register: true
       when: sub_check.rc != 0
+      tags:
+        - subscription
 
     - name: Enable repository management
       ansible.builtin.command: subscription-manager config --rhsm.manage_repos=1
       when: sub_check.rc != 0
       changed_when: false
+      tags:
+        - subscription
 
     - name: Refresh subscription
       ansible.builtin.command: subscription-manager refresh
       when: sub_check.rc != 0
       changed_when: false
+      tags:
+        - subscription
 
     - name: Configure network connection
       community.general.nmcli:
@@ -382,12 +443,16 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         ip4: "{{ ip_address }}"
         autoconnect: true
         state: present
+      tags:
+        - network
 
     - name: Activate network connection
       ansible.builtin.command: nmcli connection up {{ interface_name }}
       register: nmcli_up
       failed_when: false
       changed_when: nmcli_up.rc == 0
+      tags:
+        - network
 
     - name: Install base packages
       ansible.builtin.dnf:
@@ -396,6 +461,8 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
           - git
           - nano
         state: present
+      tags:
+        - packages
 
     - name: Install Docker and dependencies
       ansible.builtin.dnf:
@@ -404,6 +471,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
           - device-mapper-persistent-data
           - lvm2
         state: present
+      tags:
+        - packages
+        - docker
 
     - name: Add Docker CE repository
       ansible.builtin.command: >
@@ -411,6 +481,8 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         https://download.docker.com/linux/centos/docker-ce.repo
       args:
         creates: /etc/yum.repos.d/docker-ce.repo
+      tags:
+        - docker
 
     - name: Install Docker CE
       ansible.builtin.dnf:
@@ -420,18 +492,25 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
           - containerd.io
           - docker-compose-plugin
         state: present
+      tags:
+        - packages
+        - docker
 
     - name: Start and enable Docker service
       ansible.builtin.systemd:
         name: docker
         state: started
         enabled: true
+      tags:
+        - docker
 
     - name: Clone netbox-docker repository
       ansible.builtin.git:
         repo: https://github.com/netbox-community/netbox-docker.git
         dest: "{{ netbox_dir }}"
         version: release
+      tags:
+        - netbox-config
 
     - name: Create docker-compose override file
       ansible.builtin.copy:
@@ -443,12 +522,17 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
                 - 8000:8080
         dest: "{{ netbox_dir }}/docker-compose.override.yml"
         mode: '0644'
+      tags:
+        - netbox-config
 
     - name: Start NetBox containers
-      community.docker.docker_compose:
+      community.docker.docker_compose_v2:
         project_src: "{{ netbox_dir }}"
         state: present
       register: netbox_compose
+      tags:
+        - docker
+        - netbox-config
 
     - name: NetBox node setup complete
       ansible.builtin.debug:
@@ -461,6 +545,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
   hosts: wazuh
   become: true
   gather_facts: true
+  tags:
+    - wazuh
+    - setup
 
   vars:
     tmm_org: "{{ lookup('env', 'TMM_ORG') }}"
@@ -474,16 +561,22 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         policy: targeted
         state: permissive
       when: ansible_selinux.status == "enabled"
+      tags:
+        - selinux
 
     - name: Check if system is already registered
       ansible.builtin.command: subscription-manager identity
       register: sub_check
       failed_when: false
       changed_when: false
+      tags:
+        - subscription
 
     - name: Clean subscription data if not registered
       ansible.builtin.command: subscription-manager clean
       when: sub_check.rc != 0
+      tags:
+        - subscription
 
     - name: Register system with subscription-manager
       community.general.redhat_subscription:
@@ -491,16 +584,22 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         activationkey: "{{ tmm_id }}"
         force_register: true
       when: sub_check.rc != 0
+      tags:
+        - subscription
 
     - name: Enable repository management
       ansible.builtin.command: subscription-manager config --rhsm.manage_repos=1
       when: sub_check.rc != 0
       changed_when: false
+      tags:
+        - subscription
 
     - name: Refresh subscription
       ansible.builtin.command: subscription-manager refresh
       when: sub_check.rc != 0
       changed_when: false
+      tags:
+        - subscription
 
     - name: Configure network connection
       community.general.nmcli:
@@ -510,12 +609,16 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         ip4: "{{ ip_address }}"
         autoconnect: true
         state: present
+      tags:
+        - network
 
     - name: Activate network connection
       ansible.builtin.command: nmcli connection up {{ interface_name }}
       register: nmcli_up
       failed_when: false
       changed_when: nmcli_up.rc == 0
+      tags:
+        - network
 
     - name: Install base packages
       ansible.builtin.dnf:
@@ -524,6 +627,8 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
           - git
           - podman
         state: present
+      tags:
+        - packages
 
     - name: Wazuh node setup complete
       ansible.builtin.debug:
@@ -536,6 +641,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
   hosts: central
   become: true
   gather_facts: true
+  tags:
+    - central
+    - setup
 
   vars:
     tmm_org: "{{ lookup('env', 'TMM_ORG') }}"
@@ -555,32 +663,44 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         that:
           - ah_token | length > 0
         fail_msg: "Required environment variable AH_TOKEN must be set"
+      tags:
+        - always
 
     - name: Stop firewalld
       ansible.builtin.systemd:
         name: firewalld
         state: stopped
       failed_when: false
+      tags:
+        - firewall
 
     - name: Set SELinux to permissive mode
       ansible.builtin.command: setenforce 0
       failed_when: false
       changed_when: false
+      tags:
+        - selinux
 
     - name: Remove existing workshop directory
       ansible.builtin.file:
         path: "{{ workshop_repo_dir }}"
         state: absent
+      tags:
+        - cleanup
 
     - name: Check if system is already registered
       ansible.builtin.command: subscription-manager identity
       register: sub_check
       failed_when: false
       changed_when: false
+      tags:
+        - subscription
 
     - name: Clean subscription data if not registered
       ansible.builtin.command: subscription-manager clean
       when: sub_check.rc != 0
+      tags:
+        - subscription
 
     - name: Register system with subscription-manager
       community.general.redhat_subscription:
@@ -588,16 +708,22 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         activationkey: "{{ tmm_id }}"
         force_register: true
       when: sub_check.rc != 0
+      tags:
+        - subscription
 
     - name: Enable repository management
       ansible.builtin.command: subscription-manager config --rhsm.manage_repos=1
       when: sub_check.rc != 0
       changed_when: false
+      tags:
+        - subscription
 
     - name: Refresh subscription
       ansible.builtin.command: subscription-manager refresh
       when: sub_check.rc != 0
       changed_when: false
+      tags:
+        - subscription
 
     - name: Install base packages
       ansible.builtin.dnf:
@@ -606,6 +732,8 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
           - git
           - nano
         state: present
+      tags:
+        - packages
 
     - name: Install system packages
       ansible.builtin.dnf:
@@ -620,28 +748,44 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
           - python3-pip
           - unzip
         state: present
+      tags:
+        - packages
 
     - name: Download Flask wheels
       ansible.builtin.command: pip download flask -d /tmp/flask-wheels
       args:
         creates: /tmp/flask-wheels
+      tags:
+        - packages
+        - python
 
     - name: Install Flask from local wheels
       ansible.builtin.pip:
         name: flask
         extra_args: --no-index --find-links /tmp/flask-wheels
+      tags:
+        - packages
+        - python
 
     - name: Install pynetbox
       ansible.builtin.pip:
         name: pynetbox
         state: present
+      tags:
+        - packages
+        - python
 
     - name: Download IPA RPMs
       ansible.builtin.command: dnf download --resolve --destdir /tmp/ipa-rpms ipa-client
       args:
         creates: /tmp/ipa-rpms
+      tags:
+        - ipa
 
     - name: Check if containers exist and install IPA client
+      tags:
+        - ipa
+        - containers
       block:
         - name: Check if app container exists
           ansible.builtin.command: podman container exists app
@@ -701,6 +845,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         - { ip: "192.168.1.12", names: "vault.zta.lab vault" }
         - { ip: "192.168.1.15", names: "netbox.zta.lab netbox" }
         - { ip: "192.168.1.13", names: "wazuh.zta.lab wazuh" }
+      tags:
+        - network
+        - hosts
 
     - name: Configure network connection
       community.general.nmcli:
@@ -710,18 +857,24 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         ip4: "{{ ip_address }}"
         autoconnect: true
         state: present
+      tags:
+        - network
 
     - name: Activate network connection
       ansible.builtin.command: nmcli connection up {{ interface_name }}
       register: nmcli_up
       failed_when: false
       changed_when: nmcli_up.rc == 0
+      tags:
+        - network
 
     - name: Clone ZTA workshop repository
       ansible.builtin.git:
         repo: https://github.com/nmartins0611/zta-workshop-aap.git
         dest: "{{ workshop_repo_dir }}"
         version: zta-container
+      tags:
+        - workshop
 
     - name: Install Ansible collections
       community.general.ansible_galaxy_install:
@@ -731,13 +884,20 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         - community.general
         - netbox.netbox
         - ansible.controller
+      tags:
+        - ansible
+        - collections
 
     - name: Check if httpd is installed
       ansible.builtin.stat:
         path: /usr/sbin/httpd
       register: httpd_check
+      tags:
+        - ipa
 
     - name: Configure IPA rewrite if httpd exists
+      tags:
+        - ipa
       block:
         - name: Check if IPA rewrite already configured
           ansible.builtin.lineinfile:
@@ -768,11 +928,17 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
       ansible.builtin.command: podman stop keycloak
       failed_when: false
       changed_when: false
+      tags:
+        - keycloak
+        - containers
 
     - name: Remove existing Keycloak container
       ansible.builtin.command: podman rm --force keycloak
       failed_when: false
       changed_when: false
+      tags:
+        - keycloak
+        - containers
 
     - name: Create Keycloak container
       ansible.builtin.command: >
@@ -786,13 +952,20 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         --hostname=keycloak-https-{{ guid }}.{{ domain }}
         --https-port=8443 --http-enabled=true --proxy-headers forwarded
       changed_when: true
+      tags:
+        - keycloak
+        - containers
 
     - name: Check if container-keycloak systemd service exists
       ansible.builtin.stat:
         path: /etc/systemd/system/container-keycloak.service
       register: keycloak_service
+      tags:
+        - keycloak
 
     - name: Fix systemd service if it exists
+      tags:
+        - keycloak
       block:
         - name: Remove PIDFile line from systemd service
           ansible.builtin.lineinfile:
@@ -813,6 +986,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         {{ workshop_repo_dir }}/setup/configure-dns.yml
       environment:
         ANSIBLE_HOST_KEY_CHECKING: "False"
+      tags:
+        - workshop
+        - dns
 
     - name: Run Vault configuration playbook
       ansible.builtin.command: >
@@ -820,6 +996,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         {{ workshop_repo_dir }}/setup/configure-vault.yml
       environment:
         ANSIBLE_HOST_KEY_CHECKING: "False"
+      tags:
+        - workshop
+        - vault-config
 
     - name: Run Vault SSH configuration playbook
       ansible.builtin.command: >
@@ -827,6 +1006,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         {{ workshop_repo_dir }}/setup/configure-vault-ssh.yml
       environment:
         ANSIBLE_HOST_KEY_CHECKING: "False"
+      tags:
+        - workshop
+        - vault-config
 
     - name: Run IDM client enrollment playbook
       ansible.builtin.command: >
@@ -834,6 +1016,9 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
         {{ workshop_repo_dir }}/setup/enroll-idm-clients.yml
       environment:
         ANSIBLE_HOST_KEY_CHECKING: "False"
+      tags:
+        - workshop
+        - ipa
 
     - name: Central node setup complete
       ansible.builtin.debug:
@@ -883,4 +1068,4 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
 EOF
 
 ansible-galaxy install -r /tmp/requirements.yml
-ansible-playbook -i /tmp/inventory /tmp/lab_setup.yml
+ansible-playbook -i /tmp/inventory /tmp/lab_setup.yml 
