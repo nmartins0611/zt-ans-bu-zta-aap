@@ -17,10 +17,10 @@
       ansible_python_interpreter: /usr/libexec/platform-python
     loop:
       - control
-      - vault
-      - central
-      - netbox
-      - wazuh
+      # - vault
+      # - central
+      # - netbox
+      # - wazuh
 
 - name: Demo Playbook for the ansible-runner API
   hosts: all:!localhost
