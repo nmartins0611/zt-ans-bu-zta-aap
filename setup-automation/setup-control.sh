@@ -39,7 +39,7 @@ tee /tmp/inventory > /dev/null <<EOF
 localhost ansible_connection=local
 
 [control]
-control
+control ansible_connection=local
 
 [central]
 central
