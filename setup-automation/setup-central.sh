@@ -46,76 +46,76 @@ pipelining = True
 EOF
 
 
-echo "Setup the Satellite links"
+# echo "Setup the Satellite links"
 
-###############################################################################
-# Helpers
-###############################################################################
+# ###############################################################################
+# # Helpers
+# ###############################################################################
 
-retry() {
-    local max_attempts=3
-    local delay=5
-    local desc="$1"
-    shift
-    for ((i = 1; i <= max_attempts; i++)); do
-        echo "Attempt $i/$max_attempts: $desc"
-        if "$@"; then
-            return 0
-        fi
-        if [ $i -lt $max_attempts ]; then
-            echo "  Failed. Retrying in ${delay}s..."
-            sleep $delay
-        fi
-    done
-    echo "FATAL: Failed after $max_attempts attempts: $desc"
-    exit 1
-}
+# retry() {
+#     local max_attempts=3
+#     local delay=5
+#     local desc="$1"
+#     shift
+#     for ((i = 1; i <= max_attempts; i++)); do
+#         echo "Attempt $i/$max_attempts: $desc"
+#         if "$@"; then
+#             return 0
+#         fi
+#         if [ $i -lt $max_attempts ]; then
+#             echo "  Failed. Retrying in ${delay}s..."
+#             sleep $delay
+#         fi
+#     done
+#     echo "FATAL: Failed after $max_attempts attempts: $desc"
+#     exit 1
+# }
 
-run_if_needed() {
-    local desc="$1"
-    shift
-    local check=()
-    while [[ "$1" != "--" ]]; do
-        check+=("$1"); shift
-    done
-    shift
-    if "${check[@]}" &>/dev/null; then
-        echo "SKIP (already done): $desc"
-    else
-        retry "$desc" "$@"
-    fi
-}
+# run_if_needed() {
+#     local desc="$1"
+#     shift
+#     local check=()
+#     while [[ "$1" != "--" ]]; do
+#         check+=("$1"); shift
+#     done
+#     shift
+#     if "${check[@]}" &>/dev/null; then
+#         echo "SKIP (already done): $desc"
+#     else
+#         retry "$desc" "$@"
+#     fi
+# }
 
-ensure_hosts_entry() {
-    local ip="$1"
-    local names="$2"
-    if grep -q "^${ip} " /etc/hosts 2>/dev/null; then
-        echo "SKIP: /etc/hosts already has entry for ${ip}"
-    else
-        echo "${ip} ${names}" >> /etc/hosts
-    fi
-}
+# ensure_hosts_entry() {
+#     local ip="$1"
+#     local names="$2"
+#     if grep -q "^${ip} " /etc/hosts 2>/dev/null; then
+#         echo "SKIP: /etc/hosts already has entry for ${ip}"
+#     else
+#         echo "${ip} ${names}" >> /etc/hosts
+#     fi
+# }
 
-ensure_nmcli_connection() {
-    local con_name="$1"
-    shift
-    if nmcli connection show "$con_name" &>/dev/null; then
-        echo "SKIP: nmcli connection '${con_name}' already exists"
-    else
-        nmcli connection add "$@"
-    fi
-}
+# ensure_nmcli_connection() {
+#     local con_name="$1"
+#     shift
+#     if nmcli connection show "$con_name" &>/dev/null; then
+#         echo "SKIP: nmcli connection '${con_name}' already exists"
+#     else
+#         nmcli connection add "$@"
+#     fi
+# }
 
-###############################################################################
-# 1. Validate required variables
-###############################################################################
+# ###############################################################################
+# # 1. Validate required variables
+# ###############################################################################
 
-for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
-    if [ -z "${!var:-}" ]; then
-        echo "ERROR: $var is not set"
-        exit 1
-    fi
-done
+# for var in SATELLITE_URL SATELLITE_ORG SATELLITE_ACTIVATIONKEY; do
+#     if [ -z "${!var:-}" ]; then
+#         echo "ERROR: $var is not set"
+#         exit 1
+#     fi
+# done
 
 ###############################################################################
 # 2. Disable tmpfiles service
@@ -137,53 +137,72 @@ done
 # 3. Clean repos & subscriptions (only if not already registered)
 ###############################################################################
 
-if subscription-manager identity &>/dev/null; then
-    echo "SKIP: Already registered with Satellite – skipping clean/unregister"
-else
-    echo "Cleaning existing repos and subscriptions..."
-    dnf clean all || true
-    rm -f /etc/yum.repos.d/redhat-rhui*.repo
-    sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
-    subscription-manager unregister 2>/dev/null || true
-    subscription-manager remove --all 2>/dev/null || true
-    subscription-manager clean
+# if subscription-manager identity &>/dev/null; then
+#     echo "SKIP: Already registered with Satellite – skipping clean/unregister"
+# else
+#     echo "Cleaning existing repos and subscriptions..."
+#     dnf clean all || true
+#     rm -f /etc/yum.repos.d/redhat-rhui*.repo
+#     sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
+#     subscription-manager unregister 2>/dev/null || true
+#     subscription-manager remove --all 2>/dev/null || true
+#     subscription-manager clean
 
-    OLD_KATELLO=$(rpm -qa | grep katello-ca-consumer || true)
-    if [ -n "$OLD_KATELLO" ]; then
-        rpm -e "$OLD_KATELLO" 2>/dev/null || true
-    fi
-fi
+#     OLD_KATELLO=$(rpm -qa | grep katello-ca-consumer || true)
+#     if [ -n "$OLD_KATELLO" ]; then
+#         rpm -e "$OLD_KATELLO" 2>/dev/null || true
+#     fi
+# fi
 
 ###############################################################################
 # 4. Register with Satellite
 ###############################################################################
 
-CA_CERT="/etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
+# CA_CERT="/etc/pki/ca-trust/source/anchors/${SATELLITE_URL}.ca.crt"
 
-run_if_needed "Download Katello CA cert" \
-    test -f "${CA_CERT}" \
-    -- \
-    curl -fsSkL \
-        "https://${SATELLITE_URL}/pub/katello-server-ca.crt" \
-        -o "${CA_CERT}"
+# run_if_needed "Download Katello CA cert" \
+#     test -f "${CA_CERT}" \
+#     -- \
+#     curl -fsSkL \
+#         "https://${SATELLITE_URL}/pub/katello-server-ca.crt" \
+#         -o "${CA_CERT}"
 
-retry "Update CA trust" \
-    update-ca-trust extract
+# retry "Update CA trust" \
+#     update-ca-trust extract
 
-run_if_needed "Install Katello consumer RPM" \
-    rpm -q katello-ca-consumer \
-    -- \
-    rpm -Uhv --force "https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm"
+# run_if_needed "Install Katello consumer RPM" \
+#     rpm -q katello-ca-consumer \
+#     -- \
+#     rpm -Uhv --force "https://${SATELLITE_URL}/pub/katello-ca-consumer-latest.noarch.rpm"
 
-run_if_needed "Register with Satellite" \
-    subscription-manager identity \
-    -- \
-    subscription-manager register \
-        --org="${SATELLITE_ORG}" \
-        --activationkey="${SATELLITE_ACTIVATIONKEY}"
+# run_if_needed "Register with Satellite" \
+#     subscription-manager identity \
+#     -- \
+#     subscription-manager register \
+#         --org="${SATELLITE_ORG}" \
+#         --activationkey="${SATELLITE_ACTIVATIONKEY}"
 
-retry "Refresh subscription" \
-    subscription-manager refresh
+# retry "Refresh subscription" \
+#     subscription-manager refresh
+
+
+## 1. Clean Existing Subscription Data
+echo "Cleaning existing subscription data..."
+subscription-manager clean
+
+## 2. Register System
+# Using --force to ensure any existing stale registrations are overwritten
+echo "Registering system with Org ID: $ORG_ID..."
+subscription-manager register --org="$ORG_ID" --activationkey="$ACTIVATION_KEY" --force
+
+if [ $? -eq 0 ]; then
+    echo "System registered successfully!"
+else
+    echo "Registration failed. Please check your credentials and network connection."
+    exit 1
+fi
+
+
 
 ###############################################################################
 # 5. Install packages
