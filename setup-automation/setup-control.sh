@@ -882,5 +882,5 @@ tee /tmp/lab_setup.yml > /dev/null <<EOF
 
 EOF
 
-
+ansible-galaxy install -r /tmp/requirements.yml
 ansible-playbook -i /tmp/inventory /tmp/lab_setup.yml
