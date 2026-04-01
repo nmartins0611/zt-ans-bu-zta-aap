@@ -26,7 +26,52 @@ ensure_nmcli_connection() {
 }
 
 ###############################################################################
-# 6. /etc/hosts (idempotent)
+# 1. Validate Environment Variables
+###############################################################################
+
+for var in TMM_ORG TMM_ID VAULT_LIC; do
+    if [ -z "${!var:-}" ]; then
+        echo "ERROR: $var is not set. Please export it before running."
+        exit 1
+    fi
+done
+
+###############################################################################
+# 2. Subscription Management (Direct Registration)
+###############################################################################
+
+if subscription-manager identity &>/dev/null; then
+    echo "SKIP: System already registered."
+else
+    echo "Cleaning existing subscription data..."
+    subscription-manager clean
+
+    echo "Registering system with Org ID: ${TMM_ORG}..."
+    subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force
+    
+    echo "Enabling repo management..."
+    subscription-manager config --rhsm.manage_repos=1
+    subscription-manager refresh
+fi
+
+###############################################################################
+# 3. Network configuration (idempotent)
+###############################################################################
+
+# Added DNS and Search Domain directly into the 'add' logic if it were to be created
+ensure_nmcli_connection "eth1" \
+    type ethernet con-name eth1 ifname eth1 \
+    ipv4.addresses 192.168.1.12/24 \
+    ipv4.method manual \
+    connection.autoconnect yes
+
+# Ensure DNS settings are correct even if the connection already existed
+echo "Configuring DNS for eth1..."
+nmcli con mod eth1 ipv4.dns "192.168.1.11" ipv4.dns-search "zta.lab"
+nmcli connection up eth1 || true
+
+###############################################################################
+# 4. /etc/hosts (idempotent)
 ###############################################################################
 
 ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
@@ -36,59 +81,39 @@ ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
 ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 
 ###############################################################################
-# 7. Network configuration (idempotent)
+# 5. Apply Vault license and restart
 ###############################################################################
-
-###############################################################################
-# 2. Network configuration (idempotent)
-###############################################################################
-
-ensure_nmcli_connection "eth1" \
-    type ethernet con-name eth1 ifname eth1 \
-    ipv4.addresses 192.168.1.12/24 \
-    ipv4.method manual \
-    connection.autoconnect yes
-
-nmcli connection up eth1 || true
-nmcli con mod eth1 ipv4.dns 192.168.1.11
-nmcli con mod eth1 ipv4.dns-search zta.lab
-nmcli connection up eth1 || true
-
-###############################################################################
-# 3. Apply Vault license and restart
-###############################################################################
-
-if [ -z "${VAULT_LIC:-}" ]; then
-    echo "ERROR: VAULT_LIC environment variable is not set"
-    exit 1
-fi
 
 VAULT_LIC_FILE="/etc/vault.d/vault.hclic"
 
-echo "$VAULT_LIC" | sudo tee "$VAULT_LIC_FILE" > /dev/null
-sudo chmod 640 "$VAULT_LIC_FILE"
-sudo chown vault:vault "$VAULT_LIC_FILE"
+# Ensure directory exists before writing
+mkdir -p /etc/vault.d/
+
+echo "$VAULT_LIC" | tee "$VAULT_LIC_FILE" > /dev/null
+chmod 640 "$VAULT_LIC_FILE"
+chown vault:vault "$VAULT_LIC_FILE" 2>/dev/null || echo "WARN: Could not change ownership to vault user"
+
 echo "License file written to ${VAULT_LIC_FILE}"
 
-sudo systemctl restart vault
+systemctl restart vault
 sleep 3
 
-if sudo systemctl is-active --quiet vault; then
+if systemctl is-active --quiet vault; then
     echo "✓ Vault restarted successfully"
 else
-    echo "ERROR: Vault service may not be running properly"
-    sudo systemctl status vault
+    echo "ERROR: Vault service is not running"
+    systemctl status vault
     exit 1
 fi
 
 ###############################################################################
-# 4. Unseal Vault (idempotent — unseal is a no-op if already unsealed)
+# 6. Unseal Vault
 ###############################################################################
 
+# Using a subshell to ignore errors if already unsealed
+echo "Attempting to unseal Vault..."
 vault operator unseal \
     -address=http://127.0.0.1:8200 \
-    -tls-skip-verify \
-    1c6a637e70172e3c249f77b653fb64a820749864cad7f5aa7ab6d5aca5197ec5 \
-    || echo "WARN: Vault unseal returned non-zero (may already be unsealed)"
+    1c6a637e70172e3c249f77b653fb64a820749864cad7f5aa7ab6d5aca5197ec5 || echo "Vault unseal step finished (it may already be unsealed)."
 
 echo "✓ vault setup complete"
