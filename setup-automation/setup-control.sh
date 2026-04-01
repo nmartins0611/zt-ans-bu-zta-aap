@@ -30,7 +30,7 @@ run_if_needed() {
     local desc="$1"
     shift
     local check=()
-    while [[ "$1" != "--" ]]; do
+    while [[ $# -gt 0 && "${1}" != "--" ]]; do
         check+=("$1"); shift
     done
     shift
