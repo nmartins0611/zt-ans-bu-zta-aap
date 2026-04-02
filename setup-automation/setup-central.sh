@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-sysctl -w kernel.sysrq=0
+echo "kernel.sysrq = 0" > /etc/sysctl.d/99-no-sysrq.conf
 
 echo "Starting Central node setup..."
 
