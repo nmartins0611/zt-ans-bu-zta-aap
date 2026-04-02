@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+sysctl -w kernel.sysrq=0
 
 echo "Starting Central node setup..."
 
