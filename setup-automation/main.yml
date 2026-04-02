@@ -19,7 +19,7 @@
       - control
       - vault
       - central
-      # - netbox
+      - netbox
       # - wazuh
 
 - name: Demo Playbook for the ansible-runner API
