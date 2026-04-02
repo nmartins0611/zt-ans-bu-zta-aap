@@ -104,6 +104,8 @@ fi
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 export NETBOX_TOKEN=0123456789abcdef0123456789abcdef01234567
+export ANSIBLE_CONFIG=/path/to/zta-workshop-aap/ansible.cfg
+mkdir -p /root/.ansible/cp
 
 ###############################################################################
 # 4. Clean temp directory
