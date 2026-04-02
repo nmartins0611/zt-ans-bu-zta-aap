@@ -319,78 +319,78 @@ virtualmachines:
         - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
         - systemctl reload sshd                               
 
-  - name: "wazuh"
-    image: "project-zero-wazuh-base-all"
-    memory: "16G"
-    cores: 4
-    image_size: "55Gi"
-    tags:
-      - key: "AnsibleGroup"
-        value: "isolated"
-    networks:
-      - default
-      - secondary
-    services:
-      - name: wazuh-https
-        ports:
-          - port: 443
-            protocol: TCP
-            targetPort: 443
-            name: wazuh
-      - name: wazuh-api
-        ports:
-          - port: 55000
-            protocol: TCP
-            targetPort: 55000
-            name: wazuh-api      
-      # - name: wazuh-index
-      #   ports:
-      #     - port: 9200
-      #       protocol: TCP
-      #       targetPort: 9200
-      #       name: wazuh-index     
-      # - name: wazuh-grafana
-      #   ports:
-      #     - port: 3000
-      #       protocol: TCP
-      #       targetPort: 3000
-      #       name: wazuh-grafana            
-    routes:
-      - name: wazuh
-        host: wazuh
-        service: wazuh-https
-        targetPort: 443
-        tls: true
-        tls_termination: reencrypt
-        tls_destinationCACertificate: |
-          -----BEGIN CERTIFICATE-----
-          MIIDSzCCAjOgAwIBAgIUNsWEOlO7H7VI8jd252nCTrNYxucwDQYJKoZIhvcNAQEL
-          BQAwNTEOMAwGA1UECwwFV2F6dWgxDjAMBgNVBAoMBVdhenVoMRMwEQYDVQQHDApD
-          YWxpZm9ybmlhMB4XDTI2MDIyNDExMDExMloXDTM2MDIyMjExMDExMlowNTEOMAwG
-          A1UECwwFV2F6dWgxDjAMBgNVBAoMBVdhenVoMRMwEQYDVQQHDApDYWxpZm9ybmlh
-          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuGHenvy22BKIr/6KxXi2
-          PmIkSbHPfMclllAxvxxrETnvLmdE52suAf/Fv7ylAp1IIzqKRLb/mJEQQaCSS5FX
-          84gmFf3HeUJ25Gvq+gVwVAQ2K4wcY5rjHvz2QUX1vIWNfCp6UUogqiIJE1hMo4kg
-          ABIKToltu2QNVt1vjo8m8+NSuR926vPxCLNucDK7wXWRRxRxsiR3A8dEXnX+71fp
-          ke/hjZW7Gz0QGssKY/B/pjuQYNcm/kj8J1TDn4D1oCaBEB9r3Eb/pz3XO3U/VLYA
-          jjn3JgfIZTsE7jaurAvMvTQV4R+v0A7LgZ9gGW0AF4TDR8mK5JhAtYcRkvX6yecf
-          kQIDAQABo1MwUTAdBgNVHQ4EFgQUHhJwcs6zAvJiZNpdbiftmYB4HlEwHwYDVR0j
-          BBgwFoAUHhJwcs6zAvJiZNpdbiftmYB4HlEwDwYDVR0TAQH/BAUwAwEB/zANBgkq
-          hkiG9w0BAQsFAAOCAQEATSdtsz9PFfxINU4pi3J7xYd8Osj1897UopQ0jfNwcGdX
-          odQASMx5klFlf7UU0RfhjHInBaErgaie2OsopumGWwgFpK1IrHvM3CdlYFXA+FQ4
-          NGDAi1b5zjqIMoXeNYR/6AluTBIC/WsTqirTv3wmANnLyBv9bAI12obs4DHak5sH
-          a5kDugKtsxT/sc9CLiDk+mtDXIAyXTOOhjEZ0ukq7U8w14VRSmfRfyACUDrMOVCL
-          0EEtFn39Xbm38MEqlX6IOk3ttW9fG9x5eCccQUqldEHrBsC33GHU2jvwLXWK4cPQ
-          4WpD1cjQTK9ZjDIjPmNtmdjK4V5+tXmNRiD0R6gsmQ==
-          -----END CERTIFICATE-----
-        userdata: |-
-          #cloud-config
-          user: rhel
-          password: ansible123!
-          chpasswd: { expire: False }
-          runcmd:
-            - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
-            - systemctl reload sshd        
+  # - name: "wazuh"
+  #   image: "project-zero-wazuh-base-all"
+  #   memory: "16G"
+  #   cores: 4
+  #   image_size: "55Gi"
+  #   tags:
+  #     - key: "AnsibleGroup"
+  #       value: "isolated"
+  #   networks:
+  #     - default
+  #     - secondary
+  #   services:
+  #     - name: wazuh-https
+  #       ports:
+  #         - port: 443
+  #           protocol: TCP
+  #           targetPort: 443
+  #           name: wazuh
+  #     - name: wazuh-api
+  #       ports:
+  #         - port: 55000
+  #           protocol: TCP
+  #           targetPort: 55000
+  #           name: wazuh-api      
+  #     # - name: wazuh-index
+  #     #   ports:
+  #     #     - port: 9200
+  #     #       protocol: TCP
+  #     #       targetPort: 9200
+  #     #       name: wazuh-index     
+  #     # - name: wazuh-grafana
+  #     #   ports:
+  #     #     - port: 3000
+  #     #       protocol: TCP
+  #     #       targetPort: 3000
+  #     #       name: wazuh-grafana            
+  #   routes:
+  #     - name: wazuh
+  #       host: wazuh
+  #       service: wazuh-https
+  #       targetPort: 443
+  #       tls: true
+  #       tls_termination: reencrypt
+  #       tls_destinationCACertificate: |
+  #         -----BEGIN CERTIFICATE-----
+  #         MIIDSzCCAjOgAwIBAgIUNsWEOlO7H7VI8jd252nCTrNYxucwDQYJKoZIhvcNAQEL
+  #         BQAwNTEOMAwGA1UECwwFV2F6dWgxDjAMBgNVBAoMBVdhenVoMRMwEQYDVQQHDApD
+  #         YWxpZm9ybmlhMB4XDTI2MDIyNDExMDExMloXDTM2MDIyMjExMDExMlowNTEOMAwG
+  #         A1UECwwFV2F6dWgxDjAMBgNVBAoMBVdhenVoMRMwEQYDVQQHDApDYWxpZm9ybmlh
+  #         MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuGHenvy22BKIr/6KxXi2
+  #         PmIkSbHPfMclllAxvxxrETnvLmdE52suAf/Fv7ylAp1IIzqKRLb/mJEQQaCSS5FX
+  #         84gmFf3HeUJ25Gvq+gVwVAQ2K4wcY5rjHvz2QUX1vIWNfCp6UUogqiIJE1hMo4kg
+  #         ABIKToltu2QNVt1vjo8m8+NSuR926vPxCLNucDK7wXWRRxRxsiR3A8dEXnX+71fp
+  #         ke/hjZW7Gz0QGssKY/B/pjuQYNcm/kj8J1TDn4D1oCaBEB9r3Eb/pz3XO3U/VLYA
+  #         jjn3JgfIZTsE7jaurAvMvTQV4R+v0A7LgZ9gGW0AF4TDR8mK5JhAtYcRkvX6yecf
+  #         kQIDAQABo1MwUTAdBgNVHQ4EFgQUHhJwcs6zAvJiZNpdbiftmYB4HlEwHwYDVR0j
+  #         BBgwFoAUHhJwcs6zAvJiZNpdbiftmYB4HlEwDwYDVR0TAQH/BAUwAwEB/zANBgkq
+  #         hkiG9w0BAQsFAAOCAQEATSdtsz9PFfxINU4pi3J7xYd8Osj1897UopQ0jfNwcGdX
+  #         odQASMx5klFlf7UU0RfhjHInBaErgaie2OsopumGWwgFpK1IrHvM3CdlYFXA+FQ4
+  #         NGDAi1b5zjqIMoXeNYR/6AluTBIC/WsTqirTv3wmANnLyBv9bAI12obs4DHak5sH
+  #         a5kDugKtsxT/sc9CLiDk+mtDXIAyXTOOhjEZ0ukq7U8w14VRSmfRfyACUDrMOVCL
+  #         0EEtFn39Xbm38MEqlX6IOk3ttW9fG9x5eCccQUqldEHrBsC33GHU2jvwLXWK4cPQ
+  #         4WpD1cjQTK9ZjDIjPmNtmdjK4V5+tXmNRiD0R6gsmQ==
+  #         -----END CERTIFICATE-----
+  #       userdata: |-
+  #         #cloud-config
+  #         user: rhel
+  #         password: ansible123!
+  #         chpasswd: { expire: False }
+  #         runcmd:
+  #           - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+  #           - systemctl reload sshd        
 
   - name: "central"
     image: "idm-kc-wz-zerotrust-vs1"
