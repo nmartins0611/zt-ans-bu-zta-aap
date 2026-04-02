@@ -148,7 +148,7 @@ virtualmachines:
   - name: vault
     image: vault-rhel-image-1
     memory: 16G
-    cores: 2
+    cores: 4
     image_size: 40Gi
     tags:
       - key: AnsibleGroup
@@ -287,7 +287,7 @@ virtualmachines:
 
   - name: "netbox"
     image: "rhel-9.5"
-    memory: "8G"
+    memory: "16G"
     cores: 4
     image_size: "30Gi"
     tags:
@@ -322,7 +322,7 @@ virtualmachines:
   - name: "wazuh"
     image: "project-zero-wazuh-base-all"
     memory: "16G"
-    cores: 2
+    cores: 4
     image_size: "55Gi"
     tags:
       - key: "AnsibleGroup"
@@ -395,7 +395,7 @@ virtualmachines:
   - name: "central"
     image: "idm-kc-wz-zerotrust-vs1"
     memory: "64G"
-    cores: 6
+    cores: 8
     image_size: "60Gi"
     tags:
       - key: "AnsibleGroup"
