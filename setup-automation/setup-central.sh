@@ -319,7 +319,7 @@ nmcli connection up enp2s0 || true
 # 15. Run Ansible playbooks
 ###############################################################################
 
-#ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/site.yml --skip-tags arista,netbox-deploy,splunk-deploy,wazuh-server,wazuh-agents,idm-users,aap-policy,aap-ldap,aap-netbox,aap-eda,aap-bootstrap
+ansible-playbook -i /tmp/zta-workshop-aap/inventory/hosts.ini /tmp/zta-workshop-aap/setup/site.yml --skip-tags netbox-deploy,splunk-deploy,wazuh-server,idm-users,aap-policy,aap-ldap,aap-netbox,aap-eda,aap-bootstrap
 
 
 # PLAYBOOK_DIR="/tmp/zta-workshop-aap/setup"
