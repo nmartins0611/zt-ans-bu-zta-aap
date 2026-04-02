@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
-echo "kernel.sysrq = 0" > /etc/sysctl.d/99-no-sysrq.conf
-podman kill ceos1 ceos2 ceos3 2>/dev/null; true
-podman rm -f ceos1 ceos2 ceos3 2>/dev/null; true
+# echo "kernel.sysrq = 0" > /etc/sysctl.d/99-no-sysrq.conf
+# podman kill ceos1 ceos2 ceos3 2>/dev/null; true
+# podman rm -f ceos1 ceos2 ceos3 2>/dev/null; true
 
 echo "Starting Central node setup..."
 
