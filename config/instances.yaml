@@ -295,7 +295,7 @@ virtualmachines:
     image: "zta-central-img"
     memory: "32G"
     cores: 8
-    image_size: "60Gi"
+    image_size: "70Gi"
     tags:
       - key: "AnsibleGroup"
         value: "isolated"
