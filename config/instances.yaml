@@ -292,8 +292,8 @@ virtualmachines:
   #           - systemctl reload sshd        
 
   - name: "central"
-    image: "idm-kc-wz-zerotrust-vs1"
-    memory: "64G"
+    image: "zta-central-img"
+    memory: "32G"
     cores: 8
     image_size: "60Gi"
     tags:
