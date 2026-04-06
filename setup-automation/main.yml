@@ -162,6 +162,11 @@
     delegate_to: localhost
     register: r_script_test
 
+  - name: Check if setup-server.complete exists
+    ansible.builtin.stat:
+      path: "./setup-{{ config_host }}.complete"
+    register: r_script_complete
+
   - name: Copy script file
     when: r_script_test.stat.exists
     ansible.builtin.copy:
@@ -173,9 +178,10 @@
     ansible.builtin.include_vars: ../config/secrets.yaml
 
   - name: Execute setup-node.sh if it exists
-    when: r_script_test.stat.exists
+    when: 
+    - r_script_test.stat.exists
+    - not r_script_complete.exists
     ansible.builtin.shell: "sh -x /tmp/setup-scripts/setup-{{ ansible_host }}.sh > /tmp/setup-scripts/setup-{{ ansible_host }}.log 2>&1"
-    
     register: r_result
     environment:
       SATELLITE_URL: "{{ satellite_url }}"
@@ -188,6 +194,11 @@
       SSH_KEY: "{{ ssh_key }}"
       VAULT_LIC: "{{ vaultlic }}"
       AH_TOKEN: "{{ ahtoken }}"
+
+  - name: Create a setup-complete file
+    ansible.builtin.copy:
+      content: ""
+      path: "/tmp/setup-scripts/setup-{{ ansible_host }}.complete"
 
   - name: Output script result
     ansible.builtin.debug:
