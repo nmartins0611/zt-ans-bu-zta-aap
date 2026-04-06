@@ -334,5 +334,6 @@ ansible-playbook -i inventory/hosts.ini setup/deploy-db-app.yml
 ansible-playbook -i inventory/hosts.ini setup/configure-vault.yml
 ansible-playbook -i inventory/hosts.ini setup/configure-vault-ssh.yml
 ansible-playbook -i inventory/hosts.ini setup/configure-netbox.yml
+ansible-playbook -i inventory/hosts.ini setup/integrate-splunk.yml
 # echo ""
 # echo "✓ central setup complete"
