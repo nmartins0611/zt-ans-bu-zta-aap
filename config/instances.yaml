@@ -292,7 +292,7 @@ virtualmachines:
   #           - systemctl reload sshd        
 
   - name: "central"
-    image: "zta-central-img-v1.1"
+    image: "zta-central-img-vs1.2"
     memory: "32G"
     cores: 8
     image_size: "70Gi"
