@@ -178,21 +178,21 @@ ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 # 8. Install packages
 ###############################################################################
 
-run_if_needed "Install base packages" \
-    rpm -q dnf-utils \
-    -- \
-    dnf install -y dnf-utils git nano
+# run_if_needed "Install base packages" \
+#     rpm -q dnf-utils \
+#     -- \
+#     dnf install -y dnf-utils git nano
 
-run_if_needed "Install system packages" \
-    rpm -q python3-libsemanage \
-    -- \
-    dnf install -y python3-libsemanage ansible-core python3-requests \
-                   ipa-client sssd oddjob-mkhomedir python3-pip
+# run_if_needed "Install system packages" \
+#     rpm -q python3-libsemanage \
+#     -- \
+#     dnf install -y python3-libsemanage ansible-core python3-requests \
+#                    ipa-client sssd oddjob-mkhomedir python3-pip
 
-run_if_needed "Install pynetbox" \
-    python3 -c "import pynetbox" \
-    -- \
-    pip3 install pynetbox
+# run_if_needed "Install pynetbox" \
+#     python3 -c "import pynetbox" \
+#     -- \
+#     pip3 install pynetbox
 
 ###############################################################################
 # 9. Download IPA RPMs for containers
@@ -231,20 +231,20 @@ fi
 # 11. Install Ansible collections
 ###############################################################################
 
-run_if_needed "Install community.general collection" \
-    bash -c 'ansible-galaxy collection list | grep -q "community.general"' \
-    -- \
-    ansible-galaxy collection install community.general
+# run_if_needed "Install community.general collection" \
+#     bash -c 'ansible-galaxy collection list | grep -q "community.general"' \
+#     -- \
+#     ansible-galaxy collection install community.general
 
-run_if_needed "Install netbox.netbox collection" \
-    bash -c 'ansible-galaxy collection list | grep -q "netbox.netbox"' \
-    -- \
-    ansible-galaxy collection install netbox.netbox
+# run_if_needed "Install netbox.netbox collection" \
+#     bash -c 'ansible-galaxy collection list | grep -q "netbox.netbox"' \
+#     -- \
+#     ansible-galaxy collection install netbox.netbox
 
-run_if_needed "Install ansible.controller collection" \
-    bash -c 'ansible-galaxy collection list | grep -q "ansible.controller"' \
-    -- \
-    ansible-galaxy collection install ansible.controller
+# run_if_needed "Install ansible.controller collection" \
+#     bash -c 'ansible-galaxy collection list | grep -q "ansible.controller"' \
+#     -- \
+#     ansible-galaxy collection install ansible.controller
 
 ###############################################################################
 # 12. IPA rewrite config (idempotent)
