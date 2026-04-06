@@ -71,7 +71,8 @@ ensure_nmcli_connection() {
     fi
 }
 
-###############################################################################
+###############################################################################export ANSIBLE_HOST_KEY_CHECKING=False
+export NETBOX_TOKEN=0123456789abcdef0123456789abcdef01234567
 # 1. Validate required environment variables
 ###############################################################################
 
@@ -95,7 +96,8 @@ else
     echo "SELinux set to Permissive"
 fi
 
-if systemctl is-active --quiet firewalld; then
+if systemctl is-active --quiet firewalld; thenexport ANSIBLE_HOST_KEY_CHECKING=False
+export NETBOX_TOKEN=0123456789abcdef0123456789abcdef01234567
     systemctl stop firewalld
     echo "Firewalld stopped"
 else
@@ -272,7 +274,8 @@ IPA
     else
         echo "NOTE: httpd not running, config will apply when started"
     fi
-fi
+fiexport ANSIBLE_HOST_KEY_CHECKING=False
+export NETBOX_TOKEN=0123456789abcdef0123456789abcdef01234567
 
 ###############################################################################
 # 13. Reconfigure Keycloak container
@@ -330,6 +333,6 @@ ansible-playbook -i inventory/hosts.ini setup/deploy-central.yml --skip-tags key
 ansible-playbook -i inventory/hosts.ini setup/deploy-db-app.yml
 ansible-playbook -i inventory/hosts.ini setup/configure-vault.yml
 ansible-playbook -i inventory/hosts.ini setup/configure-vault-ssh.yml
-
+ansible-playbook -i inventory/hosts.ini setup/configure-netbox.yml
 # echo ""
 # echo "✓ central setup complete"
