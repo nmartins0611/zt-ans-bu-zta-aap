@@ -192,10 +192,15 @@ ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
 #     dnf install -y python3-libsemanage ansible-core python3-requests \
 #                    ipa-client sssd oddjob-mkhomedir python3-pip
 
-# run_if_needed "Install pynetbox" \
-#     python3 -c "import pynetbox" \
-#     -- \
+run_if_needed "Install pynetbox" \
+    python3 -c "import pynetbox" \
+    -- \
      pip3 install pynetbox --user
+
+run_if_needed "Install paramiko" \
+    python3 -c "import paramiko" \
+    -- \
+     pip3 install paramiko --user
 
 ###############################################################################
 # 9. Download IPA RPMs for containers
