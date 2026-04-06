@@ -18,10 +18,10 @@
     loop:
       - control
       - vault
-      - central
       - netbox
-      # - wazuh
-
+    # - wazuh
+      - central
+    
 - name: Demo Playbook for the ansible-runner API
   hosts: all:!localhost
   gather_facts: false
