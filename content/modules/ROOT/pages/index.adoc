@@ -1,31 +1,147 @@
-= {lab_name}
+= Zero Trust Architecture Workshop — Overview
+:toc: left
+:toclevels: 2
+:icons: font
+:idprefix:
+:idseparator: -
+:experimental:
 
-Welcome to {lab_name} 
+== Purpose
 
-*Red Hat Ansible Automation Platform* has the ability to automate and extend tools that are currently used in organizations, meaningthat you can integrate technologies that you are already using and have time and skills investments in. Using Ansible Automation Platform as a central automation platform for an organization's ecosystem of tools can automate and extend their ability to complete tasks and meet priorities. Use Ansible Automation Platform as a force multiplier to get more value from tools already in place in the organization!
+This workshop shows a **Zero Trust Architecture** where **Red Hat Ansible Automation Platform (AAP)** is the main **Policy Enforcement Point (PEP)**: operational change (deploy, patch, network, incident response) goes through automation that consults **identity**, **policy**, **secrets**, and **infrastructure state**.
 
-In this lab, we will delve into the use of Ansible Automation Platform with HashiCorp Terraform and HashiCorp Vault. These tools can be used together to automate the entire infrastructure lifecycle, including building to deploying, to managing, and to retiring infrastructure.
+**Open Policy Agent (OPA)** acts as a **Policy Decision Point (PDP)**. **HashiCorp Vault** issues **short-lived** database credentials and **SSH certificates**. **IdM (FreeIPA)** provides directory identity and groups. **NetBox** is the **source of truth** for inventory. **SPIFFE/SPIRE** proves **workload identity** for sensitive jobs. **Splunk** or **Wazuh** plus **Event-Driven Ansible (EDA)** demonstrate **assume breach** response.
 
-image::main.png[link=self, window=blank, width=100%]
+Lab DNS names use the `*.zta.lab` zone; replace with instructor-provided hosts where needed.
 
-Terraform excels at day-zero cloud infrastructure provisioning (IaC), building consistent infrastructure. However, for day-one configuration and application deployment, Ansible Automation Platform is more suitable. While these tools have overlapping capabilities, it’s simpler to view Terraform as more suited for initial provisioning and Ansible for ongoing configuration and orchestration, aligning tools with team responsibilities (e.g., Cloud Ops for build, App Teams for deployment). Seamless transition between day-zero and day-one tasks requires robust inventory synchronization and data exchange between Terraform Enterprise (HCP Terraform (formerly Terraform Cloud) and Ansible Automation Platform.
+== Logical architecture (summary)
 
-Beyond deployment, Ansible Automation Platform manages day-two operational tasks such as health checks, incident response, patching, and optimization. When decommissioning infrastructure, Terraform Enterprise efficiently handles resources it provisioned, but Ansible Automation Platform is crucial for management of related infrastructure or component services not owned by Terraform (e.g., load balancers, security groups). This holistic view across the hybrid cloud infrastructure lifecycle, from provisioning to retirement, necessitates strong integration and communication between Terraform Enterprise and Ansible Automation Platform.
+[subs=+macros]
+----
+                            ┌──────────────────┐
+                            │  AAP Controller   │
+                            │  control.zta.lab  │
+                            │  EDA Controller   │
+                            └────────┬─────────┘
+                                     │
+          ┌──────────┬──────────┬────┼──────────┐
+          │          │          │    │          │
+     ┌────▼───┐ ┌───▼───┐ ┌───▼──┐ │   ┌───────▼──────────────────────────────┐
+     │ Vault  │ │NetBox │ │Gitea │ │   │  Central VM (e.g. 192.168.1.11)       │
+     │vault   │ │netbox │ │gitea │ │   │  IdM, OPA, Keycloak, SPIRE Server    │
+     │.zta.lab│ │.zta   │ │.zta  │ │   │  Containers: Splunk, Wazuh, …       │
+     └────────┘ └───────┘ └──────┘ │   │  Arista cEOS fabric + app/db tiers  │
+          │          │         │   │   └────────────────────────────────────┘
+          └──────────┴─────────┴───┘
+                     192.168.1.0/24 management (lab example)
+----
 
-== Lab structure
+== Machines and components
 
-* You will have access to Ansible Automation Platform, VS Code (and a terminal), Cloud AWS account, HashiCorp Vault Enterprise, and Terraform Enterprise.
+[cols="2,3,2",options="header"]
+|===
+| Component | Role | Typical host / placement
 
-* These will be available as tabs at the top of the lab environment.
+| **AAP Controller**
+| Automation orchestration (PEP); job templates, credentials, inventory
+| `control.zta.lab` (dedicated VM)
 
-* `Helper screen shots` are provided through out the lab to help you complete the tasks
+| **EDA Controller**
+| Event-driven automation; webhooks from SIEM → trigger AAP jobs
+| Same controller VM as AAP in this lab (`control.zta.lab`)
 
-IMPORTANT: A GitHub account is required to complete this lab.
-If you do not have a GitHub account, you can create one for free at https://github.com/signup
+| **IdM (FreeIPA)**
+| Identity, LDAP, Kerberos, CA, DNS
+| `central.zta.lab`
 
-== Lab Access
+| **Open Policy Agent (OPA)**
+| Policy decisions (deny-by-default Rego)
+| `central.zta.lab` (e.g. port 8181)
 
-Each attendee will receive access to their own instance of the lab environment.
-In this lab we will use HashiCorp Terraform Enterprise, however you can acheive the same results using HCP Terraform (formally called Terraform Cloud)
+| **Keycloak**
+| SSO / OIDC (workshop / future integration)
+| `central.zta.lab` (container)
 
-Have fun!
+| **SPIRE Server**
+| Trust root for SPIFFE workload identity
+| `central.zta.lab`
+
+| **SPIRE Agents**
+| Workload attestation, SVID issuance
+| `control`, DB host, Vault VM (per your deployment)
+
+| **HashiCorp Vault**
+| Secrets, dynamic DB creds, SSH CA signing
+| `vault.zta.lab` (dedicated VM in reference design)
+
+| **NetBox**
+| CMDB / source of truth for devices and IPAM
+| `netbox.zta.lab` (dedicated VM)
+
+| **Gitea**
+| Git server for workshop project / GitOps
+| `gitea.zta.lab`
+
+| **Splunk**
+| Log aggregation, saved searches, alerts → EDA
+| `central.zta.lab` (container; UI often `:8000`)
+
+| **Wazuh**
+| Optional SIEM/HIDS path (alternative to Splunk for Section 7)
+| `central.zta.lab` (container)
+
+| **Arista cEOS**
+| Three-switch fabric (spine + leaves), VLANs, ACLs
+| Containers on `central` (published SSH ports to lab)
+
+| **PostgreSQL (app DB)**
+| Database for Global Telemetry Platform
+| RHEL container, data tier e.g. `10.30.0.10`, SSH e.g. `:2022`, PG `:5432`
+
+| **App server (GTP)**
+| Flask “Global Telemetry Platform” dashboard
+| RHEL container, app tier e.g. `10.20.0.10`, SSH e.g. `:2023`, HTTP `:8081`
+|===
+
+== Network planes
+
+Management plane (`192.168.1.0/24`)::
+VMs (central, AAP, Vault, NetBox) attach here. Published ports on **central** reach containerized services (Splunk, Wazuh, app/DB SSH, etc.) from your workstation.
+
+Data plane (Podman networks behind cEOS)::
+* **Data tier** — e.g. `10.30.0.0/24` (`net2`): DB, ceos2 as gateway.  
+* **App tier** — e.g. `10.20.0.0/24` (`net3`): app, ceos3 as gateway.  
+**Switch ACLs** enforce **micro-segmentation** between tiers (lab exercises wire this to policy and Vault).
+
+== Workshop sections (lab guides)
+
+Detailed steps are in AsciiDoc under each section:
+
+* link:section1/lab/index.adoc[Section 1 — AAP integration & verification] (from repo root: `section1/lab/index.adoc`)
+* link:section2/lab/index.adoc[Section 2 — Short-lived credentials & deploy pipeline]
+* link:section3/lab/index.adoc[Section 3 — Policy as Code patching]
+* link:section4/lab/index.adoc[Section 4 — SPIFFE + VLAN management]
+* link:section5/lab/index.adoc[Section 5 — Splunk → EDA → Vault revocation]
+* link:section6/lab/index.adoc[Section 6 — SSH lockdown & break-glass]
+* link:section7/lab/index.adoc[Section 7 — Wazuh path (optional)]
+
+Central index of labs: link:lab/index.adoc[`docs/lab/index.adoc`] (if you place *this* file in `docs/`, adjust links: use `lab/index.adoc` for the hub and `../section1/lab/index.adoc` etc., or keep everything under `docs/` with a flat structure).
+
+== Link fix if this file lives in `docs/`
+
+If you save this as `docs/workshop-overview.adoc`, use these relative links to section labs:
+
+[source,asciidoc]
+----
+* link:../section1/lab/index.adoc[Section 1]
+* link:../section2/lab/index.adoc[Section 2]
+// … etc.
+----
+
+If you save as repo root `index.adoc`, the `link:section1/...` form above is correct.
+
+== Reference docs
+
+* Narrative + tables: `docs/exercise-guide.md`
+* Setup playbooks: `setup/` and root `README.md`
+* Shared URLs / accounts summary: `docs/lab/common-environment.adoc` (include it with `include::lab/common-environment.adoc[]` if you colocate files under `docs/lab/`)
