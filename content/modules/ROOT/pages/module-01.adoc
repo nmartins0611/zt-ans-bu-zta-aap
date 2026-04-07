@@ -6,7 +6,7 @@
 :idprefix:
 :idseparator: -
 
-This lab mirrors `section1/README.md` in AsciiDoc. Use it for student handouts or PDF/HTML builds.
+This lab mirrors `section1/README.md` in AsciiDoc. Use it for student handouts or PDF/HTML builds. UI steps use the **automation controller** in **Ansible Automation Platform 2.6** (see shared platform note below).
 
 include::../../docs/lab/common-environment.adoc[]
 
@@ -63,7 +63,7 @@ vault kv get secret/db/admin
 
 === Step 2 — Create `ZTA Vault Credential` (bootstrap)
 
-Resources → Credentials → Add:
+In the **automation controller**, open **Credentials** (under *Access* or *Automation Execution*, depending on your role) → **Add**:
 
 [cols="2,3",options="header"]
 |===
@@ -106,7 +106,7 @@ Each job run **re-fetches** credentials from Vault. That aligns with **just-in-t
 
 Type **NetBox** (created by setup if present). URL `http://netbox.zta.lab:8880` and API token as deployed.
 
-If the credential type is missing, create it under Administration → Credential Types per `section1/README.md` (Input/Injector YAML).
+If the credential type is missing, create it under **Credential Types** (platform administration) per `section1/README.md` (Input/Injector YAML).
 
 === Step 6 — `ZTA Vault SSH Credential`
 
@@ -145,7 +145,7 @@ vault read ssh/roles/ssh-signer
 
 === Project (Gitea)
 
-Resources → Projects → Add:
+**Projects** → **Add**:
 
 * Name: `ZTA Workshop`
 * Git URL: `http://gitea.zta.lab:3000/zta-workshop/zta-app.git`
@@ -154,8 +154,8 @@ Resources → Projects → Add:
 
 === Inventory (NetBox)
 
-. Create inventory `ZTA Lab Inventory`.
-. Sources → Add:
+. **Inventories** → create `ZTA Lab Inventory`.
+. Open the inventory → **Sources** → **Add**:
 
 |===
 | Name | NetBox CMDB
