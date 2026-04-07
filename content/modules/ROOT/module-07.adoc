@@ -1,0 +1,84 @@
+= Section 7 (optional) — Wazuh SIEM incident response
+:toc: left
+:toclevels: 3
+:icons: font
+:idprefix:
+:idseparator: -
+
+Optional track parallel to Section 5 using **Wazuh** + EDA. Companion to `section7/README.md`.
+
+include::../../docs/lab/common-environment.adoc[]
+
+== When to use
+
+Compare agent-side detection (Wazuh) vs central log analytics (Splunk). Requires Wazuh manager/agents + `setup/configure-wazuh-eda.yml` as deployed.
+
+[IMPORTANT]
+.Same Zero Trust response, different sensor
+====
+Section 5 used **centralised search** over forwarded logs; Wazuh uses **agents** that evaluate events locally (rules 5712, etc.). The **actuator** is still **EDA → AAP → Vault**—your **containment philosophy** (revoke creds, stop app dependence on DB) stays the same. Choosing Splunk vs Wazuh is often an **architecture and operations** trade-off, not a different trust model.
+====
+
+== Exercise 7.1 — Job templates
+
+[cols="2,3",options="header"]
+|===
+| Template | Playbook
+| Emergency: Revoke App Credentials | `section5/playbooks/revoke-app-credentials.yml`
+| Simulate Brute Force (Wazuh) | `section7/playbooks/simulate-bruteforce-wazuh.yml`
+| Restore App Credentials | `section5/playbooks/restore-app-credentials.yml`
+|===
+
+[TIP]
+.Reuse containment playbooks
+====
+Revoke/restore stay in **Section 5 playbooks** on purpose: **incident response** is standardised; only the **triggering telemetry** changes. This reduces duplicated security logic and audit surface.
+====
+
+== Exercise 7.2 — EDA rulebook
+
+Import `section7/eda/wazuh-credential-revoke.yml`; activation / `ansible-rulebook` example in README.
+
+[TIP]
+.Normalise events at the edge
+====
+Wazuh’s JSON/webhook to EDA should map to the **same decision** Splunk would have made for “brute force detected.” Consistent **event contracts** between SIEM and automation are a ZTA integration best practice.
+====
+
+== Exercise 7.3 — Health baseline
+
+`curl` app health; PostgreSQL Vault user present.
+
+== Exercise 7.4 — Simulate brute force
+
+`ansible-playbook section7/playbooks/simulate-bruteforce-wazuh.yml`
+
+[TIP]
+.Host visibility
+====
+Agents see **local auth logs immediately**, which can reduce detection latency vs batch shipping to a central indexer—useful when **time-to-contain** is measured in seconds.
+====
+
+== Exercise 7.5 — Observe response
+
+Wazuh dashboard: rule **5712** and related; EDA event; AAP revoke job; app unhealthy; DB role gone.
+
+[TIP]
+.Correlate the full chain
+====
+Confirm **rule fired → webhook delivered → EDA activation → AAP job** in order. Gaps in that chain are where attackers dwell—**observability** of the automation path is as important as the initial IDS alert.
+====
+
+== Exercise 7.6 — Restore
+
+**Restore App Credentials** template.
+
+== Validation checklist
+
+* [ ] Wazuh + agents + integration healthy
+* [ ] EDA listens; rulebook triggers revoke
+* [ ] Restore succeeds
+
+== Extended exercises
+
+include::includes/exercise-7-7-wazuh-tuning.adoc[]
