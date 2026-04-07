@@ -1,0 +1,116 @@
+= Section 6 — SSH lockdown and break-glass recovery
+:toc: left
+:toclevels: 3
+:icons: font
+:idprefix:
+:idseparator: -
+
+Companion to `section6/README.md`. defence-in-depth SSH controls and recovery when automation is locked out.
+
+include::../../docs/lab/common-environment.adoc[]
+
+[IMPORTANT]
+.Why this section exists
+====
+As you tighten Zero Trust, **you will break things**—often automation first. This section shows **layered SSH controls** (network, IdM HBAC, Vault policies, monitoring) and a **tested break-glass path**. Mature ZTA programs never deploy “lockdown Friday” without **recovery drills**: the break-glass procedure is part of the security design, not an embarrassment.
+====
+
+== Prerequisites
+
+Sections 1–5 complete; console/OOB available; lockdown playbooks not yet applied (unless repeating).
+
+== Exercise 6.1 — Firewall lockdown (layer 1)
+
+[source,bash]
+----
+ansible-playbook -i inventory/hosts.ini setup/ssh_lockdown/lockdown-firewall.yml
+----
+
+From workstation: SSH to app should fail; from `control`, SSH to app should succeed (trusted source IPs).
+
+[TIP]
+.Network as first gate
+====
+**Source IP allowlists** are coarse but effective against random Internet noise. They pair with **identity** layers: passing the firewall still leaves **HBAC**, **Vault**, and **keys** to satisfy—classic **defence in depth**.
+====
+
+== Exercise 6.2 — IdM HBAC (layer 2)
+
+[source,bash]
+----
+ansible-playbook -i inventory/hosts.ini setup/ssh_lockdown/lockdown-idm-hbac.yml
+----
+
+Use `ipa hbactest` for `neteng` vs `aap-service` vs break-glass users as in README.
+
+[TIP]
+.Identity-aware admission
+====
+HBAC answers “**may this principal use SSH on this host?**” independently of sudo or app roles. For ZTA, it is another **PDP-backed** (IdM) gate—**deny by default** unless a rule explicitly matches `aap-service`, break-glass, or other controlled identities.
+====
+
+== Exercise 6.3 — Simulated lockout
+
+*Instructor:* `ansible-playbook section6/playbooks/break-hbac.yml`
+
+AAP jobs fail SSH (HBAC no longer allows `aap-service`).
+
+[TIP]
+.Automation identity is special
+====
+`aap-service` represents **machine-driven administration**. Locking it out simulates a dangerous misconfiguration: **the organisation loses managed change** while humans might still have console—exactly when **runbooks** and **break-glass** matter.
+====
+
+== Exercise 6.4 — Break-glass recovery
+
+From central as break-glass admin: `kinit admin`, diagnose `ipa hbactest`, repair `allow_aap_automation` membership for `aap-service`, verify, re-run AAP job.
+
+[TIP]
+.Controlled emergency access
+====
+Break-glass is **logged**, **limited**, and (in mature environments) **time-bound**. The goal is not “never break locks”—it is **never be unable to recover** without flying someone to a data centre. ZTA still needs **human authority** for catastrophic misconfigurations.
+====
+
+== Exercise 6.5 — Vault policy lockdown (layer 3)
+
+[source,bash]
+----
+ansible-playbook -i inventory/hosts.ini setup/ssh_lockdown/lockdown-vault-policies.yml
+----
+
+Human `admin` cannot sign SSH certs; read-only KV still works as documented.
+
+[TIP]
+.Separate human convenience from machine power
+====
+After lockdown, **humans troubleshoot** with read-only Vault access while **only AAP’s AppRole** can mint SSH certificates or sensitive creds. That is **least privilege for administrators**: fewer standing paths for attackers who phish an ops account.
+====
+
+== Exercise 6.6 — Splunk bypass detection (layer 4)
+
+[source,bash]
+----
+ansible-playbook -i inventory/hosts.ini setup/ssh_lockdown/lockdown-splunk-bypass.yml
+----
+
+Validate saved searches / webhooks to EDA for bypass patterns.
+
+[TIP]
+.Detect the bypass, not only the success
+====
+Attackers often **probe** boundaries (failed HBAC, odd SSH sources). Forwarding those patterns to EDA lets you **automate containment or ticketing** even when login ultimately fails—**continuous monitoring** of *attempts*, not only breaches.
+====
+
+== Exercise 6.7 — Full chain check
+
+Confirm only expected paths work: workstation blocked, unauthorised IdM user blocked, human cannot mint SSH certs, AAP job path succeeds.
+
+[TIP]
+.Desired end state
+====
+The only **supported** path to routine change should be **AAP** with **Vault-signed** access and **policy** gates—humans use break-glass rarely. That is the ZTA operational ideal: **centralised, attestable administration** instead of thousands of ad hoc SSH sessions.
+====
+
+== Validation checklist
+
+See `section6/README.md` checklist (layers 1–4, break scenario, recovery, Vault, Splunk).
