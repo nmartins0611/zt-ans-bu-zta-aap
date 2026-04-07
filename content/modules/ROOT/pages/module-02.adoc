@@ -1,480 +1,121 @@
-:doctype: book
+= Section 2 — Deploy application with short-lived credentials
+:toc: left
+:toclevels: 3
+:icons: font
+:idprefix:
+:idseparator: -
 
-= Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 1
+Asciidoc companion to `section2/README.md`.
 
-In this challenge you will learn how to trigger infrastructure provisioning and automation from Terraform Enterprise.
+include::../../docs/lab/common-environment.adoc[]
 
-The follwoing diagram shows the overall scenario that we will be covering in this, and the following lab sections. Let's work through to completion of this scenario.
+== Overview
 
-image::module2-3scenario.png[link=self, window=blank, width=100%]
+Deploy the **Global Telemetry Platform** using Vault dynamic database credentials. Experience OPA **deny** for the wrong user, then **allow** for `app-deployers`. Observe micro-segmentation (Arista) and credential TTL.
 
-There are a number of prerequisites that you will need to complete before you can start this lab.
+[IMPORTANT]
+.Why this section exists
+====
+Deploying an app is where **identity (who)**, **policy (may they)**, **secrets (with what credential)**, and **network (on which path)** meet. In Zero Trust you **do not** hand every engineer a long-lived DB password or open the database to the whole VLAN. This pipeline shows **policy before secrets** and **least-privilege network paths** aligned with short-lived credentials—so compromise of one layer does not instantly mean full data access.
+====
 
-* Vault Enterprise
-* Terraform Enterprise
-** Cloning a GitHub repository to your account
-** Create a Terraform Enterprise Workspace that used Version Control System (VCS) to store the Terraform code
-
-Part 1 of this lab module will focus on configuring the Vault Enterprise Secret Engine.
-
-[#task1]
-== Configure the Vault Enterprise Secret Engine
-
-Open the Vault Enterprise UI in your browser, the tab name is `HashiCorp Vault`.
-In the `Method` dropdown, select `Userpass`.
-Enter the following details to login to the Vault Enterprise UI.
-
-* `User:  admin`
-* `Password:  ansible123!`
-* Click on the `Sign In` button.
-
-image::vaultlogin.png[link=self, window=blank, width=100%]
-
-* Click on the `Vault` menu option in the left menu.
-* Click on the `Secrets Engines` menu option.
-* Click on the `+ Enable new engine` button.
-
-image::vaultengine1.png[link=self, window=blank, width=100%]
-
-* Select the `KV` secrets engine from the `Generic` section.
-
-image::vaultkv.png[link=self, window=blank, width=100%]
-
-Enter the following details:
-
+.Core vs extended
+[cols="2,1,1",options="header"]
 |===
-| Field | Value
-
-| Path
-| secret
-
-| Version
-| 2
+| Exercise | Track | Est.
+| 2.1–2.6 | Core | ~30 min (2-hour path)
+| 2.7–2.8 | Extended | optional
+| 2.9–2.11 | Extended | break/fix labs
 |===
 
-* Expand the `Method Options` section to see the available options.
-* Scroll down and in the `Version` dropdown, select `2`. (This is the latest version of the KV secrets engine.) Must be 2.
-* Scroll down and click on the `Enable Engine` button.
+== Exercise 2.1 — Create job templates
 
-image::vaultengine2.png[link=self, window=blank, width=100%]
+Inventory: **ZTA Lab Inventory**. Credential: **ZTA Machine Credential**.
 
-=== Create a new secret for your AWS keys in this secret engine
-
-* Select the `Create secret +` option on the right
-* In the `Path for this secret` field, enter `aws_creds`
-* In the `Secret data` section, enter the following details:
-
-* Get the AWS Access Key ID and AWS Secret Access Key from the `Cloud(AWS)` tab in your lab.
+[cols="2,2,2",options="header"]
 |===
-| Field | Value
-
-| access_key
-| <Your AWS Access Key ID>
-
-| secret_key
-| <Your AWS Secret Access Key>
+| Template | Playbook | Extra credentials
+| Check DB Access Policy | `section2/playbooks/check-db-policy.yml` | —
+| Create DB Credential | `section2/playbooks/create-db-credential.yml` | —
+| Configure DB Access List | `section2/playbooks/configure-db-access.yml` | ZTA Arista Credential
+| Deploy Application | `section2/playbooks/deploy-application.yml` | —
+| Rotate DB Credentials | `section2/playbooks/rotate-credentials.yml` | —
 |===
 
-* Click on the `Save` button.
-
-image::vaultawscreds.png[link=self, window=blank, width=100%]
-
-You have now created a new secret for your AWS keys in the Vault secret engine. You can now use these keys to authenticate against the AWS cloud account.
-
-=== Validate that you can read the secret from the Vault secret engine
-
-Let's validate that you can **read the secret from the Vault secret engine by using the Vault CLI**.
-
-* Open the `TERMINAL` tab from your lab
-* You will be at the `vscode` terminal prompt
-* SSH to the `vault` server by typing `ssh rhel@vault`, type `yes` when prompted
-
-[source,bash,role=execute]
-----
-ssh rhel@vault
-----
-
-* Type `yes` when prompted to continue
-* Enter the password `ansible123!` when prompted
-* Run the following commands to login to the Vault CLI:
-
-[source,bash,role=execute]
-----
-export VAULT_ADDR=http://127.0.0.1:8200
-----
+[TIP]
+.Separation of concerns in templates
+====
+Each step has a single job: **decide** (OPA), **issue** (Vault), **enforce path** (Arista), **configure app**. That mirrors ZTA’s idea that **no single giant playbook** should skip gates—each stage can fail closed, be audited, and be replaced without collapsing the whole story.
+====
 
-[source,bash,role=execute]
-----
-vault login -address=http://127.0.0.1:8200 -method=userpass username=admin password=ansible123!
-----
+== Exercise 2.2 — Workflow
 
-* You are now logged in to the Vault CLI.
-* Run either of the following commands to read the secret from the Vault secret engine:
+Create workflow **Deploy Application Pipeline**:
 
-[source,bash,role=execute]
-----
-vault kv get secret/aws_creds
-----
+....
+Check DB Access Policy ──(success)──► Create DB Credential ──► Configure DB Access List ──► Deploy Application
+        │
+     (failure) → Access Denied
+....
 
-OR (alternate way to read the secret)
+[TIP]
+.Order of operations = trust boundaries
+====
+**Check DB Access Policy runs first** on purpose: if the human (via AAP) is not entitled to database credentials, the workflow **never touches Vault**. That is *defence in depth*—the secret manager is not a substitute for authorisation. In breach terms, an attacker who tricks someone into clicking “deploy” still hits a **PDP (OPA)** before any **secret issuance**.
+====
 
-[source,bash,role=execute]
-----
-vault kv get -mount=secret aws_creds
-----
+== Exercise 2.3 — Wrong user (denied)
 
-image::vaultawscreds2.png[link=self, window=blank, width=100%]
+. Log into AAP as `neteng` (not in `app-deployers`).
+. Launch the workflow.
+. Expect first step to show OPA **DENIED**; workflow stops; Vault not contacted.
 
-You should see the AWS Access Key ID and AWS Secret Access Key in the output.
+[TIP]
+.What the learner should feel here
+====
+The unauthorised user **never sees** a database password. Zero Trust is not only about encryption—it is about **shrinking who can cause sensitive actions**. Deny-by-default policy turns “I have network reachability” into “I still cannot obtain credentials.”
+====
 
-=== Create an Application Role in Vault Enterprise (AppRole)
+== Exercise 2.4 — Policy
 
-In this task we will create an Application Role in Vault Enterprise (AppRole) for both Terraform Enterprise and Ansible Automation Platform so that they can authenticate against the Vault secret engine to read and write secrets.
+`zta.db_access` requires `app-deployers`, valid DB (`ztaapp`), and bounded permissions.
 
-Before creating the Application Role, we need to create a `Policy` in Vault Enterprise.
+*Fix:* log in as `appdev`, or run `ipa group-add-member app-deployers --users=neteng` on central.
 
-NOTE: **For simplicity**, In this lab we will create a single policy for both Terraform Enterprise and Ansible Automation Platform. In a production environment, you would create a separate policy for each system.
+[TIP]
+.Identity-driven access
+====
+**IdM groups** are attributes the PDP understands. Changing group membership is how the organisation **grants or revokes** deployment authority without editing playbooks. That is **policy + identity lifecycle** working together—important when people change roles or leave.
+====
 
-* Back in the Vault Enterprise UI, click on the `Policies` menu option in the left menu.
-* Click on the `ACL Policies` menu option in the left menu.
-* Click on the `Create ACL policy +` button on the right.
-* For the `Name` field, enter `aap-terraform-policy`
-* Enter the following into the `Policy` body:
+== Exercise 2.5 — Correct user (allowed)
 
-[source,hcl,role=execute]
-----
-### Read AWS credentials
-path "secret/data/aws_creds" {
-  capabilities = ["read"]
-}
-### Write SSH keys - TFE to write, and AAP to read SSH keys
-path "secret/data/*/ssh-keys/*" {
-  capabilities = ["create", "read", "update", "delete"]
-}
-path "secret/data/rhel-server/ssh-keys/*" {
-  capabilities = ["create", "read", "update", "delete"]
-}
-# Allow creating child tokens
-path "auth/token/create" {
-  capabilities = ["create", "update"]
-}
-path "auth/token/renew-self" {
-  capabilities = ["update"]
-}
-path "auth/token/lookup-self" {
-  capabilities = ["read"]
-}
-#
-### TFE and AAP can see, list, and read metadata
-path "secret/metadata/*" {
-  capabilities = ["list", "read"]
-}
-# Allow TFE and AAP to write instance metadata
-path "secret/data/*/metadata" {
-  capabilities = ["create", "read", "update", "delete"]
-}
-----
+As `appdev`, launch the workflow. Expect OPA allow, Vault dynamic user, ACL update, app healthy at `http://app.zta.lab:8081`.
 
-* Click on the `Create policy` button.
+[TIP]
+.Micro-segmentation after authorisation
+====
+Even with valid DB credentials, **network policy** still limits *where* connections may originate. The Arista step models **segmentation** that is common in ZTA: secrets prove *who the app is*, ACLs constrain *which paths are valid*. An attacker with stolen creds from a random laptop should still fail if the fabric only permits the app tier IP.
+====
 
-image::terraformpolicy.png[link=self, window=blank, width=100%]
+== Exercise 2.6 — Credential expiry
 
-You have now created a new policy in Vault Enterprise.
+After deploy, confirm Vault user in PostgreSQL; wait TTL (e.g. 5 minutes); user disappears; `curl http://app.zta.lab:8081/health` reflects loss of DB access until rotation/restore.
 
-Now let's enable the `AppRole authentication method` in Vault Enterprise UI. The AppRole authentication method in HashiCorp Vault is for machines, services, and automated applications to securely authenticate with Vault
+[TIP]
+.Ephemeral credentials change operations
+====
+TTL expiry is a feature, not a bug: it forces **rotation**, **re-authorisation**, or **deliberate renewal** instead of silent, multi-year database passwords. In ZTA, **standing access** to data is the exception and must be justified; here the app must be **re-fed** credentials on a schedule or on demand—exactly what `Rotate DB Credentials` (extended) practices.
+====
 
-* Return to the main menu by clicking on the `Back to main navigation` menu option in the top left.
-* Select the `Access` menu option in the left menu.
-* Click on the `Authentication Methods` menu option in the left menu.
-* Click on the `+ Enable new method +` button on the right.
-* Click on the `AppRole` tile.
+== Validation checklist
 
-image::approle1.png[link=self, window=blank, width=100%]
+* [ ] `neteng` denied at policy step
+* [ ] `appdev` full success
+* [ ] Unique Vault DB user per run
+* [ ] App reachable at :8081
+* [ ] TTL removes user; app unhealthy without fresh creds
 
-* In the `Path` field, keep it at the default of `approle`
-* Click on `Enable method` to enable the AppRole authentication method
+== Extended exercises
 
-image::approle2.png[link=self, window=blank, width=100%]
-
-NOTE: The Vault UI only supports the configuration of the AppRole authentication method. You will need to use the Vault CLI to create the Application Role, and perform additional configuration steps.
-
-image::approle3.png[link=self, window=blank, width=100%]
-
-* Open the `TERMINAL` tab from your lab
-* You will be at the `vscode` terminal prompt
-* SSH to the `vault` server by typing `ssh rhel@vault`, type `yes` when prompted
-
-[source,bash,role=execute]
-----
-ssh rhel@vault
-----
-
-* Type `yes` when prompted to continue
-* Enter the password `ansible123!` when prompted
-
-* Run the following command to login to the Vault CLI (**if you are not already logged in**):
-
-[source,bash,role=execute]
-----
-export VAULT_ADDR=http://127.0.0.1:8200
-----
-
-[source,bash,role=execute]
-----
-vault login -address=http://127.0.0.1:8200 -method=userpass username=admin password=ansible123!
-----
-
-* Run the following command to create  a role named `aapterraform` within the AppRole authentication method in Vault Enterprise. It explicitly assigns the `aap-terraform-policy` to any tokens generated by this role. This is a standard step for any AppRole in Vault Enterprise.
-
-
-[source,bash,role=execute]
-----
-vault write auth/approle/role/aapterraform token_policies=aap-terraform-policy
-----
-
-* You should see the following output: `Success! Data written to: auth/approle/role/aapterraform`
-* Now get the `Role ID` and `Secret ID` for the AppRole:
-
-Run the following command to get the `Role ID`:
-[source,bash,role=execute]
-----
-vault read auth/approle/role/aapterraform/role-id
-----
-
-Then run the following command to get the `Secret ID`:
-[source,bash,role=execute]
-----
-vault write -f auth/approle/role/aapterraform/secret-id
-----
-
-
-* **Copy the Role ID and Secret ID to your clipboard. You will need these momentarily**
-
-==== **Test the AppRole authentication method**
-
-Let's test the AppRole authentication method by using the Vault CLI. (using the `role_id` and `secret_id` you copied a moment ago)
-
-[source,bash,role=execute]
-----
-vault write auth/approle/login \
-    role_id=<aapterraform-role-id> \
-    secret_id=<aapterraform-secret-id>
-----
-
-If you see key / value pairs in the output, you have successfully authenticated against the Vault secret engine using the AppRole authentication method! Great Job!
-
-image::approle4.png[link=self, window=blank, width=100%]
-
-You have now created an Application Role (AppRole) in Vault Enterprise. Ansible Automation Platform and Terraform Enterprise can now authenticate securely against the Vault secret engine.
-
-[#task2]
-== Configure Ansible Automation Platform to use the AppRole authentication method
-
-In this task we will configure Ansible Automation Platform to use the AppRole authentication method to securely authenticate against the Vault secret engine.
-
-=== Create a new credential in Ansible Automation Platform to use the AppRole authentication method
-
-Create a new credential in Ansible Automation Platform to use the AppRole authentication method. This will be named `Vault lookup credential`
-
-* Open the `Ansible Automation Platform` tab in your lab
-* Click on the `Automation Execution` menu option in the left menu.
-* Click on the `Infrastructure` menu option in the left menu.
-* Click on the `Credentials` menu option in the left menu.
-* Click on the `+ Create credential` button on the right.
-* Fill in the following details from the table below:
-
-|===
-| Field | Value
-
-| Name
-| Vault lookup credential
-
-| Credential Type
-| HashiCorp Vault Secret Lookup
-
-| Server URL
-| https://vault-{guid}.{domain} +
-**YOUR VAULT hostname url will look like:** https://vault-guid#-1.apps.ocpvdev01.rhdp.net
-
-| AppRole role_id
-| <generated role id>
-
-| AppRole secret_id
-| <generated secret id>
-
-| Path to Auth
-| approle
-
-| API Version
-| v2
-|===
-
-image::aapvaultlookupcred1.png[link=self, window=blank, width=100%]
-
-image::aapvaultlookupcred2.png[link=self, window=blank, width=100%]
-
-* Click on the `Create credential` button.
-
-**Once you have saved the credential, go back into it to change to EDIT the credential**, and select `Test` to validate this. **We know we created the AWS credentials in the Vault secret engine earlier, so this test should pass.**
-
-* Enter the following details into the `Test external credential` dialog box:
-
-|===
-| Field | Value
-
-| Name of Secret Backend
-| secret
-
-| Path to Secret
-| aws_creds
-
-| Path to Auth
-| approle
-
-| Key Name
-| access_key
-|===
-
-image::aapvaultlookupcred3.png[link=self, window=blank, width=100%]
-
-* Click on the `Run` button to test credential lookup. You should see a success message in the output.
-
-image::aapvaultlookupcred4.png[link=self, window=blank, width=100%]
-
-You have now configured Ansible Automation Platform to use the AppRole authentication method to authenticate against the Vault secret engine.
-
-=== Create ANOTHER credential in Ansible Automation Platform
-
-*This will be a machine credential to SSH to the inventory RHEL hosts, and it will use the Vault lookup credential we created earlier to read the SSH private key.*
-
-* Click on the `Automation Execution` menu option in the left menu.
-* Click on the `Infrastructure` menu option in the left menu.
-* Click on the `Credentials` menu option in the left menu.
-* Click on the `+ Create credential` button on the right.
-* For the `Name` field, enter `Vault MACHINE SSH credential`
-* For the `Credential Type` field, select `Machine`
-* For the `Username` field, enter `ec2-user`
-* Click on the `KEY` icon to the right of the `SSH Private Key` field
-
-|===
-| Field | Value
-
-| Name
-| Vault MACHINE SSH credential
-
-| Credential Type
-| Machine
-
-| Username
-| ec2-user
-
-| **SSH Private Key**
-| **Click on the `KEY` icon to the right of the `SSH Private Key` field**
-|===
-
-image::aapvaultsshcred1.png[link=self, window=blank, width=100%]
-
-
-* On the `Secret Management System` dialog box, fill in the following details:
-** For the `Credential` field, select `Vault lookup credential` from the dropdown
-** For the `Name of Secret Backend` field, enter the `secret`
-** For the `Path to Secret` field, enter `rhel-server/ssh-keys/latest`
-** For the `Path to Auth` field, enter `approle`
-** For the `Key Name` field, enter `private_key`
-** Click on the `Finish` to save this dialog box
-
-|===
-| Field | Value
-
-| Credential
-| Vault lookup credential
-
-| Name of Secret Backend
-| secret
-
-| Path to Secret
-| rhel-server/ssh-keys/latest
-
-| Path to Auth
-| approle
-
-| Key Name
-| private_key
-|===
-
-image::aapvaultsshcred2.png[link=self, window=blank, width=100%]
-
-* Click on the `Create credential` button. You will see a summary of the credential you just created
-
-NOTE: Don't worry about testing this credential yet, as it will error out until there are some SSH private_keys in the Vault secret engine.
-
-[#task3]
-== Create the Job Template and Workflow template that will be triggered by Terraform Enterprise
-
-In this task we will create a Job Template and Workflow template that will be triggered by Terraform Enterprise.
-
-=== Duplicate the **"Install Nginx on RHEL"** job template
-
-Click on the `Ansible Automation Platform` tab at the top of lab. (if not already) Expand the `Automation Execution` menu on the left. `Automation Execution` -> `Templates`.
-
-* Now click on `Elipsis` at the end of the `Install Nginx on RHEL` job template and select `Duplicate template`.
-* Edit this duplicated Job Template and make 2 small changes
-** Change the `Name` field to `Install Nginx on RHEL - TFE-VCS`
-** Change the `Credentials` field:
-*** REMOVE the existing SSH Credential
-*** ADD the `Vault MACHINE SSH credential` we created earlier
-
-|===
-| Field | Value
-
-| Name
-| **Install Nginx on RHEL - TFE-VCS**
-
-| Credential
-| **Vault MACHINE SSH credential**
-|===
-
-* Click on the `Save job template` button to save the job template
-
-image::updatedjt.png[link=self, window=blank, width=100%]
-
-=== Create a new `Worflow Job Template`
-
-* Click on the `+ Create workflow job template` button
-* Fill out the following fields:
-|===
-| Field | Value
-
-| Name
-| **WF-Launched by TFE**    (Please use that name exactly)
-
-| Organization
-| **Default**
-
-| **Inventory**
-| Ckeck the **Prompt on launch** checkbox
-|===
-
-* Click on the `Create workflow job template` button to save the workflow job template
-
-image::newwjt.png[link=self, window=blank, width=100%]
-
-NOTE: `Prompt on launch` is needed because Terraform Enterprise cannot supply or override Ansible job template variables unless Ansible Automation Platform explicitly allows it. Without `Prompt on launch`, Ansible Automation Platform treats the job template as fully static, and external systems (like Terraform Enterprise) are blocked from injecting runtime values.
-
-=== Create the nodes for the "WF-Launched by TFE" workflow template
-
-* Select `+ Add step` and then
-* For this next step Change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`.
-* Select `Next` then `Finish` to save this node. This will synchronize the inventory source you created earlier.
-
-
-* Click on the vertical ellipsis `...` at the end of the node you just created, and then select `+ Add step and link`.
-* For this next step 
-** Keep the `Node Type` to `Job Template` and select the `**Install Nginx on RHEL - TFE-VCS**` job template. 
-** Change the `Status` to `Run on Success`.
-* Select `Next` then `Finish` to save this step. This will install Nginx on the RHEL hosts.
-* Click on the `Save` button to save the workflow template.
-
-image::newwjt2.png[link=self, window=blank, width=100%]
-
-In the next lab section we perform the GitHub requirements so that we can trigger the infrastructure provisioning and automation from Terraform Enterprise.
+include::includes/extended-exercises.adoc[]
