@@ -458,6 +458,7 @@ virtualmachines:
         targetPort: 8000
         tls: true
         tls_termination: Edge
+        tls_insecureEdgeTerminationPolicy: Redirect
       - name: opa-http
         host: opa-http
         service: opa-http
