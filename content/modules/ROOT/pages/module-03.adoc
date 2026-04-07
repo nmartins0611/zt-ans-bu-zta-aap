@@ -1,307 +1,118 @@
-:doctype: book
+= Section 3 — AAP Policy as Code: platform-gated patching
+:toc: left
+:toclevels: 3
+:icons: font
+:idprefix:
+:idseparator: -
 
-= Trigger Infrastructure Provisioning and automation from Terraform Enterprise - Part 2
+Companion to `section3/README.md`. Demonstrates **AAP → OPA gateway** blocking launches before playbooks run.
 
-In this part we will continue the prerequisites and put the final touches on the Terraform Enterprise Workspace.
+include::../../docs/lab/common-environment.adoc[]
 
-The following diagram shows the overall scenario that we started in the previous lab section.
+== Overview
 
-image::module2-3scenario.png[link=self, window=blank, width=100%]
+Template name contains **Patch** → `aap.gateway` requires `patch-admins`. Wrong users never start the playbook.
 
-Let's work through to completion of this scenario.
-
-NOTE:  You MUST have a github account to complete this lab. Having said that if you want to use a GitLAB account, you can do so by creating a new GitLAB account and using that instead of a GitHub account. The instructions will be nearly identical. The only difference are the values from TFE did not auto fill in gitlab when creating the OAuth application, so you have to copy and paste those values manually.
-
-* Terraform Enterprise
-** Import a GitHub repository to your account
-** Create a Terraform Enterprise Workspace that uses Version Control System (VCS, in this case GitHub) to store the Terraform code
-** Trigger Terraform infrastructure provisioning and automation by committing changes to the Terraform code in the GitHub repository.
-
-In this challenge you will learn how to bring in HashiCorp Vault Enterprise to your automation pipeline.
-
-[#task1]
-== Import the GitHub repository to your account
-
-NOTE: To create your own UNLINKED GitHub repository, Use the GitHub.com UI to `IMPORT REPOSITORY` from an existing repository.
-
-The following repository contains the Terraform code for the infrastructure you will be provisioning.
-
-* https://github.com/ansible-tmm/aap-hashi-lab-2.git  # This is the repository you will be importing to your account
-* While logged in to Github.com with your acccount, the top right corner click on the `+` icon, and select `Import repository`
-
-image::importrepo.png[link=self, window=blank, width=100%]
-
-* In the `Repository URL` field, enter the URL of the repository you want to import, in this case: https://github.com/ansible-tmm/aap-hashi-lab-2.git
-* Scroll down and enter an `Owner` and `Repository name` for your new repository, in this case: `YOUR GITHUB USERNAME` and `aap-hashi-lab-2` (or another name if you prefer)
-* Keep it at `Public` repository type.
-* Click on the `Begin import` button to import the repository to your account.
-* The repository will be ready in a minute or two.
-
-image::importrepo1.png[link=self, window=blank, width=100%]
-
-Later in this lab, you will be committing changes to the Terraform code in the GitHub repository, which in turn will trigger the Terraform infrastructure provisioning and automation, and will retrieve secrets from Vault Enterprise.
-
-[#task2]
-== Set up the Terraform Enterprise Workspace
-
-We now want to create a new Terraform Enterprise Workspace that uses `*Version Control System (VCS)*` to store the Terraform code. By doing this, you will be able to trigger the Terraform infrastructure provisioning and Ansible automation by committing changes to the Terraform code in the GitHub repository that you imported earlier.
-
-Back in the Terraform Enterprise UI, click on the `Workspaces` menu option in the left menu.
-
-* Click on the `New` button on the right, and select `Workspace` from the dropdown.
-* Enter the following details:
-* For the `Project` field, select `rhdp-initial-project` from the dropdown, and select `Create`
-
-image::workspace1.png[link=self, window=blank, width=100%]
-
-* On the next screen choose `Version Control Workflow` for the Workspace type
-
-image::workspace1-1.png[link=self, window=blank, width=100%]
-
-image::workspace2.png[link=self, window=blank, width=100%]
-
-Now you will need to configure the Workspace to use the GitHub repository you cloned earlier into your GitHub account.
-
-* Select the `GitHub` option from the dropdown, and then click on the `GitHub.com` button.
-* You will now be launced to step 2 (`Set up provider`), which is to setup the GitHub repository connection
-* Click the `Register a new OAuth Application` link to register a new OAuth application with GitHub.
-
-image::workspace3.png[link=self, window=blank, width=100%]
-
-* Authenticate to `your GitHub account`, and authorize the Terraform Enterprise OAuth application to access your GitHub account.
-* **It will have automatically populated some of the fields for you as they relate to Terraform Enterprise**
-* Scroll down and click on the `Register application` button
-
-image::workspace4.png[link=self, window=blank, width=100%]
-
-* The application will now be registered, and you will need to click the `Generate a new client secret` button to generate a new client secret. 
-* You will be prompted to login to your GitHub account, please do so.
-* Copy both the `Client ID` and `Client Secret`, you will need these momentarily.
-* Scroll down and click on `Update application` button to save the application configuration
-
-image::workspace5.png[link=self, window=blank, width=100%]
-
-BACK in the `Terraform Enterprise UI`, please do the following:
-
-* For the `Name` field, enter your initials, followed by dash and github, example: `jdoe-github`
-* Paste the `Client ID` to the Client ID field.
-* Paset the `Client Secret` to the Client Secret field.
-* Click on the `Connect and Continue` button to save the VCS provider configuration
-
-image::workspace6.png[link=self, window=blank, width=100%]
-
-* You will be redirected to GitHub.com to authorize the Terraform Enterprise application to access your GitHub account, please `authenticate and authorize`.
-* Scroll to the bottom of the screen and click on the `Skip and Finish` button
-
-image::workspace6-0.png[link=self, window=blank, width=100%]
-
-* On the next screen, you will need to choose the repository you want to use for this workspace. For this lab, we will ***use the repository you imported earlier into your GitHub account** We had named it `aap-hashi-lab-2` earlier (Unless you chose to name it something else).
-
-image::workspace6-1.png[link=self, window=blank, width=100%]
-
-* The Workspace Name will default to the repository name. Change the `Workspace Name` to `TFE-Demo-VCS`
-* For the `Description` field, enter `Using GitHub commits to trigger Plan/Apply Runs`
-* Expand the `*Advanced Options*` section, and check both of the `*Auto-apply*` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.
-* For the `Terraform Working Directory` field, enter `TF_templates/AWS/`
+[IMPORTANT]
+.Platform enforcement vs playbook checks
+====
+In Section 2, OPA ran **inside** the workflow. Here, **AAP itself** asks OPA before starting the job. That is **Policy as Code on the automation platform**: even a playbook with *no* internal `uri` call to OPA cannot bypass the gate, because the **PEP (AAP)** refuses to enqueue the run. This models **separation of duties**—only `patch-admins` may even *attempt* patching templates—and shrinks insider “I’ll run ansible by hand” if your production design wires the same gateway for all changes.
+====
 
 |===
-| Field | Value
-
-| Workspace Name
-| TFE-Demo-VCS
-
-| Description
-| Using GitHub commits to trigger Plan/Apply Runs
-
-| Terraform Working Directory
-| **TF_templates/AWS/**
-
-| **Auto-apply**
-| **Check both of the `Auto-apply` option checkboxes. This will automatically apply the changes to the workspace when you commit changes to the repository.**
+| Template pattern | Required group (gateway)
+| Patch | `patch-admins`
+| VLAN / Network | `network-admins`
+| Deploy, Database, Credential | `app-deployers`
+| Verify, Test, Check | Any authenticated user
 |===
 
-* Scroll down
+[TIP]
+.Why template names matter
+====
+The gateway policy uses **resource metadata** (here, template name substrings) as a coarse **risk classifier**. Production policies often add **inventory tags, execution environments, survey variables, or SAML claims**—the idea is the same: **encode risk in attributes** the PDP can evaluate consistently, not in tribal knowledge about “who is allowed to click what.”
+====
 
-image::workspace7.png[link=self, window=blank, width=100%]
-
-* Scroll down the bottom of the screen and click on the `Create` button to save the workspace configuration
-
-While you still have the GitHub UI open, navigate to the repository you cloned earlier into your GitHub account please perform the following:
-
-* Navigate to the repository `SETTINGS` -> `WEBHOOKS`
-* You will see the Terraform Enterprise webhook configuration, click on the `Edit` button
-* Scroll down to the `SSL verification` section, and check the `Disable` checkbox. When prompted, click on the `I understand`
-* For the `Which events would you like to trigger this webhook?` section:
-** select `Just the push event.`
-* Scroll down and click on the `Update Webhook` button to save the webhook configuration
-* Authenticate to your GitHub account if prompted
-
-image::workspace8.png[link=self, window=blank, width=100%]
-
-* In Terraform Enterprise UI, You will now see that the Terraform Enterprise Workspace is now created successfully.
-* **DO NOT accept the auto detected variables**
-* Click on the `Go to Workspace Overview` link to navigate to the workspace dashboard
-
-image::workspace9.png[link=self, window=blank, width=100%]
-
-* On this page, click on the `Configure Variables` button
-
-image::workspace10.png[link=self, window=blank, width=100%]
-
-* On the next screen, add the following `Terraform variables`:
+== Exercise 3.1 — Job template
 
 |===
-| Key | Value | Sensitive
-
-| aap_host
-| https://control-{guid}.{domain} +
-**YOUR AAP hostname url will look like:** https://control-guid#-1.apps.ocpvdev01.rhdp.net
-| No
-
-| aap_username
-| admin
-| No
-
-| aap_password
-| ansible123!
-| Yes
-
-| aws_access_key
-| <your aws access key id>
-| No
-
-| aws_secret_key
-| <your aws secret access key>
-| Yes
-
-| vault_addr
-| https://vault-{guid}.{domain} +
-**YOUR VAULT hostname url will look like:** https://vault-guid#-1.apps.ocpvdev01.rhdp.net
-| No
-
-| vault_role_id
-| <your vault role id>
-| No
-
-| vault_secret_id
-| <your vault secret id>
-| Yes
+| Name | Apply Security Patch
+| Playbook | `section3/playbooks/apply-security-patch.yml`
+| Inventory | ZTA Lab Inventory
+| Credential | ZTA Machine Credential
+| Survey | `target_host` (default `app`)
 |===
 
-image::workspacevars1.png[link=self, window=blank, width=100%]
+**Important:** name must include "Patch" for the lab gateway rule.
 
+[TIP]
+.Auditability
+====
+Denied launches still generate **AAP audit events**—useful when investigating “who tried to patch during the freeze window?” In ZTA, **every decision should leave evidence**, whether allow or deny.
+====
 
+== Exercise 3.2 — Blocked launch
 
-[#task3]
-== Trigger infrastructure provisioning and automation
+As `neteng`, launch template → AAP denies at platform level (playbook never runs).
 
-Now we're all set to trigger the infrastructure provisioning and automation from Terraform Enterprise by committing changes to the Terraform code in the GitHub repository.
+[TIP]
+.Stronger than hiding buttons
+====
+Traditional RBAC might hide templates or rely on operator discipline. **Policy as Code** makes denial **explicit and uniform**—the PDP answer can be the same for UI, API, and integrated CI—reducing **policy drift** between teams and making exceptions visible in Git-tracked Rego rather than tribal knowledge.
+====
 
-=== Perform a quick test run in the Terraform Enterprise Workspace
+== Exercise 3.3 — Fix access
 
-Let's perform a quick test to make sure we set up the Terraform Enterprise Workspace correctly. This will be a `Plan only` run, so we will not actually create any resources.
+* Use `ztauser`, or
+* `ipa group-add-member patch-admins --users=neteng`
 
-* Click on the `Runs` menu option on the left.
-* Click on the `+ New Run` button in the top right of the Workspace overview screen.
-* For the `Run Type` select `Plan only`
-* Click on the `Start` button to perform a quick test run of the Terraform code in the Terraform Enterprise Workspace.
+[TIP]
+.Identity lifecycle, not ticket forever
+====
+Granting `patch-admins` in IdM is how the organisation says “this identity may initiate high-risk automation.” Revoking the group later **closes the gate** without redeploying AAP—**continuous authorisation** tied to the directory.
+====
 
-image::testplanonly2.png[link=self, window=blank, width=100%]
+== Exercise 3.4 — Successful patch
 
-* In a few moments You will see the `TEST PLAN RUN` completed successfully. This is a test run to make sure the Terraform Enterprise Workspace is configured correctly.
+As `ztauser`, patch `app`. Expect banner, SSH hardening, password policy, audit rules (playbook output).
 
-image::testplanonly3.png[link=self, window=blank, width=100%]
+[TIP]
+.Hardening as code
+====
+Once launch is authorised, the playbook still applies **defensive configuration** (banner, `sshd`, password quality, audit). ZTA is not only gates at the edge—it includes **measurable security posture** on endpoints, ideally still delivered *through* the same controlled automation channel.
+====
 
-**GREAT! We are all set to commit changes to the Terraform code in the GitHub repository to trigger the infrastructure provisioning and automation.**
+== Exercise 3.5 — Verify on host
 
-=== Commit changes to the Terraform code in the GitHub repository
+[source,bash]
+----
+ssh -p 2023 rhel@central.zta.lab
+sudo sshd -T | grep -E 'permitrootlogin|maxauthtries|permitemptypasswords'
+----
 
-NOTE: In a real-world scenario, you would commit changes to the Terraform code in the GitHub repository to a separate branch. Then you would create a pull request to merge the changes into the main branch. Then Terraform Enterprise will trigger the infrastructure provisioning and automation. For this lab, we will simply change the `instance_count` variable to 2, to create 2 RHEL ec2 instances.
+[TIP]
+.Verify outcomes, not intentions
+====
+Spot-checking `sshd -T` and audit rules proves **the control landed**. Zero Trust operations depend on **observable state** (what the host actually enforces), not only on “the job was green.”
+====
 
-* Navigate to the repository you cloned earlier into your GitHub account
-* Click on the `Code` tab, and go to the `TF_templates/AWS/` folder
-* Select the `terraform.tfvars` file, and on the right click on the `Pencil` and select `In place`
-* Chance the `instance_count = 0` to `instance_count = 2`
-* Click on the `Commit changes` button to commit the changes to the repository, then click `Commit` directly to the main branch
+== Exercise 3.6 — Other scenarios
 
-image::gitcommit1.png[link=self, window=blank, width=100%]
+* `appdev` cannot launch patch template.
+* Remove `neteng` from `patch-admins` if added; confirm deny again.
 
-=== What will happen now in Terraform Enterprise and Vault Enterprise
+[TIP]
+.Separation of duties
+====
+`appdev` can deploy (Section 2) but must **not** silently patch servers—that is a different risk class. Mapping **different IdM groups** to **different template families** encodes **SoD** in machine-readable policy instead of org-chart prose only.
+====
 
-* Navigate to the Terraform Enterprise UI, and click on the `Runs` menu option on the left. (if you're not already there).
-* It may take a few moments to see the new run appear in the list.
-* Below you will see the plan and apply in Terraform Enterprise, and the resources that will be created.
+== Validation checklist
 
-image::planapply1.png[link=self, window=blank, width=100%]
+* [ ] Platform deny for unauthorised user
+* [ ] Success for `patch-admins`
+* [ ] Banner and hardening visible on target
 
-* Please observe the output of the plan and apply.
+== Extended: Section 3B — OPA Rego authoring
 
-image::planapply2.png[link=self, window=blank, width=100%]
-
-* **Terraform Enterprise created the SSH Keys for the RHEL ec2 instances in the Vault Enterprise secret engine.**
-
-If you'd like to see the SSH private key that was created, you can navigate to the `Vault Enterprise UI`
-
-* Click on the `Secrets Engine` menu on the left.
-* Select the `secret` secret engine
-* Navigate to the `rhel-server/ssh-keys/latest` path.
-* Click on the `Secret` menu item.
-* You will see the SSH key details.
-
-image::vaultsshkey.png[link=self, window=blank, width=100%]
-
-=== What will happen now in Ansible Automation Platform
-
-* Terraform Enterprise will then trigger the `WF-Launched by TFE` workflow template in Ansible Automation Platform. You will see the workflow in a `Running` state.
-
-image::tfewf0.png[link=self, window=blank, width=100%]
-
-* After a few minutes, you will see the workflow template successfully completed.
-
-image::tfewf1.png[link=self, window=blank, width=100%]
-
-* If you look at the job template output, you will see the Nginx installation completed successfully on all the new EC2 instances.
-* **Ansible Automation Platform retrieved the SSH private key for the RHEL ec2 instances, from Vault Enterprise, to allow Ansible to connect to the instances and install Nginx and setup the Insurance company's website.**
-
-image::tfewf2.png[link=self, window=blank, width=100%]
-
-* The Terraform Inventory in Ansible Automation Platform will be synchronized with the new resources.
-* The RHEL ec2 instances will have Nginx installed and running on them.
-** Feel free to navigate to the `public IP address` or `DNS name` of the EC2 instances and verify the Nginx installation. You can get the public IP address or DNS names from the Terraform Enterprise UI, or from the Ansible Automation Platform UI.
-* Please use the `http` protocol to access the website.
-* If prompted that the site doesn't support a secure connection, please click on the `Continue to site` button. 
-
-You will see the following page:
-
-image::rhelnginx.png[link=self, window=blank, width=100%]
-
-=== Destroy the infrastructure - Please
-
-In this section we will destroy the infrastructure that was created by Terraform Enterprise in the `TFE-Demo-VCS` workspace.
-
-* Navigate to the Terraform Enterprise UI, and click on the `Workspaces` menu option on the left.
-* Select the `TFE-Demo-VCS` workspace.
-* Click on the `Settings` menu option on the left.
-* Click on the `Destruction and Deletion` menu option on the left.
-* Scoll down to the `Manually Destroy` section.
-* Click on the `Queue Destroy Plan` button.
-* Another dialog box will appear
-** Enter/paste the name of the Workspace to confirm the destruction: `TFE-Demo-VCS`.
-** Click on the `Queue Destroy Plan` button.
-This will trigger a destroy plan run of the Terraform code in the Terraform Enterprise Workspace, and will take a few minutes to complete.
-
-image::destroy0.png[link=self, window=blank, width=100%]
-
-image::destroy1.png[link=self, window=blank, width=100%]
-
-**THANK YOU FOR CLEANING UP THE INFRASTRUCTURE! APPRECIATED!**
-
-== Summary
-The following scenario is what you competed in module 2 and module 3 of this lab. 
-
-* You learned how to trigger infrastructure provisioning and automation from Terraform Enterprise using GitHub commits.
-* You also learned how to configure Ansible Automation Platform to retrieve secrets from HashiCorp Vault Enterprise. AAP retrieved the SSH private key for the RHEL ec2 instances, from Vault Enterprise, to allow Ansible to connect to the instances and install Nginx.
-
-image::module2-3scenario.png[link=self, window=blank, width=100%]
-
-**THANK YOU FOR COMPLETING THE LAB! GREAT JOB!**
+include::includes/section-3b-rego.adoc[]
