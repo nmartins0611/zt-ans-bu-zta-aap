@@ -182,7 +182,7 @@ run_if_needed "Install paramiko" \
 # 8. Download IPA RPMs for containers
 ###############################################################################
 
-if [ ! -d /tmp/ipa-rpms ]; thenhrg2t
+if [ ! -d /tmp/ipa-rpms ]; then
     mkdir -p /tmp/ipa-rpms
     dnf download --resolve --destdir /tmp/ipa-rpms ipa-client
 fi
