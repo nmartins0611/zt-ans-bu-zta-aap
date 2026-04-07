@@ -1,571 +1,257 @@
-:doctype: book
+= Section 1 — Configure ZTA components and AAP integration
+:toc: left
+:toclevels: 3
+:icons: font
+:experimental:
+:idprefix:
+:idseparator: -
 
-NOTE: To pop out the instructions in a new browser tab, you can click on the lab title at the top.
+This lab mirrors `section1/README.md` in AsciiDoc. Use it for student handouts or PDF/HTML builds.
 
-image::instructions.png[link=self, window=blank, width=100%]
+include::../../docs/lab/common-environment.adoc[]
 
-= *Red Hat Ansible Automation Platform and HashiCorp Terraform Enterprise*
+== Overview
 
-* Welcome to the `Terraform Enterprise & Red Hat Ansible Automation Platform` lab.
+Configure Ansible Automation Platform and connect it to the Zero Trust stack: IdM (identity), Vault (secrets + SSH CA), OPA (policy), NetBox (CMDB), and Gitea (Git). Verify integrations with job templates.
 
-Terraform (Enterprise and HCP Terraform) is a great tool you can use for deploying cloud infrastructure using delcarative Infrastructure as Code (IaC).
-It allows you to define infrastructure as code and then build, modify, and destroy these resources declaratively.
-Terraform (Enterprise and HCP Terraform) can be a simple way to deploy infrastructure, however if you add Ansible Automation Platform, together they can be used to automate the entire infrastructure lifecycle, from build to deploy, to manage, and to retire infrastructure, to enhance your automation journey!
+[IMPORTANT]
+.Why this section exists
+====
+Until AAP is wired to the same **identity, policy, secrets, and inventory truth** the rest of the architecture uses, automation would be a *shadow admin path*—easy to bypass Zero Trust intent. Here you make AAP a **first-class citizen** of the ZTA fabric: it authenticates like other services, reads policy from OPA, pulls secrets from Vault, and builds inventory from NetBox so *what you run jobs against* matches *what the organisation says exists*.
+====
 
-image::aaptfmain.png[link=self, window=blank, width=100%]
-
-In the following challenge tasks you will use Ansible Automation Platform and Terraform Enterprise together.
-Centrally from Ansible Automation Platform you will trigger an Ansible Workflow that will use Terraform to create cloud Infrastructure, and then synchronize the inventory back into Ansible Automation Platform, and go on to perform other configuration and orchestration tasks.
-
-* In this first challenge you will learn
-** How to create an Ansible Workflow template and run it to create resources in AWS using Terraform Enterprise and Ansible Automation Platform will perform further configuration and orchestration tasks.
-
-There are `several prerequisites` that you will need to complete before you can start this lab.
-
-The following diagram shows the overall scenario that we will be covering in this lab section.
-
-image::module1scenario.png[link=self, window=blank, width=100%]
-
-[#task1]
-== Create the Terraform Enterprise API token
-
-You will need to create an API token in Terraform Enterprise to use in Ansible Automation Platform to authenticate against Terraform Enterprise.
-
-**This is the top menu of the lab. You can use this to pop out Ansible Automation Platform and Terraform Enterprise, and Vault Enterprise in new browser tabs.**
-
-image::labtopmenu.png[link=self, window=blank, width=100%]
-
-Login to Terraform Enterprise using the following *Login Credentials:*  
-
-* `User:  admin`
-* `Password:  ansible123!`
-
-* Select the `user icon` in the top left.
-* Select the `Account Settings`.
-* In the left menu, click on `Tokens`.
-* Click on the `Create an API token` button in the top right.
-* In the `Description` field enter `Terraform Enterprise API Token for Ansible Automation Platform`.
-* In the `Expiration` field keep the default value of `30 days`.
-
+.Workshop delivery (2-hour track)
+[cols="3,1,1",options="header"]
 |===
-| Field | Value
+| Exercise | Track | Est. time
 
-| Description
-| Terraform Enterprise API Token for Ansible Automation Platform
-
-| Expiration
-| 30 days
+| 1.1 — Configure AAP credentials | Core | 10 min
+| 1.2 — Inventory and project | Core | 5 min
+| 1.3 — Job templates | Core | 3 min
+| 1.4 — Verify ZTA services | Core | 2 min
+| 1.5 — Vault dynamic credentials | Core | 3 min
+| 1.6 — Vault SSH signed certificates | Core | 3 min
+| 1.7 — OPA policy decisions | Core | 2 min
+| 1.8 — Certificate trust debugging | Extended | 25 min
 |===
 
-* Click on `Generate Token`, and then click on the `Copy to clipboard` button.
-* Copy the API token to your clipboard, save it somewhere where you can easily find it.
+For a short workshop, complete **1.1–1.7** (~25 min). Skip **1.8** unless you have extra time.
 
-image::tfetoken0.png[link=self, window=blank, width=100%]
+== Exercise 1.1 — Configure AAP credentials (Vault-sourced)
 
-image::tfetoken.png[link=self, window=blank, width=100%]
+=== Goal
 
-image::tfetoken1.png[link=self, window=blank, width=100%]
+Bootstrap AAP credentials so machine and device secrets are resolved from Vault at job runtime where applicable.
 
-[#task2]
-== Create a Terraform Enterprise Workspace
+[TIP]
+.Zero Trust: secrets on the platform
+====
+**Standing credentials in the automation database** are a common weak point: anyone with AAP admin access inherits the keys to the kingdom. Sourcing machine and network passwords from **Vault KV at job time** shrinks that blast radius: AAP stores references, not the secret values. The lone “bootstrap” Vault credential is still a sensitivity—you would harden this in production (AppRole, TLS, namespaced policies)—but the *pattern* is classic ZTA: **no unnecessary persistence of secrets**, and **rotation in one place** (Vault) without re-keying every template.
+====
 
-This task is done in Terraform Enterprise.
+=== Step 1 — Verify Vault paths
 
-=== Create the Terraform Enterprise Workspace
-Go back to the main menu by clicking on the `Terraform Enterprise logo` in the top left corner. 
-
-* Select the organization `rhdp-tf-org`.
-* In the left menu, click on `Workspaces`
-* Click on `Create a workspace`.  Select `API-Driven Workflow` as the type of workspace.
-
-image::tfeworkspace.png[link=self, window=blank, width=100%]
-
-Fill out the following fields - **Table below:**
-
-|===
-| Field | Value
-
-| Name
-| **TFE-Demo**    (Please use that name exactly)
-
-| Project
-| **rhdp-initial-project**
-
-| Description
-| My Initial Workspace for my first TFE demo.
-|===
-
-Click on `Create` to save the workspace.
-
-image::tfeworkspace1.png[link=self, window=blank, width=100%]
-
-The workspace is now created. You can now use this workspace for Terraform Enterprise runs.
-
-image::tfeworkspace2.png[link=self, window=blank, width=100%]
-
-=== Add the AWS Keys to the Terraform Enterprise Workspace
-
-While in the `TFE-Demo` workspace, click on the `Variables` menu option in the left menu.
-Click on the `Variables` tab.
-
-Click on the `+ Add variable` button.
-Enter the following details:
-
-* Select the `Environment variable` variable type.
-* In the `Key` field enter `AWS_ACCESS_KEY_ID`
-* In the `Value` field enter the AWS Access Key ID. Get this from the `Cloud(AWS)` tab in your lab.
-* Click on `Add variable` to save the variable.
-
-image::tfevariables.png[link=self, window=blank, width=100%]
-
-Repeat the process for the `AWS_SECRET_ACCESS_KEY` variable.
-
-Click on the `+ Add variable` button.
-Enter the following details:
-
-* Select the `Environment variable` variable type.
-* In the `Key` field enter `AWS_SECRET_ACCESS_KEY`.
-* In the `Value` field enter the AWS Secret Access Key. Get this from the `Cloud(AWS)` tab in your lab.
-* Select the `Sensitive` checkbox.
-* Click on `Add variable` to save the variable.
-
-image::tfevariables1.png[link=self, window=blank, width=100%]
-
-You have now added the AWS keys to the Terraform Enterprise Workspace.
-These keys can now be used by Terraform to authenticate against the AWS cloud account.
-
-[#task3]
-==  Create a Terraform Enterprise credential type.
-
-This task is done in Ansible Automation Platform.  Go back to the `MAIN LAB WINDOW`
-
-Click on the `Ansible Automation Platform` tab at the top of lab.
-
-Log in using the following *Login Credentials:*  
-
-* `User:  admin`
-* `Password:  ansible123!`
-
-An Ansible Credential Type defines a structure (schema) for storing and using secrets like passwords, SSH keys, or API tokens, allowing secure management within Ansible Automation Platform for connecting to systems in this example Terraform Enterprise.
-
-NOTE: A credential type for HCP Terraform (also works for Terraform Enterprise) will be native in AAP in the coming months. Stay tuned for this. At the moment you have to manually create this credential type.
-
-Expand: `Automation Execution` -> `Infrastructure` -> `Credential Types` -> `+ Create Credential Type`
-
-|===
-| Field | Value
-
-| Name
-| Terraform Enterprise credential type
-
-| Description
-| Terraform Enterprise credential type for Terraform Enterprise
-|===
-
-For the `Input configuration` add the following:
-
-[source,yaml,role=execute]
+[source,bash]
 ----
----
-#INPUT
-fields:
-  - id: hostname
-    type: string
-    label: Terraform Enterprise Hostname
-  - id: org
-    type: string
-    label: Organization
-  - id: workspace
-    type: string
-    label: Workspace
-  - id: token
-    type: string
-    label: Token
-    secret: true
-required:
-  - hostname
-  - org
-  - workspace
-  - token
+export VAULT_ADDR=http://vault.zta.lab:8200
+vault login -method=userpass username=admin password=ansible123!
+
+vault kv get secret/machine/rhel
+vault kv get secret/network/arista
+vault kv get secret/db/admin
 ----
 
-For the `Injector configuration` add the following:
+=== Step 2 — Create `ZTA Vault Credential` (bootstrap)
 
-[source,yaml,role=execute]
-----
----
-#INJECTOR
-extra_vars:
-  tf_hostname: '{{ hostname }}' # e.g. https://tfe-https-1234567890.apps.ocpvdev01.rhdp.net
-  tf_org: '{{ org }}'
-  tf_workspace: '{{ workspace }}'
-  tf_token: '{{ token }}'
-----
+Resources → Credentials → Add:
 
-Click on `Create Credential Type` to save the credential type.
-
-image::tfecredtype.png[link=self, window=blank, width=100%]
-
-[#task4]
-== Create the Terraform Enterprise Credential in Ansible Automation Platform
-
-Credentials are utilized for authentication when launching Jobs against machines, synchronizing with inventory sources, and importing project content from a version control system.
-
-You will now create a credential in Ansible Automation Platform to use with the Terraform Enterprise credential type.
-
-This task is done in Ansible Automation Platform.
-
-Log in to the `Ansible Automation Platform` 
-
-Expand the `Automation Execution` menu on the left.
-`Automation Execution` -> `Infrastructure` -> `Credentials`.
-Click on the `Credentials` link and examine some of pre-configured credentials
-
-NOTE: The keys are encrypted so no one, not even an administrator, can see the keys once placed in Ansible Automation Platfrom as a credential.
-
-. Click on `+ Create credential`
-. For the `Name` enter `Terraform Enterprise credential`
-. Expand the `Credential Type` drop-down, and select `Terraform Enterprise credential type` (**Start typing the name, OR click on the `Load more` button to see the credential type**)
-. In the `Terraform Enterprise Hostname` section enter `**<Your terraform hostname url>**`
-. In the `Organization` (**Terraform Organization**) section enter `**rhdp-tf-org**`
-. In the `Workspace` section enter `**TFE-Demo**`
-. In the `Token` section enter the API token you generated earlier in Terraform Enterprise
-. Click on `Create credential` to save the credential
-
+[cols="2,3",options="header"]
 |===
 | Field | Value
-
-| Name
-| Terraform Enterprise credential
-
-| Credential Type
-| Terraform Enterprise credential type (**Start typing the name, OR click on the `Load more` button to see the credential type**)
-
-| Terraform Enterprise Hostname
-| https://tfe-https-{guid}.{domain} +
-**Your terraform hostname url will look like:** https://tfe-https-12345-a.apps.#######.rhdp.net
-
-| Organization (**Terraform Organization**)
-| **rhdp-tf-org**
-
-| Workspace
-| **TFE-Demo**
-
-| Token
-| <Your terraform api token> # This is the API token you generated earlier in Terraform Enterprise
+| Name | `ZTA Vault Credential`
+| Type | HashiCorp Vault Secret Lookup
+| Vault URL | `http://vault.zta.lab:8200`
+| Username | `admin`
+| Password | `ansible123!`
+| API Version | v2
 |===
 
-image::tfecred.png[link=self, window=blank, width=100%]
+[TIP]
+.Why a Vault “lookup” credential
+====
+This credential exists so AAP can **authenticate to Vault** and resolve other credentials’ fields. It is the narrowest bootstrap the UI exercise needs; production designs still treat it as **highly privileged** and pair it with tight Vault policies, short TTLs, and break-glass procedures (see Section 6).
+====
 
-[#task5]
-== Create a Terraform Inventory Source in Ansible Automation Platform
+=== Step 3 — Create `ZTA Machine Credential` (KV lookup)
 
-An Inventory is a collection of hosts against which automation jobs may be launched.
-Inventories.
-You can source your inventory data from external sources and cloud providers.
+Create a **Machine** credential:
 
-In `Ansible Automation Platform`, create the Terraform inventory source
+* Username: `rhel`; privilege escalation: `sudo`.
+* **Password**: use external lookup → Credential `ZTA Vault Credential`, path `secret/data/machine/rhel`, key `password`.
+* **Become password**: same path, key `become_password`.
 
-* Click on the `Ansible Automation Platform` tab at the top of lab.
-(if not already)
+Do not store the SSH password in AAP.
 
-* Expand the `Automation Execution` menu on the left.
-`Automation Execution` -> `Infrastructure` -> `Inventories`.
+[TIP]
+.Just-in-time access
+====
+Each job run **re-fetches** credentials from Vault. That aligns with **just-in-time / just-enough** access: if a password rotates or a policy revokes a path, the next run reflects reality instead of silently using a stale copy stored in AAP’s database.
+====
 
-* Notice that there is an inventory that we've created for you called `Terraform Inventory`.
+=== Step 4 — Create `ZTA Arista Credential` (KV lookup)
 
-* Click on this inventory, and then select the `Sources` tab.
-* Click the `+ Create Source` and then enter the following details.
+**Network** credential. Use lookups from `secret/data/network/arista` for `username` and `password` keys.
 
-|===
-| Field | Value
+=== Step 5 — Create `ZTA NetBox Credential`
 
-| Name
-| AWS source for TFE resources
+Type **NetBox** (created by setup if present). URL `http://netbox.zta.lab:8880` and API token as deployed.
 
-| Execution environment
-| Terraform Execution Environment
+If the credential type is missing, create it under Administration → Credential Types per `section1/README.md` (Input/Injector YAML).
 
-| Source
-| Amazon EC2
+=== Step 6 — `ZTA Vault SSH Credential`
 
-| Credential
-| AWS Credential
+Usually **pre-created** by `setup/configure-aap-credentials.yml` (AppRole → SSH CA signing). Confirm in Vault:
 
-| Verbosity
-| 1 (Info)
-
-| **Overwrite**
-| **Check**
-
-| Update on launch
-| Check
-
-| Cache timeout (seconds)
-| 0
-|===
-
-ADD the following to the `Source variables` section
-[source,yaml,role=execute]
+[source,bash]
 ----
----
-hostnames:
-  - tag:Name
-compose:
-  ansible_host: public_ip_address
-  ansible_ssh_pipelining: "true"  
+vault read ssh/config/ca
+vault read ssh/roles/ssh-signer
 ----
 
-* Scroll to the bottom Click the blue `Create source` button to **save** the Inventory Source.
-
-image::tfinventorysource0.png[link=self, window=blank, width=100%]
-image::tfinventorysource.png[link=self, window=blank, width=100%]
-
-* Click on the `Sync inventory source` button in the top right corner of the screen to synchronize the inventory source. You should see a status of `Success` shortly.
-
-NOTE: This could take up to a minute as this is the first time we use the Execution Environment, and it needs to pull down the image from the registry.
-
-[#task6]
-== Create a Workflow Template to kick off a Terraform Enterprise `**PLAN and APPLY**` operation
-
-In this Task we will create an Ansible Job Template that will kick off a Terrafrom project, and then create the Workflow Template that will kick off the Job Template, followed by synchronizing the inventory source, and then another job template installing Nginx on the new EC2 instances.
-
-The Terraform project is a simple project that will leverage the AWS provider to create an EC2 instance in the AWS cloud account you are using.
-
-NOTE: Please note that you can also do this in Azure and Google Cloud in the same way as you are here with AWS
-
-=== Create the `Terraform Enterprise APPLY` job template
-
-Click on the `Ansible Automation Platform` tab at the top of lab.
-(if not already) Expand the `Automation Execution` menu on the left.
-
-`Automation Execution` -> `Templates` -> `+ Create template`, then click on `Create job template`
-
-Fill out the following fields - **Table below:**
-
+.Credential summary
+[cols="2,2,3",options="header"]
 |===
-| Field | Value
-
-| Name
-| Terraform Enterprise APPLY
-
-| Inventory
-| **Demo Inventory**
-
-| Project
-| Terraform Demos Project
-
-| Playbook
-| playbooks/terraform_apply_plan.yml
-
-| Execution environment
-| Terraform Execution Environment
-
-| Credentials
-| Terraform Enterprise credential
+| Credential | Type | Source
+| ZTA Vault Credential | Vault lookup | Stored bootstrap password
+| ZTA Machine | Machine | KV `secret/data/machine/rhel`
+| ZTA Arista | Network | KV `secret/data/network/arista`
+| ZTA NetBox | NetBox | Token in credential
+| ZTA Vault SSH | Vault Signed SSH | AppRole + CA role `ssh-signer`
 |===
 
-ADD the following to the `Extra variables` section
-[source,yaml,role=execute]
+[TIP]
+.Vault SSH CA vs static keys
+====
+**Signed SSH certificates** are the Zero Trust answer to “everyone shares `~/.ssh/id_rsa`.” Hosts trust the **CA**, not individual keys; AAP proves workload identity to Vault (here via AppRole) and receives a **time-bound** cert. Compromise of an old key matters less when certificates expire and principals are scoped—**no standing SSH identity** on the jump host or in Git.
+====
+
+== Exercise 1.2 — Inventory and project
+
+[TIP]
+.Source of truth and GitOps
+====
+**NetBox** is the *infrastructure source of truth* in this workshop: if a host is decommissioned there, it should disappear from automation inventory on sync—reducing “ghost” targets attackers or operators could hit. **Gitea** holds *intent* (playbooks); together they separate **what exists** (CMDB) from **what we want to do** (code), both subject to policy in later sections.
+====
+
+=== Project (Gitea)
+
+Resources → Projects → Add:
+
+* Name: `ZTA Workshop`
+* Git URL: `http://gitea.zta.lab:3000/zta-workshop/zta-app.git`
+* Credential: `ZTA Gitea Credential`
+* Save; wait for successful sync.
+
+=== Inventory (NetBox)
+
+. Create inventory `ZTA Lab Inventory`.
+. Sources → Add:
+
+|===
+| Name | NetBox CMDB
+| Source | Sourced from a project
+| Project | ZTA Workshop
+| Inventory file | `inventory/netbox_inventory.yml`
+| Credential | ZTA NetBox Credential
+|===
+
+. Enable **Overwrite** and **Update on launch**; sync and verify hosts (central, control, vault, netbox, app, db, ceos1–3, etc.).
+
+[TIP]
+.Update on launch
+====
+Refreshing inventory **before each job** reduces stale targeting: policy and playbooks see **current** CMDB state, which is how Zero Trust ties **continuous authorisation** to **current asset posture** (at least at inventory granularity).
+====
+
+== Exercise 1.3 — Job templates
+
+[TIP]
+.Why these four templates
+====
+You are building an **evidence trail** that each pillar works before you trust it for real change. In ZTA terms this is **verify, then enforce**: IdM/Vault/OPA/network paths must be healthy or later sections will fail in ambiguous ways. Treat these jobs as **control-plane health checks** for the PEP (AAP).
+====
+
+Create templates using **ZTA Lab Inventory** and **ZTA Machine Credential**:
+
+[cols="2,3",options="header"]
+|===
+| Name | Playbook
+| Verify ZTA Services | `section1/playbooks/verify-zta-services.yml`
+| Test Vault Integration | `section1/playbooks/test-vault-integration.yml`
+| Test Vault SSH Certificates | `section1/playbooks/test-vault-ssh.yml`
+| Test OPA Policy | `section1/playbooks/test-opa-policy.yml`
+|===
+
+== Exercise 1.4 — Verify ZTA services
+
+Run **Verify ZTA Services**. Expect healthy IdM, Vault, OPA, NetBox, DNS, PostgreSQL, and Arista facts.
+
+[TIP]
+.Never trust, always verify
+====
+**Service checks** are the operational face of “never trust, always verify”: you do not assume IdM or OPA is up because yesterday it was. For the workshop, this mirrors **continuous diagnostics** on which policy decisions and secret issuance depend.
+====
+
+== Exercise 1.5 — Test Vault integration
+
+Run **Test Vault Integration**. Observe short-lived PostgreSQL users (unique name per run, TTL, revoke at end).
+
+[TIP]
+.Short-lived database identities
+====
+Dynamic DB users with a **TTL** limit how long a leaked credential is useful—core **assume breach** hygiene. Vault **revokes** the lease so the database role disappears without a human running `DROP USER`. That is how **least privilege** becomes **time-bound privilege**.
+====
+
+== Exercise 1.6 — Test Vault SSH certificates
+
+Run **Test Vault SSH Certificates**. Observe CA-signed cert, TTL, principals, successful SSH to app/db.
+
+Optional manual sign (from README):
+
+[source,bash]
 ----
----
-aws_region: us-east-1
-aws_name_tag: tfevm
-aws_instance_size: t2.medium
-aws_instance_count: 1
-aws_instance_public_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAKzl1JGwZh92P1ABxIVHE52I2nJk+h7ED4B6GgbMXAl hmourad@hmourad-mac
+export VAULT_ADDR=http://vault.zta.lab:8200
+vault login -method=userpass username=admin password=ansible123!
+ssh-keygen -t rsa -b 2048 -f /tmp/ephemeral -N '' -q
+vault write -field=signed_key ssh/sign/ssh-signer \
+  public_key=@/tmp/ephemeral.pub valid_principals=rhel > /tmp/ephemeral-cert.pub
+ssh-keygen -L -f /tmp/ephemeral-cert.pub
 ----
 
-Scroll to the bottom Click the blue `Create  Job Template` button to **save** the job template.
+[TIP]
+.Cryptographic proof of permission to log in
+====
+The certificate encodes **who may act as which principal** and **for how long**. Hosts need only trust the CA once; they do not need network reachability to Vault at login time. That separation is useful in segmented networks and matches the ZTA idea that **access is explicitly granted and expires**.
+====
 
-image::templateapply1.png[link=self, window=blank, width=100%]
+== Exercise 1.7 — Test OPA policy
 
-=== Create the `WF-Terraform Enterprise APPLY` workflow template, and it's nodes
+Run **Test OPA Policy**. Expect allow/deny scenarios for patching, VLAN, and DB access per group membership.
 
-* Click on the `Ansible Automation Platform` tab at the top of lab.
-(if not already) Expand the `Automation Execution` menu on the left.
-`Automation Execution` -> `Templates` -> `+ Create template` -> then select `Create workflow job template`
+[TIP]
+.Deny by default (PDP)
+====
+OPA returns **allow** only when Rego rules fire; everything else is **implicit deny**. **IdM groups** supply *role-like* attributes the PDP can use, but unlike a static RBAC matrix in one app, the same policy can be **versioned, tested, and shared** across AAP and other PEPs. You are seeing **central policy** backing **distributed enforcement**.
+====
 
-Fill out the following fields - **Table below:**
+== Validation checklist (core)
 
-|===
-| Field | Value
+* [ ] Vault lookup + machine + Arista + NetBox credentials configured as specified
+* [ ] Vault SSH credential present (instructor)
+* [ ] NetBox inventory sync shows all lab hosts
+* [ ] Gitea project synced
+* [ ] Four verification templates run successfully
 
-| Name
-| WF-Terraform Enterprise APPLY
+== Extended exercises
 
-| Organization
-| **Default**
-|===
-
-Scroll to the bottom Click the blue `Create Workflow Job Template` button to **save** the Workflow.
-
-image::wftemplateapply1.png[link=self, window=blank, width=100%]
-
-=== Create the nodes for the `WF-Terraform Enterprise APPLY` workflow template
-
-* Select `+ Add step` and then select the `Terraform Enterprise APPLY` job template you created earlier, Select `Next` to continue, and then `Finish` to save the node.
-
-image::wftemplateapply2.png[link=self, window=blank, width=100%]
-
-* Click on the vertical ellipsis `...` at the end of the node we just created, and then select `+ Add step and link`.
-* For this next step 
-** Change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`. 
-** Change the `Status` to `Run on Success`.
-* Select `Next` then `Finish` to save this second step. This will synchronize the inventory source you created earlier.
-
-image::wftemplateapply3.png[link=self, window=blank, width=100%]
-
-* Click on the vertical ellipsis `...` at the end of the node we just created, and then select `+ Add step and link`.
-* For this next step 
-** Keep the `Node Type` to `Job Template` and select the `Install Nginx on RHEL` job template. 
-** The `Install Nginx on RHEL` job template is a job template that is already created for you in Ansible Automation Platform. It is used to install Nginx on the RHEL hosts.
-** Change the `Status` to `Run on Success`.
-* Select `Next` then `Finish` to save this step. This will install Nginx on the RHEL hosts.
-
-Click on the `Save` button to save the workflow template.
-
-image::wftemplateapply4.png[link=self, window=blank, width=100%]
-
-=== Launch the `WF-Terraform Enterprise APPLY` workflow template
-
-Launch the `WF-Terraform Enterprise APPLY` workflow template by selecting it and clicking on `🚀 Launch template`, or by simply clicking the `Rocket Launcher` 🚀 icon. The job status will show `Running` momentarily.
-
-* Observe the output of the Workflow Template run. You will see the nodes running and the workflow visualizer showing the flow of the workflow.
-
-image::wftemplateapply5.png[link=self, window=blank, width=100%]
-
-* Quickly switch to the `Terraform Enterprise` tab in your lab and observe the `plan` and then the `apply` being performed. 
-* If you were still at the Adding of an API Token screen, click on the `Terraform Enterprise` LOGO in the top left. Select the `rhdp-tf-org` organization, then select the `TFE-Demo` workspace, and then click on the `Runs` menu option on the left.
-* Click on the `Run` menu option on the left. You will see the `plan` and then the `apply` being performed. Also notice the resouce count in the Terraform Enterprise console.
-
-This shows that Ansible Automation Platform was able to trigger the Terraform Enterprise `plan` and `apply` operations successfully. Great Job!
-
-image::tfeapply1.png[link=self, window=blank, width=100%]
-
-=== Validate the Nginx installation
-
-**Please make sure that the Ansible Workflow completed successfully before proceeding. AAP has to have completed the entire workflow, including the `Install Nginx on RHEL` job template successfully before proceeding to validate the Nginx installation.**
-
-* From the Terraform Enterprise console, in the job run output you will see the resources that were created by Terraform.
-* From here get the public IP address (or DNS name) of the EC2 instance that was created by Terraform. 
-* You can also get the public IP address from the Ansible Automation Platform -> Inventory -> Terraform Inventory -> Hosts. Click on the host and then click on the `Details` tab.
-
-image::tfeapplyip.png[link=self, window=blank, width=100%]
-
-* Open a browser tab and navigate to the public IP address of the EC2 instance that was created by Terraform.
-* Use `http` as the protocol.
-* If prompted that the site doesn't support a secure connection, please click on the `Continue to site` button. 
-
-You will see the following page:
-
-image::rhelnginx.png[link=self, window=blank, width=100%]
-
-=== Inspect the Terraform Inventory in Ansible Automation Platform
-
-* Switch back to the Ansible Automation Platform browser tab.
-* Expand the `Automation Execution` menu on the left. `Automation Execution` -> `Infrastructure` -> `Inventories`.
-* Select the `Terraform Inventory`, and then click on the `Hosts` menu. Notice that there is a new host that was created by Terraform and is now part of your Ansible inventory, and hence can be used for further automation operations.
-
-image::tfeapplyinventory.png[link=self, window=blank, width=100%]
-
-[#task7]
-== Create the `WF-Terraform Enterprise DESTROY` workflow template, and its nodes
-
-In this task we will create a Workflow template to trigger a `Terraform Enterprise DESTROY` operation to destroy the previously created resources also followed up by and inventory sync to udpate the resources from the Ansible inventory.
-
-* Click on the `Ansible Automation Platform` tab at the top of lab.
-
-=== Create the `Terraform Enterprise DESTROY` job template
-
-
-Start by creating the another job template to trigger a `Terraform Entperprise destroy operation` to destroy the created resources.
-
-* Click on the `Ansible Automation Platform` tab at the top of lab. (if not already)
-* Expand the `Automation Execution` menu on the left. `Automation Execution` -> `Templates`.
-* Now click on `+ Create Template` then click  `Create job template`
-
-Fill out the following fields - **Table below:**
-
-|===
-| Field | Value
-
-| Name
-| Terraform Enterprise DESTROY
-
-| Inventory
-| **Demo Inventory**
-
-| Project
-| Terraform Demos Project
-
-| Playbook
-| playbooks/terraform_destroy_plan.yml
-
-| Execution environment
-| Terraform Execution Environment
-
-| Credentials
-| Terraform Enterprise credential
-|===
-
-Scroll to the bottom Click the blue `Create Job Template` button to **save** the job template.
-
-=== Create the `Terraform Enterprise DESTROY Workflow` workflow template, and it's nodes
-
-* Click on the `Ansible Automation Platform` tab at the top of lab.
-
-(if not already) Expand the `Automation Execution` menu on the left.
-
-* `Automation Execution` -> `Templates` -> `+Create template`.
-* Now click on `+ Create Workflow job template`
-
-Fill out the following fields - **Table below:**
-|===
-| Field | Value
-
-| Name
-| WF-Terraform Enterprise DESTROY
-
-| Organization
-| **Default**
-|===
-
-Scroll to the bottom Click the blue `Create Workflow Job Template` button to **save** the Workflow.
-
-=== Create the nodes for the `WF-Terraform Enterprise DESTROY` workflow template
-
-* Select `+ Add step` and then select the `Terraform Enterprise DESTROY` job template you created earlier, Select `Next` to continue, and then `Finish` to save the node.
-
-* Click on the vertical ellipsis `...` at the end of the node we just created, and then select `+ Add step and link`.
-* For this next step 
-** Change the `Node Type` to `Inventory Source Sync` and select the `AWS source for TFE resources`. 
-** Change the `Status` to `Run on Success`.
-* Select `Next` then `Finish` to save this second step. This will synchronize the inventory source you created earlier.
-
-Click on the `Save` button to save the workflow template.
-
-image::wftemplatedestroy1.png[link=self, window=blank, width=100%]
-
-=== Launch the `WF-Terraform Enterprise DESTROY` workflow template
-
-Launch the `Terraform Enterprise DESTROY Workflow` template by selecting it and clicking on `🚀 Launch template`, or by simply clicking the `Rocket Launcher` 🚀 icon. The job status will show `Running` momentarily.
-
-* Observe the output of the Workflow Template run. You will see the nodes running and the workflow visualizer showing the flow of the workflow.
-
-* Quickly switch to the `Terraform Enterprise` tab in your lab and observe the `destroy` being performed. Also notice the resouce count in the Terraform Enterprise console. You will see the resource count should be 0.
-
-image::tfedestroy1.png[link=self, window=blank, width=100%]
-
-* Observe the resources that were destroyed by Terraform in Ansible Automation Platform -> Inventory -> Terraform Inventory -> Hosts.
-** Here you will see that the host has been removed from the inventory and the resources have been destroyed.
-
-=== SUMMARY
-
-* In this lab section you created an configured AAP and Terraform Enterprise to work together.
-* You created Workflow templates in Ansible Automation Platform that kick off Terraform Enterprise to provision cloud resources, and then Ansible Automation Platform performed further automation operations on the resources.
-* You created a Workflow template to destroy the resources created by Terraform.
-
-NOTE: Even though this lab is focused on Terraform Enterprise and Ansible Automation Platform, you can also use HCP Terraform (also known as Terraform Cloud) and Ansible Automation Platform together in the EXACT SAME WAY!
-
-This work further enhances the **BETTER TOGETHER STORY!**, and additionally providing more options and choice for Automators and Infrastructure operators!
+include::includes/extended-exercise-1-8.adoc[]
