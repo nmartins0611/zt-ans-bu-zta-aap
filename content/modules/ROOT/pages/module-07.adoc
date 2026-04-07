@@ -37,7 +37,7 @@ Revoke/restore stay in **Section 5 playbooks** on purpose: **incident response**
 
 == Exercise 7.2 — EDA rulebook
 
-Import `section7/eda/wazuh-credential-revoke.yml`; activation / `ansible-rulebook` example in README.
+In the **Event-Driven Ansible controller (AAP 2.6)**, add project content for `section7/eda/wazuh-credential-revoke.yml`, a **Decision Environment**, and a **Rulebook Activation** (see `section7/README.md`). For CLI-only demos, use `ansible-rulebook` as documented there.
 
 [TIP]
 .Normalise events at the edge
@@ -61,12 +61,12 @@ Agents see **local auth logs immediately**, which can reduce detection latency v
 
 == Exercise 7.5 — Observe response
 
-Wazuh dashboard: rule **5712** and related; EDA event; AAP revoke job; app unhealthy; DB role gone.
+Wazuh dashboard: rule **5712** and related; EDA event; automation controller revoke job; app unhealthy; DB role gone.
 
 [TIP]
 .Correlate the full chain
 ====
-Confirm **rule fired → webhook delivered → EDA activation → AAP job** in order. Gaps in that chain are where attackers dwell—**observability** of the automation path is as important as the initial IDS alert.
+Confirm **rule fired → webhook delivered → EDA activation → automation controller job** in order. Gaps in that chain are where attackers dwell—**observability** of the automation path is as important as the initial IDS alert.
 ====
 
 == Exercise 7.6 — Restore
