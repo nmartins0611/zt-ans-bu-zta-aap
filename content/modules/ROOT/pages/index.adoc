@@ -1,147 +1,236 @@
-= Zero Trust Architecture Workshop — Overview
-:toc: left
-:toclevels: 2
-:icons: font
-:idprefix:
-:idseparator: -
-:experimental:
+# Zero Trust Architecture Workshop
 
-== Purpose
+Build and operate a Zero Trust Architecture using Red Hat Ansible Automation
+Platform as the central orchestration layer, integrated with IdM, HashiCorp
+Vault, Open Policy Agent, SPIFFE/SPIRE, Wazuh, Event-Driven Ansible, Netbox,
+and Arista cEOS network infrastructure.
 
-This workshop shows a **Zero Trust Architecture** where **Red Hat Ansible Automation Platform (AAP)** is the main **Policy Enforcement Point (PEP)**: operational change (deploy, patch, network, incident response) goes through automation that consults **identity**, **policy**, **secrets**, and **infrastructure state**.
+## Lab Architecture
 
-**Open Policy Agent (OPA)** acts as a **Policy Decision Point (PDP)**. **HashiCorp Vault** issues **short-lived** database credentials and **SSH certificates**. **IdM (FreeIPA)** provides directory identity and groups. **NetBox** is the **source of truth** for inventory. **SPIFFE/SPIRE** proves **workload identity** for sensitive jobs. **Splunk** or **Wazuh** plus **Event-Driven Ansible (EDA)** demonstrate **assume breach** response.
-
-Lab DNS names use the `*.zta.lab` zone; replace with instructor-provided hosts where needed.
-
-== Logical architecture (summary)
-
-[subs=+macros]
-----
+```
                             ┌──────────────────┐
-                            │  AAP Controller   │
+                            │   AAP Controller  │
                             │  control.zta.lab  │
-                            │  EDA Controller   │
+                            │   EDA Controller  │
                             └────────┬─────────┘
                                      │
           ┌──────────┬──────────┬────┼──────────┐
-          │          │          │    │          │
-     ┌────▼───┐ ┌───▼───┐ ┌───▼──┐ │   ┌───────▼──────────────────────────────┐
-     │ Vault  │ │NetBox │ │Gitea │ │   │  Central VM (e.g. 192.168.1.11)       │
-     │vault   │ │netbox │ │gitea │ │   │  IdM, OPA, Keycloak, SPIRE Server    │
-     │.zta.lab│ │.zta   │ │.zta  │ │   │  Containers: Splunk, Wazuh, …       │
-     └────────┘ └───────┘ └──────┘ │   │  Arista cEOS fabric + app/db tiers  │
-          │          │         │   │   └────────────────────────────────────┘
-          └──────────┴─────────┴───┘
-                     192.168.1.0/24 management (lab example)
-----
+          │          │          │    │           │
+     ┌────▼───┐ ┌───▼───┐ ┌───▼──┐ │      ┌───▼──────────────────────────────────┐
+     │ Vault  │ │Netbox │ │Gitea │ │      │  Central VM  (192.168.1.11)          │
+     │  .zta  │ │ .zta  │ │.zta  │ │      │                                     │
+     │  .lab  │ │ .lab  │ │.lab  │ │      │  Host services: IdM, OPA, Keycloak, │
+     │        │ │       │ │      │ │      │                 SPIRE Server         │
+     │Secrets │ │ CMDB  │ │ Git  │ │      │                                     │
+     │SSH CA  │ │       │ │Server│ │      │  Containers:                        │
+     └────────┘ └───────┘ └──────┘ │      │  ┌────────┐ ┌────────┐ ┌────────┐  │
+          │          │         │   │      │  │Splunk  │ │ Wazuh  │ │Keycloak│  │
+          └──────────┴─────────┴───┘      │  │ :8000  │ │:5601   │ │ :8543  │  │
+                     │                    │  │ :8088  │ │:9200   │ │        │  │
+         192.168.1.0/24 mgmt network     │  │        │ │:55000  │ │        │  │
+         ────────────────────────────     │  └────────┘ └────────┘ └────────┘  │
+                     │                    │                                     │
+                     └────────────────────┤  ┌──────────────────────────────┐   │
+                                          │  │  Arista cEOS Switch Fabric   │   │
+                                          │  │  ceos1 (spine)               │   │
+                                          │  │    ├── ceos2 (leaf/data)     │   │
+                                          │  │    └── ceos3 (leaf/app)      │   │
+                                          │  └──┬───────────────────┬──────┘   │
+                                          │     │                   │          │
+                                          │  ┌──▼──────┐  ┌────────▼──┐       │
+                                          │  │  DB      │  │   App     │       │
+                                          │  │10.30.0.10│  │10.20.0.10 │       │
+                                          │  │ :2022 SSH│  │ :2023 SSH │       │
+                                          │  │ :5432 PG │  │ :8081 HTTP│       │
+                                          │  └─────────┘  └───────────┘       │
+                                          └────────────────────────────────────┘
+```
 
-== Machines and components
+## Components
 
-[cols="2,3,2",options="header"]
-|===
-| Component | Role | Typical host / placement
+| Component | Role | Host |
+|-----------|------|------|
+| **IdM (FreeIPA)** | Identity, LDAP, Kerberos, CA, DNS | central.zta.lab |
+| **Open Policy Agent** | Policy-based authorisation (deny-by-default) | central.zta.lab |
+| **Keycloak** | SSO / OIDC (future use) | central.zta.lab |
+| **SPIRE Server** | Trust root for SPIFFE workload identity | central.zta.lab |
+| **SPIRE Agents** | Workload attestation, SVID issuance | control, db, vault |
+| **HashiCorp Vault** | Secrets management, dynamic DB creds, SSH CA | vault.zta.lab (own VM) |
+| **Netbox** | CMDB / source of truth for infrastructure | netbox.zta.lab (own VM) |
+| **Gitea** | Git server for GitOps workflows | gitea.zta.lab |
+| **Splunk** | Log aggregation, security analytics | central.zta.lab (container) |
+| **Wazuh** | SIEM, vulnerability scanning, brute-force detection | central.zta.lab (container) |
+| **Automation controller (AAP 2.6)** | Automation orchestration (Policy Enforcement Point) | control.zta.lab (own VM) |
+| **Event-Driven Ansible controller (AAP 2.6)** | Event-Driven Ansible (automated incident response) | control.zta.lab (own VM) |
+| **Arista cEOS** | 3-switch fabric (spine + 2 leaf), VLANs, ACLs | central.zta.lab (containers) |
+| **PostgreSQL** | Application database | central.zta.lab (RHEL container, 10.30.0.10) |
+| **App Server** | Global Telemetry Platform (Flask) | central.zta.lab (RHEL container, 10.20.0.10) |
 
-| **AAP Controller**
-| Automation orchestration (PEP); job templates, credentials, inventory
-| `control.zta.lab` (dedicated VM)
+## Network Architecture
 
-| **EDA Controller**
-| Event-driven automation; webhooks from SIEM → trigger AAP jobs
-| Same controller VM as AAP in this lab (`control.zta.lab`)
+**Management plane** (`192.168.1.0/24`):
+All VMs (central, AAP, Vault, Netbox) on this network. External VMs reach
+containers via published ports on central's management IP.
 
-| **IdM (FreeIPA)**
-| Identity, LDAP, Kerberos, CA, DNS
-| `central.zta.lab`
+**Data plane** (internal Podman networks, routed via Arista cEOS):
+- `net2` = `10.30.0.0/24` (data-tier) — DB container, ceos2 gateway
+- `net3` = `10.20.0.0/24` (app-tier) — App container, ceos3 gateway
+- ACLs on switches control cross-tier traffic
 
-| **Open Policy Agent (OPA)**
-| Policy decisions (deny-by-default Rego)
-| `central.zta.lab` (e.g. port 8181)
+---
 
-| **Keycloak**
-| SSO / OIDC (workshop / future integration)
-| `central.zta.lab` (container)
+## Workshop Sections
 
-| **SPIRE Server**
-| Trust root for SPIFFE workload identity
-| `central.zta.lab`
+### Section 1 — Configure ZTA Components & AAP Integration
 
-| **SPIRE Agents**
-| Workload attestation, SVID issuance
-| `control`, DB host, Vault VM (per your deployment)
+Configure AAP and connect it to the Zero Trust infrastructure: IdM for
+identity, Vault for secrets (including SSH signed certificates), OPA for
+policy decisions, Netbox as a CMDB, and Gitea for source control. Verify
+all services are healthy.
 
-| **HashiCorp Vault**
-| Secrets, dynamic DB creds, SSH CA signing
-| `vault.zta.lab` (dedicated VM in reference design)
+### Section 2 — Deploy Application with Short-Lived Credentials
 
-| **NetBox**
-| CMDB / source of truth for devices and IPAM
-| `netbox.zta.lab` (dedicated VM)
+Attempt to deploy the **Global Telemetry Platform** as the wrong user — OPA
+denies the request. Examine the policy, use the correct user, and deploy
+with short-lived Vault database credentials. Observe credential expiry.
 
-| **Gitea**
-| Git server for workshop project / GitOps
-| `gitea.zta.lab`
+### Section 3 — AAP Policy as Code: Platform-Gated Patching
 
-| **Splunk**
-| Log aggregation, saved searches, alerts → EDA
-| `central.zta.lab` (container; UI often `:8000`)
+AAP **Policy as Code** blocks a security patch from even launching when the
+user is not in `patch-admins`. Fix the group membership and successfully
+apply a security hardening patch (login banner, SSH hardening, password
+policy, audit logging).
 
-| **Wazuh**
-| Optional SIEM/HIDS path (alternative to Splunk for Section 7)
-| `central.zta.lab` (container)
+### Section 4 — SPIFFE-Verified Network VLAN Management
 
-| **Arista cEOS**
-| Three-switch fabric (spine + leaves), VLANs, ACLs
-| Containers on `central` (published SSH ports to lab)
+Create a VLAN through two OPA policy rings: the **outer ring** (AAP gateway)
+checks whether the user can launch the template, and the **inner ring**
+(in-playbook) validates the SPIFFE workload identity, user group, VLAN range,
+and action.
 
-| **PostgreSQL (app DB)**
-| Database for Global Telemetry Platform
-| RHEL container, data tier e.g. `10.30.0.10`, SSH e.g. `:2022`, PG `:5432`
+### Section 5 — Automated Incident Response (Splunk → EDA → Vault)
 
-| **App server (GTP)**
-| Flask “Global Telemetry Platform” dashboard
-| RHEL container, app tier e.g. `10.20.0.10`, SSH e.g. `:2023`, HTTP `:8081`
-|===
+Simulate a brute-force SSH attack on the app server. **Splunk** detects the
+attack via a saved search alert and sends a webhook to **Event-Driven Ansible**
+(EDA), which automatically triggers an AAP job to **revoke the application's
+database credentials** in Vault — isolating the application from sensitive data
+in under 30 seconds.
 
-== Network planes
+---
 
-Management plane (`192.168.1.0/24`)::
-VMs (central, AAP, Vault, NetBox) attach here. Published ports on **central** reach containerized services (Splunk, Wazuh, app/DB SSH, etc.) from your workstation.
+## Platform version
 
-Data plane (Podman networks behind cEOS)::
-* **Data tier** — e.g. `10.30.0.0/24` (`net2`): DB, ceos2 as gateway.  
-* **App tier** — e.g. `10.20.0.0/24` (`net3`): app, ceos3 as gateway.  
-**Switch ACLs** enforce **micro-segmentation** between tiers (lab exercises wire this to policy and Vault).
+Workshop automation and UI steps target **Red Hat Ansible Automation Platform 2.6** (automation controller and Event-Driven Ansible controller). See the [AAP 2.6 documentation](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.6/).
 
-== Workshop sections (lab guides)
+---
 
-Detailed steps are in AsciiDoc under each section:
+## Getting Started
 
-* link:section1/lab/index.adoc[Section 1 — AAP integration & verification] (from repo root: `section1/lab/index.adoc`)
-* link:section2/lab/index.adoc[Section 2 — Short-lived credentials & deploy pipeline]
-* link:section3/lab/index.adoc[Section 3 — Policy as Code patching]
-* link:section4/lab/index.adoc[Section 4 — SPIFFE + VLAN management]
-* link:section5/lab/index.adoc[Section 5 — Splunk → EDA → Vault revocation]
-* link:section6/lab/index.adoc[Section 6 — SSH lockdown & break-glass]
-* link:section7/lab/index.adoc[Section 7 — Wazuh path (optional)]
+### 1. Clone the repo
 
-Central index of labs: link:lab/index.adoc[`docs/lab/index.adoc`] (if you place *this* file in `docs/`, adjust links: use `lab/index.adoc` for the hub and `../section1/lab/index.adoc` etc., or keep everything under `docs/` with a flat structure).
+```bash
+git clone -b zta-container https://github.com/nmartins0611/zta-workshop-aap.git /tmp/zta-workshop-aap
+cd /tmp/zta-workshop-aap
+```
 
-== Link fix if this file lives in `docs/`
+### 2. Install Ansible collections
 
-If you save this as `docs/workshop-overview.adoc`, use these relative links to section labs:
+```bash
+ansible-galaxy collection install -r collections/requirements.yml
+```
 
-[source,asciidoc]
-----
-* link:../section1/lab/index.adoc[Section 1]
-* link:../section2/lab/index.adoc[Section 2]
-// … etc.
-----
+### 3. Update the inventory
 
-If you save as repo root `index.adoc`, the `link:section1/...` form above is correct.
+Edit `inventory/hosts.ini` and replace `ansible_host` values with your lab IPs.
 
-== Reference docs
+### 4. Set environment variables
 
-* Narrative + tables: `docs/exercise-guide.md`
-* Setup playbooks: `setup/` and root `README.md`
-* Shared URLs / accounts summary: `docs/lab/common-environment.adoc` (include it with `include::lab/common-environment.adoc[]` if you colocate files under `docs/lab/`)
+```bash
+export VAULT_TOKEN="<your-vault-token>"   # or log in with: vault login -method=userpass username=admin password=ansible123!
+export NETBOX_TOKEN="<your-netbox-api-token>"
+```
+
+### 5. Deploy core services
+
+```bash
+# From the zta-lab-idm-keycloak project:
+ansible-playbook site.yml          # IdM + Keycloak + OPA (~15-20 min)
+ansible-playbook integrate.yml     # Wire services together
+ansible-playbook verify.yml        # Verify health
+```
+
+### 6. Run workshop setup playbooks
+
+```bash
+cd /tmp/zta-workshop-aap
+
+# Identity & DNS
+ansible-playbook setup/configure-dns.yml
+ansible-playbook setup/enroll-idm-clients.yml
+ansible-playbook setup/configure-idm-users.yml
+
+# Secrets & SSH Certificates
+ansible-playbook setup/configure-vault.yml
+ansible-playbook setup/configure-vault-ssh.yml
+
+# Arista cEOS switch fabric
+ansible-playbook setup/deploy-arista.yml
+
+# RHEL containers (DB + App) — connected to switch fabric
+ansible-playbook setup/deploy-rhel-containers.yml
+
+# Database & Application (targets RHEL containers)
+ansible-playbook setup/deploy-db-app.yml
+
+# Splunk & Wazuh (containers on central)
+ansible-playbook setup/deploy-splunk.yml
+ansible-playbook setup/deploy-wazuh.yml
+
+# Policy
+ansible-playbook setup/configure-opa-base.yml
+ansible-playbook setup/configure-aap-policy.yml
+
+# Workload Identity (SPIFFE/SPIRE)
+ansible-playbook setup/deploy-spire.yml
+
+# SIEM → EDA Integration
+ansible-playbook setup/configure-wazuh-eda.yml
+
+# Verify everything
+ansible-playbook setup/verify-lab.yml
+```
+
+### 7. Start the workshop
+
+Section guides (Markdown): `sectionN/README.md`. **AsciiDoc lab handouts:** `sectionN/lab/index.adoc` (index of all: `docs/lab/index.adoc`).
+
+```
+section1/README.md   — Configure & Verify
+section2/README.md   — Deploy App with Short-Lived Credentials
+section3/README.md   — AAP Policy as Code: Patching
+section4/README.md   — SPIFFE-Verified VLAN Management
+section5/README.md   — Automated Incident Response (EDA)
+section6/README.md   — SSH Lockdown & Break-Glass (optional advanced)
+section7/README.md   — Wazuh EDA path (optional)
+```
+
+---
+
+## Zero Trust Principles Demonstrated
+
+| Principle | Where |
+|-----------|-------|
+| **Never trust, always verify** | Every AAP job checks OPA policy before execution |
+| **Least privilege** | Vault issues DB credentials with minimum grants |
+| **Short-lived credentials** | Dynamic DB users expire; SSH certificates are time-bound |
+| **No standing access** | SSH requires a Vault-signed certificate — no static keys |
+| **Deny by default** | OPA blocks all actions unless explicitly allowed |
+| **Identity-driven access** | IdM groups control who can run which operations |
+| **Workload identity** | SPIFFE/SPIRE proves the automation platform is legitimate |
+| **Platform enforcement** | AAP Policy as Code blocks unauthorised launches |
+| **Micro-segmentation** | Arista ACLs isolate app and data tiers on the switch fabric |
+| **Continuous monitoring** | Wazuh watches every authentication attempt |
+| **Assume breach** | EDA automatically revokes credentials on attack detection |
+| **Blast radius containment** | Credential revocation limits attacker data access |
+| **CMDB as source of truth** | Netbox validates infrastructure state for policy |
+| **GitOps** | Code push triggers automated, policy-governed pipelines |
