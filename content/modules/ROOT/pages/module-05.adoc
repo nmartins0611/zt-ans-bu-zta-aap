@@ -146,3 +146,4 @@ Post-restore checks prove **new** credentials and **clean** state—not the old 
 == Extended exercises
 
 include::includes/exercise-5-8-splunk-tuning.adoc[]
+
