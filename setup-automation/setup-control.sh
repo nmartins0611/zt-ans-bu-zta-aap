@@ -234,7 +234,7 @@ cp /tmp/zta-workshop-aap/ansible.cfg /etc/ansible/
 PLAYBOOK_DIR="/tmp/zta-workshop-aap"
 cd "${PLAYBOOK_DIR}" || { echo "ERROR: Cannot cd to ${PLAYBOOK_DIR}"; exit 1; }
 ansible-playbook -i inventory/hosts.ini setup/configure-aap-credentials.yml
-ansible-playbook -i inventory/hosts.ini setup/configure-aap-ldap.yml
+##ansible-playbook -i inventory/hosts.ini setup/configure-aap-ldap.yml
 ansible-playbook -i inventory/hosts.ini setup/configure-aap-inventory.yml
 ansible-playbook -i inventory/hosts.ini setup/configure-aap-project.yml --tags ee,project,section1
 ansible-playbook -i inventory/hosts.ini setup/configure-aap-inventory.yml ## Bring in SCM details
