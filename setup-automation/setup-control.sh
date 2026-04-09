@@ -2,7 +2,8 @@
 set -euo pipefail
 
 echo "Starting Control node setup..."
-
+export ANSIBLE_LOCALHOST_WARNING=False
+export ANSIBLE_INVENTORY_UNPARSED_WARNING=False
 ###############################################################################
 # Helpers
 ###############################################################################
