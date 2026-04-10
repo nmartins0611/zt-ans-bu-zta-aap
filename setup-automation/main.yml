@@ -124,6 +124,7 @@
       ansible.builtin.stat:
         path: "./setup-{{ ansible_host }}.sh"
       delegate_to: localhost
+      become: false
       register: r_script_test
 
     - name: Copy bootstrap script
@@ -163,6 +164,7 @@
         content: "{{ r_result.stdout | default(r_result.stderr) | default(r_result) }}"
         dest: "/tmp/{{ ansible_host }}-bootstrap.out"
       delegate_to: localhost
+      become: false
       when: r_result is defined
 
     - name: Fail if bootstrap failed
@@ -213,6 +215,7 @@
         content: "{{ r_central_configure.stdout | default(r_central_configure.stderr) | default(r_central_configure) }}"
         dest: /tmp/central-configure.out
       delegate_to: localhost
+      become: false
 
     - name: Fail if central configure failed
       ansible.builtin.fail:
@@ -261,6 +264,7 @@
         content: "{{ r_control_configure.stdout | default(r_control_configure.stderr) | default(r_control_configure) }}"
         dest: /tmp/control-configure.out
       delegate_to: localhost
+      become: false
 
     - name: Fail if control configure failed
       ansible.builtin.fail:
