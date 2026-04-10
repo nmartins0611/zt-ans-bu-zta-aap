@@ -25,7 +25,7 @@
 - name: Demo Playbook for the ansible-runner API
   hosts: all:!localhost
   gather_facts: false
-  serial: 1
+ # serial: 1
   vars:
     satellite_url: "{{ lookup('ansible.builtin.env', 'SATELLITE_URL') }}"
     satellite_org: "{{ lookup('ansible.builtin.env', 'SATELLITE_ORG') }}"
