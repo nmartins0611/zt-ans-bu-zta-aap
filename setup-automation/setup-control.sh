@@ -238,7 +238,7 @@ ansible-playbook -i inventory/hosts.ini setup/configure-aap-credentials.yml
 ansible-playbook -i inventory/hosts.ini setup/configure-aap-inventory.yml
 ansible-playbook -i inventory/hosts.ini setup/configure-aap-project.yml --tags ee,project,section1
 ansible-playbook -i inventory/hosts.ini setup/configure-aap-inventory.yml ## Bring in SCM details
-ansible-playbook -i inventory/hosts.ini setup/configure-aap-podman-gateway-prereqs.yml
+#ansible-playbook -i inventory/hosts.ini setup/configure-aap-podman-gateway-prereqs.yml
 #ansible-playbook -i inventory/hosts.ini setup/configure-aap-project.yml --tags rbac
 
 
