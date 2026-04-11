@@ -1,0 +1,90 @@
+---
+# Common bootstrap tasks executed on all hosts in parallel.
+# Uses only ansible.builtin.* modules for container compatibility.
+#
+# Required variables (set via add_host in inventory play):
+#   net_interface   - NIC name (e.g. eth1, enp2s0)
+#   net_address     - CIDR address (e.g. 192.168.1.12/24)
+#   net_dns         - DNS server IP (optional)
+#   net_dns_search  - DNS search domain (optional)
+#   hosts_entries   - list of {ip, names} dicts
+#   tmm_org         - subscription-manager org
+#   tmm_id          - subscription-manager activation key
+
+- name: Check current SELinux mode
+  ansible.builtin.command: getenforce
+  register: r_selinux
+  changed_when: false
+
+- name: Set SELinux to permissive
+  ansible.builtin.command: setenforce 0
+  when: r_selinux.stdout == 'Enforcing'
+  changed_when: true
+
+- name: Stop firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: stopped
+  failed_when: false
+
+- name: Populate /etc/hosts entries
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: "^{{ item.ip }} "
+    line: "{{ item.ip }} {{ item.names }}"
+    state: present
+  loop: "{{ hosts_entries }}"
+  loop_control:
+    label: "{{ item.ip }}"
+
+- name: Check if nmcli connection exists
+  ansible.builtin.command: "nmcli connection show {{ net_interface }}"
+  register: r_nmcli_check
+  failed_when: false
+  changed_when: false
+
+- name: Create nmcli connection
+  ansible.builtin.command: >-
+    nmcli connection add
+    type ethernet
+    con-name {{ net_interface }}
+    ifname {{ net_interface }}
+    ipv4.addresses {{ net_address }}
+    ipv4.method manual
+    {{ 'ipv4.dns ' ~ net_dns if net_dns | default('') | length > 0 else '' }}
+    {{ 'ipv4.dns-search ' ~ net_dns_search if net_dns_search | default('') | length > 0 else '' }}
+    connection.autoconnect yes
+  when: r_nmcli_check.rc != 0
+  changed_when: true
+
+- name: Bring up nmcli connection
+  ansible.builtin.command: "nmcli connection up {{ net_interface }}"
+  failed_when: false
+  changed_when: false
+
+- name: Check subscription-manager registration
+  ansible.builtin.command: subscription-manager identity
+  register: r_rhsm_check
+  failed_when: false
+  changed_when: false
+
+- name: Register with subscription-manager
+  when: r_rhsm_check.rc != 0
+  block:
+    - name: Clean existing subscription data
+      ansible.builtin.shell: |
+        dnf clean all || true
+        rm -f /etc/yum.repos.d/redhat-rhui*.repo
+        sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
+        subscription-manager unregister 2>/dev/null || true
+        subscription-manager remove --all 2>/dev/null || true
+        subscription-manager clean
+      changed_when: true
+
+    - name: Register system
+      ansible.builtin.command: >-
+        subscription-manager register
+        --org="{{ tmm_org }}"
+        --activationkey="{{ tmm_id }}"
+        --force
+      changed_when: true

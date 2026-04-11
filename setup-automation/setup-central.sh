@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "Starting Central node setup..."
+echo "Starting Central node setup (bootstrap phase)..."
 
 cleanup() {
     echo "Cleaning up temporary ansible configuration..."
@@ -47,26 +47,6 @@ run_if_needed() {
     fi
 }
 
-ensure_hosts_entry() {
-    local ip="$1"
-    local names="$2"
-    if grep -q "^${ip} " /etc/hosts 2>/dev/null; then
-        echo "SKIP: /etc/hosts already has entry for ${ip}"
-    else
-        echo "${ip} ${names}" >> /etc/hosts
-    fi
-}
-
-ensure_nmcli_connection() {
-    local con_name="$1"
-    shift
-    if nmcli connection show "$con_name" &>/dev/null; then
-        echo "SKIP: nmcli connection '${con_name}' already exists"
-    else
-        nmcli connection add "$@"
-    fi
-}
-
 ###############################################################################
 # 1. Validate required environment variables
 ###############################################################################
@@ -80,26 +60,7 @@ for var in AH_TOKEN TMM_ORG TMM_ID GUID DOMAIN; do
 done
 
 ###############################################################################
-# 2. SELinux and Firewall configuration
-###############################################################################
-
-CURRENT_MODE=$(getenforce)
-if [ "${CURRENT_MODE}" = "Permissive" ] || [ "${CURRENT_MODE}" = "Disabled" ]; then
-    echo "SKIP: SELinux already in ${CURRENT_MODE} mode"
-else
-    setenforce 0
-    echo "SELinux set to Permissive"
-fi
-
-if systemctl is-active --quiet firewalld; then
-    systemctl stop firewalld
-    echo "Firewalld stopped"
-else
-    echo "SKIP: Firewalld already stopped"
-fi
-
-###############################################################################
-# 3. Environment variables
+# 2. Environment variables
 ###############################################################################
 
 export ANSIBLE_HOST_KEY_CHECKING=False
@@ -108,7 +69,7 @@ export ANSIBLE_CONFIG=/tmp/zta-workshop-aap/ansible.cfg
 mkdir -p /root/.ansible/cp
 
 ###############################################################################
-# 4. Setup Ansible configuration with AH Token
+# 3. Setup Ansible configuration with AH Token
 ###############################################################################
 
 tee ~/.ansible.cfg > /dev/null <<EOF
@@ -131,41 +92,7 @@ pipelining = True
 EOF
 
 ###############################################################################
-# 5. Register with subscription manager (idempotent)
-###############################################################################
-
-if subscription-manager identity &>/dev/null; then
-    echo "SKIP: Already registered – skipping registration"
-else
-    echo "Cleaning existing subscription data..."
-    dnf clean all || true
-    rm -f /etc/yum.repos.d/redhat-rhui*.repo
-    sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
-    subscription-manager unregister 2>/dev/null || true
-    subscription-manager remove --all 2>/dev/null || true
-    subscription-manager clean
-
-    echo "Registering with subscription manager..."
-    if subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force; then
-        echo "System registered successfully!"
-    else
-        echo "Registration failed. Please check your credentials and network connection."
-        exit 1
-    fi
-fi
-
-###############################################################################
-# 6. /etc/hosts (idempotent)
-###############################################################################
-
-ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
-ensure_hosts_entry "192.168.1.11" "central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab"
-ensure_hosts_entry "192.168.1.12" "vault.zta.lab vault"
-ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
-ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
-
-###############################################################################
-# 7. Install packages
+# 4. Install packages
 ###############################################################################
 
 run_if_needed "Install pynetbox" \
@@ -179,7 +106,7 @@ run_if_needed "Install paramiko" \
      pip3 install paramiko --user
 
 ###############################################################################
-# 8. Download IPA RPMs for containers
+# 5. Download IPA RPMs for containers
 ###############################################################################
 
 if [ ! -d /tmp/ipa-rpms ]; then
@@ -201,7 +128,7 @@ for c in app db; do
 done
 
 ###############################################################################
-# 9. Clone workshop repo (idempotent)
+# 6. Clone workshop repo (idempotent)
 ###############################################################################
 
 if [ -d /tmp/zta-workshop-aap ]; then
@@ -212,7 +139,7 @@ else
 fi
 
 ###############################################################################
-# 10. IPA rewrite config (idempotent)
+# 7. IPA rewrite config (idempotent)
 ###############################################################################
 
 IPA_REWRITE="/etc/httpd/conf.d/ipa-rewrite.conf"
@@ -239,8 +166,8 @@ IPA
 fi
 
 ###############################################################################
-# 11. Reconfigure Keycloak container
-###############################################################################hrg2t
+# 8. Reconfigure Keycloak container
+###############################################################################
 
 echo "Reconfiguring Keycloak container..."
 podman stop keycloak 2>/dev/null || true
@@ -270,23 +197,10 @@ fi
 systemctl start container-keycloak
 
 ###############################################################################
-# 12. Network configuration (idempotent)
+# 9. Copy ansible.cfg and run independent playbooks
 ###############################################################################
-
-echo "Configuring network interface..."
-ensure_nmcli_connection "enp2s0" \
-    type ethernet con-name enp2s0 ifname enp2s0 \
-    ipv4.addresses 192.168.1.11/24 \
-    ipv4.method manual \
-    connection.autoconnect yes
-
-nmcli connection up enp2s0 || true
 
 cp /tmp/zta-workshop-aap/ansible.cfg /etc/ansible/
-
-###############################################################################
-# 13. Run Ansible playbooks
-###############################################################################
 
 PLAYBOOK_DIR="/tmp/zta-workshop-aap"
 cd "${PLAYBOOK_DIR}" || { echo "ERROR: Cannot cd to ${PLAYBOOK_DIR}"; exit 1; }
@@ -294,9 +208,6 @@ ansible-playbook -i inventory/hosts.ini setup/configure-dns.yml
 ansible-playbook -i inventory/hosts.ini setup/enroll-idm-clients.yml
 ansible-playbook -i inventory/hosts.ini setup/deploy-central.yml --skip-tags keycloak
 ansible-playbook -i inventory/hosts.ini setup/deploy-db-app.yml
-ansible-playbook -i inventory/hosts.ini setup/configure-vault.yml
-ansible-playbook -i inventory/hosts.ini setup/configure-vault-ssh.yml
-ansible-playbook -i inventory/hosts.ini setup/configure-netbox.yml
-ansible-playbook -i inventory/hosts.ini setup/integrate-splunk.yml --skip-tags arista_syslog,wazuh_splunk
-ansible-playbook -i inventory/hosts.ini setup/configure-aap-podman-gateway-prereqs.yml
 
+echo ""
+echo "central bootstrap phase complete"

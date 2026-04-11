@@ -41,99 +41,8 @@ run_if_needed() {
     fi
 }
 
-ensure_hosts_entry() {
-    local ip="$1"
-    local names="$2"
-    if grep -q "^${ip} " /etc/hosts 2>/dev/null; then
-        echo "SKIP: /etc/hosts already has entry for ${ip}"
-    else
-        echo "${ip} ${names}" >> /etc/hosts
-    fi
-}
-
-ensure_nmcli_connection() {
-    local con_name="$1"
-    shift
-    if nmcli connection show "$con_name" &>/dev/null; then
-        echo "SKIP: nmcli connection '${con_name}' already exists"
-    else
-        nmcli connection add "$@"
-    fi
-}
-
 ###############################################################################
-# 1. Validate required environment variables
-###############################################################################
-
-for var in TMM_ORG TMM_ID; do
-    if [ -z "${!var:-}" ]; then
-        echo "ERROR: $var environment variable is not set"
-        echo "Usage: TMM_ORG='...' TMM_ID='...' $0"
-        exit 1
-    fi
-done
-
-###############################################################################
-# 2. SELinux — set permissive (idempotent)
-###############################################################################
-
-CURRENT_MODE=$(getenforce)
-if [ "${CURRENT_MODE}" = "Permissive" ] || [ "${CURRENT_MODE}" = "Disabled" ]; then
-    echo "SKIP: SELinux already in ${CURRENT_MODE} mode"
-else
-    setenforce 0
-    echo "SELinux set to Permissive"
-fi
-
-###############################################################################
-# 3. /etc/hosts (idempotent)
-###############################################################################
-
-ensure_hosts_entry "192.168.1.10" "control.zta.lab control aap.zta.lab"
-ensure_hosts_entry "192.168.1.11" "central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab"
-ensure_hosts_entry "192.168.1.12" "vault.zta.lab vault"
-ensure_hosts_entry "192.168.1.15" "netbox.zta.lab netbox"
-ensure_hosts_entry "192.168.1.13" "wazuh.zta.lab wazuh"
-
-###############################################################################
-# 4. Network configuration (idempotent)
-###############################################################################
-
-echo "Configuring network interface..."
-ensure_nmcli_connection "eth1" \
-    type ethernet con-name eth1 ifname eth1 \
-    ipv4.addresses 192.168.1.15/24 \
-    ipv4.method manual \
-    connection.autoconnect yes
-
-nmcli connection up eth1 || true
-
-###############################################################################
-# 5. Register with subscription manager (idempotent)
-###############################################################################
-
-if subscription-manager identity &>/dev/null; then
-    echo "SKIP: Already registered – skipping registration"
-else
-    echo "Cleaning existing subscription data..."
-    dnf clean all || true
-    rm -f /etc/yum.repos.d/redhat-rhui*.repo
-    sed -i 's/enabled=1/enabled=0/' /etc/dnf/plugins/amazon-id.conf 2>/dev/null || true
-    subscription-manager unregister 2>/dev/null || true
-    subscription-manager remove --all 2>/dev/null || true
-    subscription-manager clean
-
-    echo "Registering with subscription manager..."
-    if subscription-manager register --org="$TMM_ORG" --activationkey="$TMM_ID" --force; then
-        echo "System registered successfully!"
-    else
-        echo "Registration failed. Please check your credentials and network connection."
-        exit 1
-    fi
-fi
-
-###############################################################################
-# 6. Install packages and Docker
+# 1. Install packages and Docker
 ###############################################################################
 
 run_if_needed "Install base packages" \
@@ -156,7 +65,7 @@ run_if_needed "Install Docker" \
         docker-buildx-plugin docker-compose-plugin
 
 ###############################################################################
-# 7. Enable & start Docker (idempotent)
+# 2. Enable & start Docker (idempotent)
 ###############################################################################
 
 if ! systemctl is-enabled --quiet docker 2>/dev/null; then
@@ -174,7 +83,7 @@ else
 fi
 
 ###############################################################################
-# 8. Wait for Docker daemon to be ready
+# 3. Wait for Docker daemon to be ready
 ###############################################################################
 
 echo "Waiting for Docker daemon to be ready..."
@@ -193,7 +102,7 @@ if ! docker info &>/dev/null; then
 fi
 
 ###############################################################################
-# 9. Clone NetBox Docker repo (idempotent)
+# 4. Clone NetBox Docker repo (idempotent)
 ###############################################################################
 
 if [ -d /tmp/netbox-docker ]; then
@@ -205,7 +114,7 @@ else
 fi
 
 ###############################################################################
-# 10. Docker Compose override configuration
+# 5. Docker Compose override configuration
 ###############################################################################
 
 echo "Creating Docker Compose override configuration..."
@@ -226,34 +135,56 @@ services:
       SUPERUSER_PASSWORD: "netbox"
       SUPERUSER_NAME: "admin"
     healthcheck:
-      start_period: 180s
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/login/ || exit 1"]
+      start_period: 300s
+      interval: 15s
+      timeout: 5s
+      retries: 3
 EOF
 
 ###############################################################################
-# 11. Deploy NetBox containers
+# 6. Deploy NetBox containers
 ###############################################################################
 
 cd /tmp/netbox-docker
 
-# Check if containers are already running
 if docker compose ps | grep -q "netbox.*Up"; then
     echo "SKIP: NetBox containers already running"
 else
     retry "Pull NetBox images" \
         docker compose pull
 
-    retry "Start NetBox containers" \
-        docker compose up -d netbox netbox-worker
+    docker compose up -d netbox
+
+    echo "Waiting for NetBox container to become healthy..."
+    health="starting"
+    for i in {1..60}; do
+        health=$(docker inspect --format='{{.State.Health.Status}}' netbox-docker-netbox-1 2>/dev/null || echo "missing")
+        if [ "$health" = "healthy" ]; then
+            echo "NetBox container is healthy"
+            break
+        fi
+        echo "  Health status: $health (attempt $i/60)"
+        sleep 5
+    done
+
+    if [ "$health" != "healthy" ]; then
+        echo "ERROR: NetBox did not become healthy in time"
+        docker compose logs netbox --tail=50
+        exit 1
+    fi
+
+    docker compose up -d netbox-worker
 fi
 
 ###############################################################################
-# 12. Wait for NetBox to be ready
+# 7. Wait for NetBox to be ready
 ###############################################################################
 
 echo "Waiting for NetBox to be ready..."
 for i in {1..30}; do
     if curl -f -s http://localhost:8000 &>/dev/null; then
-        echo "✓ NetBox is up and responding"
+        echo "NetBox is up and responding"
         break
     fi
     echo "Waiting for NetBox to start... (attempt $i/30)"
@@ -276,4 +207,4 @@ else
 fi
 
 echo ""
-echo "✓ netbox setup complete"
+echo "netbox setup complete"
