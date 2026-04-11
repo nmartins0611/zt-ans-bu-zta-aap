@@ -122,22 +122,22 @@
 
     - name: Check if bootstrap script exists
       ansible.builtin.stat:
-        path: "{{ playbook_dir }}/setup-{{ ansible_host }}.sh"
+        path: "{{ playbook_dir }}/setup-{{ inventory_hostname }}.sh"
       delegate_to: localhost
       become: false
       register: r_script_test
 
     - name: Copy bootstrap script
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/setup-{{ ansible_host }}.sh"
-        dest: "/tmp/setup-scripts/setup-{{ ansible_host }}.sh"
+        src: "{{ playbook_dir }}/setup-{{ inventory_hostname }}.sh"
+        dest: "/tmp/setup-scripts/setup-{{ inventory_hostname }}.sh"
         mode: '0755'
       when: r_script_test.stat.exists
 
     - name: Execute bootstrap script
       ansible.builtin.shell: >-
-        sh -x /tmp/setup-scripts/setup-{{ ansible_host }}.sh
-        > /tmp/setup-scripts/setup-{{ ansible_host }}.log 2>&1
+        sh -x /tmp/setup-scripts/setup-{{ inventory_hostname }}.sh
+        > /tmp/setup-scripts/setup-{{ inventory_hostname }}.log 2>&1
       when: r_script_test.stat.exists
       register: r_result
       environment:
@@ -169,7 +169,7 @@
 
     - name: Fail if bootstrap failed
       ansible.builtin.fail:
-        msg: "Bootstrap failed for {{ ansible_host }}"
+        msg: "Bootstrap failed for {{ inventory_hostname }}"
       when:
         - r_result is defined
         - r_result.rc is defined
