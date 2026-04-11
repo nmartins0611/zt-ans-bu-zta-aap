@@ -97,7 +97,10 @@ ingress:
   # ── ZTA Dashboard ──
   - protocol: TCP
     port: 5050     # Live Topology Dashboard
-
+  - from:
+      - podSelector:
+          matchLabels:
+            kubevirt.io: virt-launcher
 egress:
 - ports:
   # ── General ──
@@ -190,3 +193,7 @@ egress:
   # ── ZTA Dashboard ──
   - protocol: TCP
     port: 5050     # Live Topology Dashboard
+  - to:
+      - podSelector:
+          matchLabels:
+            kubevirt.io: virt-launcher

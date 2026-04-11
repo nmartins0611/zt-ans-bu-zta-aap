@@ -1,31 +1,112 @@
 ---
+# Phase 1: Build dynamic inventory with per-host network variables
 - name: Create inventory
   hosts: localhost
   gather_facts: false
-
   vars_files:
-    - ../config/secrets.yaml  # NOTE: this is inclueded later in this document
+    - ../config/secrets.yaml
   tasks:
-  - name: Add nodes
-    ansible.builtin.add_host:
-      name: "{{ item }}"
-      ansible_ssh_host: "{{ item }}"
-      ansible_ssh_port: "{{ lookup('ansible.builtin.env', 'BASTION_PORT') }}"
-      ansible_ssh_user: "{{ lookup('ansible.builtin.env', 'BASTION_USER') }}"
-      ansible_ssh_pass: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
-      ansible_become_password: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
-      ansible_python_interpreter: /usr/libexec/platform-python
-    loop:
-      - vault
-      - netbox
-    # - wazuh
-      - central
-      - control
-    
-- name: Demo Playbook for the ansible-runner API
+    - name: Add vault host
+      ansible.builtin.add_host:
+        name: vault
+        ansible_ssh_host: vault
+        ansible_ssh_port: "{{ lookup('ansible.builtin.env', 'BASTION_PORT') }}"
+        ansible_ssh_user: "{{ lookup('ansible.builtin.env', 'BASTION_USER') }}"
+        ansible_ssh_pass: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_become_password: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_python_interpreter: /usr/libexec/platform-python
+        net_interface: eth1
+        net_address: 192.168.1.12/24
+        net_dns: "192.168.1.11"
+        net_dns_search: zta.lab
+
+    - name: Add netbox host
+      ansible.builtin.add_host:
+        name: netbox
+        ansible_ssh_host: netbox
+        ansible_ssh_port: "{{ lookup('ansible.builtin.env', 'BASTION_PORT') }}"
+        ansible_ssh_user: "{{ lookup('ansible.builtin.env', 'BASTION_USER') }}"
+        ansible_ssh_pass: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_become_password: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_python_interpreter: /usr/libexec/platform-python
+        net_interface: eth1
+        net_address: 192.168.1.15/24
+        net_dns: ""
+        net_dns_search: ""
+
+    # - name: Add wazuh host
+    #   ansible.builtin.add_host:
+    #     name: wazuh
+    #     ...
+
+    - name: Add central host
+      ansible.builtin.add_host:
+        name: central
+        ansible_ssh_host: central
+        ansible_ssh_port: "{{ lookup('ansible.builtin.env', 'BASTION_PORT') }}"
+        ansible_ssh_user: "{{ lookup('ansible.builtin.env', 'BASTION_USER') }}"
+        ansible_ssh_pass: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_become_password: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_python_interpreter: /usr/libexec/platform-python
+        net_interface: enp2s0
+        net_address: 192.168.1.11/24
+        net_dns: ""
+        net_dns_search: ""
+
+    - name: Add control host
+      ansible.builtin.add_host:
+        name: control
+        ansible_ssh_host: control
+        ansible_ssh_port: "{{ lookup('ansible.builtin.env', 'BASTION_PORT') }}"
+        ansible_ssh_user: "{{ lookup('ansible.builtin.env', 'BASTION_USER') }}"
+        ansible_ssh_pass: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_become_password: "{{ lookup('ansible.builtin.env', 'BASTION_PASSWORD') }}"
+        ansible_python_interpreter: /usr/libexec/platform-python
+        net_interface: eth1
+        net_address: 192.168.1.10/24
+        net_dns: "192.168.1.11"
+        net_dns_search: zta.lab
+
+# Phase 2: Common bootstrap on all hosts in parallel (~90s)
+# SELinux, firewalld, /etc/hosts, nmcli, RHSM registration
+- name: Common bootstrap
   hosts: all:!localhost
   gather_facts: false
-#  serial: 1
+  become: true
+  vars_files:
+    - ../config/secrets.yaml
+  vars:
+    tmm_org: "{{ tmm_orgid }}"
+    tmm_id: "{{ tmm_activation }}"
+    hosts_entries:
+      - ip: 192.168.1.10
+        names: control.zta.lab control aap.zta.lab
+      - ip: 192.168.1.11
+        names: central.zta.lab central keycloak.zta.lab opa.zta.lab splunk.zta.lab db.zta.lab app.zta.lab ceos1.zta.lab ceos2.zta.lab ceos3.zta.lab
+      - ip: 192.168.1.12
+        names: vault.zta.lab vault
+      - ip: 192.168.1.15
+        names: netbox.zta.lab netbox
+      - ip: 192.168.1.13
+        names: wazuh.zta.lab wazuh
+  tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+
+    - name: Run common bootstrap tasks
+      ansible.builtin.include_tasks: tasks/common-bootstrap.yml
+
+# Phase 3: Host-specific bootstrap in parallel (~300s, netbox bottleneck)
+# vault: license + unseal
+# netbox: Docker + compose + wait-for-ready
+# central: packages, Keycloak, IPA, first 4 independent playbooks
+# control: packages, collections install
+- name: Host-specific bootstrap
+  hosts: all:!localhost
+  gather_facts: false
+  become: true
+  vars_files:
+    - ../config/secrets.yaml
   vars:
     satellite_url: "{{ lookup('ansible.builtin.env', 'SATELLITE_URL') }}"
     satellite_org: "{{ lookup('ansible.builtin.env', 'SATELLITE_ORG') }}"
@@ -33,75 +114,181 @@
     guid: "{{ lookup('ansible.builtin.env', 'GUID') }}"
     domain: "{{ lookup('ansible.builtin.env', 'DOMAIN') }}"
   tasks:
-  - name: "waiting for the port tcp/22 to be open"
-    ansible.builtin.wait_for_connection:
+    - name: Create setup-scripts directory
+      ansible.builtin.file:
+        path: /tmp/setup-scripts/
+        state: directory
+        mode: '0755'
 
-  - name: Set config_host variable with ansible_host value
-    ansible.builtin.set_fact:
-      config_host: "{{ ansible_host }}"
+    - name: Check if bootstrap script exists
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/setup-{{ inventory_hostname }}.sh"
+      delegate_to: localhost
+      become: false
+      register: r_script_test
 
-  - name: Create a directory if it does not exist
-    ansible.builtin.file:
-      path: "/tmp/setup-scripts/"
-      state: directory
-      mode: '0755'
+    - name: Copy bootstrap script
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/setup-{{ inventory_hostname }}.sh"
+        dest: "/tmp/setup-scripts/setup-{{ inventory_hostname }}.sh"
+        mode: '0755'
+      when: r_script_test.stat.exists
 
-  - name: Check if setup-server.sh exists
-    ansible.builtin.stat:
-      path: "./setup-{{ config_host }}.sh"
-    delegate_to: localhost
-    register: r_script_test
+    - name: Execute bootstrap script
+      ansible.builtin.shell: >-
+        sh -x /tmp/setup-scripts/setup-{{ inventory_hostname }}.sh
+        > /tmp/setup-scripts/setup-{{ inventory_hostname }}.log 2>&1
+      when: r_script_test.stat.exists
+      register: r_result
+      environment:
+        SATELLITE_URL: "{{ satellite_url }}"
+        SATELLITE_ORG: "{{ satellite_org }}"
+        SATELLITE_ACTIVATIONKEY: "{{ satellite_activationkey }}"
+        GUID: "{{ guid }}"
+        DOMAIN: "{{ domain }}"
+        REG_KEY: "{{ reg_username }}"
+        REG_PASS: "{{ reg_password }}"
+        SSH_KEY: "{{ ssh_key }}"
+        VAULT_LIC: "{{ vaultlic }}"
+        AH_TOKEN: "{{ ahtoken }}"
+        TMM_ID: "{{ tmm_activation }}"
+        TMM_ORG: "{{ tmm_orgid }}"
 
-  - name: Copy script file
-    when: r_script_test.stat.exists
-    ansible.builtin.copy:
-      src: "./setup-{{ ansible_host }}.sh"
-      dest: "/tmp/setup-scripts/setup-{{ ansible_host }}.sh"
-    register: r_result
+    - name: Show bootstrap output
+      ansible.builtin.debug:
+        var: r_result.stdout_lines
+      when: r_result is defined and r_result.stdout_lines is defined
 
-  - name: Include secrets var
-    ansible.builtin.include_vars: ../config/secrets.yaml
+    - name: Save bootstrap output
+      ansible.builtin.copy:
+        content: "{{ r_result.stdout | default(r_result.stderr) | default(r_result) }}"
+        dest: "/tmp/{{ inventory_hostname }}-bootstrap.out"
+      delegate_to: localhost
+      become: false
+      when: r_result is defined
 
-  - name: Execute setup-node.sh if it exists
-    when: r_script_test.stat.exists
-    ansible.builtin.shell: "sh -x /tmp/setup-scripts/setup-{{ ansible_host }}.sh > /tmp/setup-scripts/setup-{{ ansible_host }}.log 2>&1"
-    become: true
-    register: r_result
-    environment:
-      SATELLITE_URL: "{{ satellite_url }}"
-      SATELLITE_ORG: "{{ satellite_org }}"
-      SATELLITE_ACTIVATIONKEY: "{{ satellite_activationkey }}"
-      GUID: "{{ guid }}"
-      DOMAIN: "{{ domain }}"
-      REG_KEY: "{{ reg_username }}"
-      REG_PASS: "{{ reg_password }}"
-      SSH_KEY: "{{ ssh_key }}"
-      VAULT_LIC: "{{ vaultlic }}"
-      AH_TOKEN: "{{ ahtoken }}"
-      TMM_ID: "{{ tmm_activation }}"
-      TMM_ORG: "{{ tmm_orgid }}"
+    - name: Fail if bootstrap failed
+      ansible.builtin.fail:
+        msg: "Bootstrap failed for {{ inventory_hostname }}"
+      when:
+        - r_result is defined
+        - r_result.rc is defined
+        - r_result.rc != 0
 
-  - name: Output script result
-    ansible.builtin.debug:
-      var: r_result.stdout
-    when: r_script_test.stat.exists
+# Phase 4: Central configure (~200s)
+# Waits for Vault and NetBox, then runs dependent playbooks
+- name: Central service-dependent configuration
+  hosts: central
+  gather_facts: false
+  become: true
+  vars_files:
+    - ../config/secrets.yaml
+  vars:
+    guid: "{{ lookup('ansible.builtin.env', 'GUID') }}"
+    domain: "{{ lookup('ansible.builtin.env', 'DOMAIN') }}"
+  tasks:
+    - name: Wait for Vault to be unsealed
+      ansible.builtin.command: vault status -address=http://127.0.0.1:8200
+      delegate_to: vault
+      register: r_vault_ready
+      until: r_vault_ready.rc == 0
+      retries: 30
+      delay: 10
+      changed_when: false
 
-  - name: Write script result to file
-    ansible.builtin.copy:
-      content: "{{ r_result.stdout | default(r_result.stderr) | default(r_result) }}"
-      dest: "/tmp/{{ ansible_host }}-setup-script.out"
-    delegate_to: localhost
-    when:
-    - r_result is defined
+    - name: Wait for NetBox to be responsive
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8000
+        status_code: 200
+      delegate_to: netbox
+      register: r_netbox_ready
+      until: r_netbox_ready.status == 200
+      retries: 30
+      delay: 10
+      changed_when: false
 
-  - name: Output script result
-    ansible.builtin.debug:
-      var: r_result
-    when: r_result is defined
+    - name: Copy central configure script
+      ansible.builtin.copy:
+        src: ./setup-central-configure.sh
+        dest: /tmp/setup-scripts/setup-central-configure.sh
+        mode: '0755'
 
-  - name: Fail if stage was failed
-    ansible.builtin.fail:
-      msg: "Setup failed"
-    when:
-    - r_result is defined
-    - r_result.rc != 0
+    - name: Execute central configure script
+      ansible.builtin.shell: >-
+        sh -x /tmp/setup-scripts/setup-central-configure.sh
+        > /tmp/setup-scripts/setup-central-configure.log 2>&1
+      register: r_central_configure
+      environment:
+        GUID: "{{ guid }}"
+        DOMAIN: "{{ domain }}"
+        AH_TOKEN: "{{ ahtoken }}"
+        TMM_ID: "{{ tmm_activation }}"
+        TMM_ORG: "{{ tmm_orgid }}"
+
+    - name: Show central configure output
+      ansible.builtin.debug:
+        var: r_central_configure.stdout_lines
+      when: r_central_configure.stdout_lines is defined
+
+    - name: Save central configure output
+      ansible.builtin.copy:
+        content: "{{ r_central_configure.stdout | default(r_central_configure.stderr) | default(r_central_configure) }}"
+        dest: /tmp/central-configure.out
+      delegate_to: localhost
+      become: false
+
+    - name: Fail if central configure failed
+      ansible.builtin.fail:
+        msg: "Central configure phase failed"
+      when:
+        - r_central_configure.rc is defined
+        - r_central_configure.rc != 0
+
+# Phase 5: Control configure (~180s)
+# Runs AAP playbooks after central has configured vault/netbox
+- name: Control AAP configuration
+  hosts: control
+  gather_facts: false
+  become: true
+  vars_files:
+    - ../config/secrets.yaml
+  vars:
+    guid: "{{ lookup('ansible.builtin.env', 'GUID') }}"
+    domain: "{{ lookup('ansible.builtin.env', 'DOMAIN') }}"
+  tasks:
+    - name: Copy control configure script
+      ansible.builtin.copy:
+        src: ./setup-control-configure.sh
+        dest: /tmp/setup-scripts/setup-control-configure.sh
+        mode: '0755'
+
+    - name: Execute control configure script
+      ansible.builtin.shell: >-
+        sh -x /tmp/setup-scripts/setup-control-configure.sh
+        > /tmp/setup-scripts/setup-control-configure.log 2>&1
+      register: r_control_configure
+      environment:
+        GUID: "{{ guid }}"
+        DOMAIN: "{{ domain }}"
+        AH_TOKEN: "{{ ahtoken }}"
+        TMM_ID: "{{ tmm_activation }}"
+        TMM_ORG: "{{ tmm_orgid }}"
+
+    - name: Show control configure output
+      ansible.builtin.debug:
+        var: r_control_configure.stdout_lines
+      when: r_control_configure.stdout_lines is defined
+
+    - name: Save control configure output
+      ansible.builtin.copy:
+        content: "{{ r_control_configure.stdout | default(r_control_configure.stderr) | default(r_control_configure) }}"
+        dest: /tmp/control-configure.out
+      delegate_to: localhost
+      become: false
+
+    - name: Fail if control configure failed
+      ansible.builtin.fail:
+        msg: "Control configure phase failed"
+      when:
+        - r_control_configure.rc is defined
+        - r_control_configure.rc != 0

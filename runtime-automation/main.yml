@@ -33,20 +33,20 @@
 
   - name: Check if /module_dir/module_stage-host.sh exists
     ansible.builtin.stat:
-      path: "./{{ module_dir }}/{{ module_stage }}-{{ config_host }}.sh"
+      path: "{{ playbook_dir }}/{{ module_dir }}/{{ module_stage }}-{{ inventory_hostname }}.sh"
     delegate_to: localhost
     register: r_script_test
 
   - name: Copy script file
     when: r_script_test.stat.exists
     ansible.builtin.copy:
-      src: "./{{ module_dir }}/{{ module_stage }}-{{ ansible_host }}.sh"
-      dest: "/tmp/runtime-scripts/{{ module_dir }}/{{ module_stage }}-{{ ansible_host }}.sh"
+      src: "{{ playbook_dir }}/{{ module_dir }}/{{ module_stage }}-{{ inventory_hostname }}.sh"
+      dest: "/tmp/runtime-scripts/{{ module_dir }}/{{ module_stage }}-{{ inventory_hostname }}.sh"
     register: r_result
 
   - name: Execute module_stage-host.sh if it exists
     when: r_script_test.stat.exists
-    ansible.builtin.shell: "sh -x /tmp/runtime-scripts/{{ module_dir }}/{{ module_stage }}-{{ ansible_host }}.sh > /tmp/runtime-scripts/{{ module_dir }}/{{ module_stage }}-{{ ansible_host }}.log 2>&1"
+    ansible.builtin.shell: "sh -x /tmp/runtime-scripts/{{ module_dir }}/{{ module_stage }}-{{ inventory_hostname }}.sh > /tmp/runtime-scripts/{{ module_dir }}/{{ module_stage }}-{{ inventory_hostname }}.log 2>&1"
     become: true
     register: r_result
 
