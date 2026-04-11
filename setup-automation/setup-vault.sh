@@ -38,7 +38,36 @@ for var in VAULT_LIC; do
 done
 
 ###############################################################################
-# 2. Apply Vault license (idempotent)
+# 2. Stop crash-looping Vault service (clean slate)
+###############################################################################
+
+if systemctl is-active --quiet vault 2>/dev/null || systemctl is-failed --quiet vault 2>/dev/null; then
+    echo "Stopping Vault service before applying configuration fixes..."
+    sudo systemctl stop vault
+    sudo systemctl reset-failed vault 2>/dev/null || true
+    echo "Vault service stopped"
+else
+    echo "SKIP: Vault service not running"
+fi
+
+###############################################################################
+# 3. Patch storage backend: file -> raft (idempotent)
+###############################################################################
+
+VAULT_HCL="/etc/vault.d/vault.hcl"
+
+if grep -q 'storage "file"' "$VAULT_HCL" 2>/dev/null; then
+    echo "Patching vault.hcl: changing storage backend from 'file' to 'raft'..."
+    sudo sed -i 's/storage "file"/storage "raft"/' "$VAULT_HCL"
+    echo "Storage backend updated to 'raft'"
+elif grep -q 'storage "raft"' "$VAULT_HCL" 2>/dev/null; then
+    echo "SKIP: Storage backend already set to 'raft'"
+else
+    echo "WARNING: Could not detect storage backend in $VAULT_HCL"
+fi
+
+###############################################################################
+# 4. Apply Vault license (idempotent)
 ###############################################################################
 
 VAULT_LIC_FILE="/etc/vault.d/vault.hclic"
@@ -66,7 +95,19 @@ else
 fi
 
 ###############################################################################
-# 3. Enable and start Vault service (idempotent)
+# 5. License diagnostics
+###############################################################################
+
+echo "Vault version: $(vault version 2>/dev/null || echo 'UNKNOWN')"
+if [ -f "$VAULT_LIC_FILE" ] && [ -s "$VAULT_LIC_FILE" ]; then
+    echo "License file: ${VAULT_LIC_FILE} ($(wc -c < "$VAULT_LIC_FILE") bytes)"
+    echo "License prefix: $(head -c 20 "$VAULT_LIC_FILE")..."
+else
+    echo "WARNING: License file is missing or empty at ${VAULT_LIC_FILE}"
+fi
+
+###############################################################################
+# 6. Enable and start Vault service
 ###############################################################################
 
 if ! systemctl is-enabled --quiet vault 2>/dev/null; then
@@ -76,30 +117,20 @@ else
     echo "SKIP: Vault service already enabled"
 fi
 
-if [ "$LICENSE_UPDATED" = true ]; then
-    echo "Restarting Vault service due to license update..."
-    sudo systemctl restart vault
-    sleep 3
-else
-    if ! systemctl is-active --quiet vault; then
-        echo "Starting Vault service..."
-        sudo systemctl start vault
-        sleep 3
-    else
-        echo "SKIP: Vault service already running"
-    fi
-fi
+echo "Starting Vault service..."
+sudo systemctl start vault
+sleep 5
 
 if sudo systemctl is-active --quiet vault; then
     echo "Vault service is running"
 else
-    echo "ERROR: Vault service may not be running properly"
-    sudo systemctl status vault
+    echo "ERROR: Vault service failed to start"
+    sudo journalctl -u vault --no-pager -n 20
     exit 1
 fi
 
 ###############################################################################
-# 4. Unseal Vault (idempotent)
+# 7. Unseal Vault (idempotent)
 ###############################################################################
 
 echo "Checking Vault seal status..."
